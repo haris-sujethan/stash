@@ -1,0 +1,68 @@
+/* Hallmark · shape: Marquee Hero · genre: modern-minimal · theme: Vantage (by request: the user picked direction 5) · job: try · draw: 8a6288
+ * hero: Ledge (the bloom above, the head at its base) · nav: floating pill · footer: mast · imagery: a lit 3D ASCII flower in the hero, an ASCII network of laptops and the Stash cloud in how it works · signature: each petal fires on its own clock, its pulse lands in the seed head and the seed head brightens and fills; when full it sends light back out · vantage: object/steel
+ * axes: dark/grotesk-sans/chromatic-lime · posture: restrained · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4 · weakest: E, two animations on one page; the hero bloom is the feeling and the laptop network is the explanation, each with a pause */
+@import url("./tokens.css");
+@import url("./base.css");
+@import url("../vantage-shared/vantage.css");
+
+/* hero: Ledge */
+.hero { min-height: 100dvh; display: grid; grid-template-rows: minmax(0, 1fr) auto; padding-bottom: var(--space-2xl); }
+.bloom { position: relative; margin: 0; min-height: 380px; }
+.bloom canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: pan-y; }
+.bloom pre { position: absolute; inset: 25% 40%; margin: 0; font: 400 0.75rem/1.2 var(--font-body); color: var(--point-mid); }
+.js .bloom pre { display: none; }
+.hero__base { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--gap-columns); align-items: end; }
+.hero h1 { font-size: clamp(3rem, 5.2vw + 0.5rem, 5.75rem); max-width: 12ch; }
+.hero .lead { max-width: 32ch; }
+.hero__actions { display: flex; gap: var(--space-md); margin-top: var(--space-lg); flex-wrap: wrap; align-items: center; }
+.pause { min-height: 44px; padding: 0 var(--space-md); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-muted); font: 300 var(--text-sm)/1 var(--font-body); box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule); cursor: pointer; transition: color var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out); }
+.pause:hover { color: var(--color-ink); background: var(--color-paper-2); }
+.pause:active { background: var(--color-paper-3); }
+.pause:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.pause[disabled] { opacity: 0.5; cursor: not-allowed; }
+.hero .pause { position: absolute; right: var(--gutter); top: calc(var(--space-4xl) + var(--space-md)); }
+.hero { position: relative; }
+
+/* statement */
+.statement { font: 300 var(--text-display-s)/1.1 var(--font-display); font-variation-settings: "SHRP" 100; letter-spacing: var(--tracking-display); color: var(--color-ink); max-width: 28ch; }
+.statement span { color: var(--color-muted); }
+
+/* how it works: a switcher beside the network */
+.how { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--space-2xl); align-items: stretch; }
+.tabs { list-style: none; margin: 0; padding: 0; display: grid; align-content: start; border-top: var(--rule-hair) solid var(--color-rule); }
+.tabs button { display: grid; gap: var(--space-xs); width: 100%; padding: var(--space-lg) 0 var(--space-lg) var(--space-lg); border: 0; border-bottom: var(--rule-hair) solid var(--color-rule); border-left: 2px solid transparent; background: transparent; color: var(--color-ink-2); text-align: left; font: 300 var(--text-md)/1.5 var(--font-body); cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out); }
+.tabs button strong { font: 400 var(--text-title)/1.1 var(--font-display); font-variation-settings: "SHRP" 100; color: var(--color-ink); }
+.tabs button code { font: inherit; color: var(--color-accent); }
+.tabs button:hover { background: var(--color-paper-2); }
+.tabs button:active { background: var(--color-paper-3); }
+.tabs button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
+.tabs button[aria-selected="true"] { border-left-color: var(--color-accent); background: var(--color-paper-2); }
+.tabs button[aria-selected="false"] span { color: var(--color-muted); }
+.tabs button[disabled] { opacity: 0.5; cursor: not-allowed; }
+.net { position: relative; margin: 0; min-height: 520px; }
+.net canvas { position: absolute; inset: var(--space-md); width: calc(100% - 2 * var(--space-md)); height: calc(100% - 2 * var(--space-md)); }
+.net pre { margin: var(--space-xl); font: 400 0.8125rem/1.25 var(--font-body); color: var(--point-mid); white-space: pre; }
+.js .net pre { display: none; }
+.net .pause { position: absolute; right: var(--space-md); bottom: var(--space-md); z-index: var(--z-raised); }
+
+/* values */
+.values { list-style: none; margin: 0; padding: 0; border-top: var(--rule-hair) solid var(--color-rule); }
+.values li { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); gap: var(--gap-columns); align-items: baseline; padding-block: var(--space-xl); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.values h3 { font-size: var(--text-2xl); font-weight: 300; }
+.values p { font-size: var(--text-lead); max-width: 40ch; }
+
+/* install */
+.handoff { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-2xl); align-items: end; }
+.handoff h2 { font-size: clamp(2.75rem, 4.6vw + 0.5rem, 5rem); max-width: 13ch; }
+.handoff p { color: var(--color-ink-2); font-size: var(--text-lead); max-width: 32ch; }
+.platforms { margin-top: var(--space-2xl); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap-columns); }
+.platforms div { position: relative; padding: var(--space-xl); min-height: 160px; display: grid; align-content: end; gap: var(--space-2xs); }
+.platforms strong { color: var(--color-ink); font-weight: 400; font-size: var(--text-title); }
+.platforms span { color: var(--color-muted); }
+
+@media (max-width: 60rem) {
+  .hero__base, .how, .values li, .handoff, .platforms { grid-template-columns: minmax(0, 1fr); }
+  .hero .pause { top: var(--space-3xl); }
+  .net { min-height: 420px; }
+}

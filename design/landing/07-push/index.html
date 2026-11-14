@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: every push grows the project’s memory</title>
+<meta name="description" content="Push a coding agent session and its memories join the project's shared memory.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="pill">
+  <a class="wordmark" href="#top">stash</a>
+  <nav aria-label="Main"><ul><li><a href="#read">How to read it</a></li><li><a class="btn btn--sm" href="#install">Install</a></li></ul></nav>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero__grid">
+      <figure class="scene" aria-label="A cloud of memories grouped by topic. Each push drops a new session's memories into the topics they belong to.">
+        <canvas aria-hidden="true"></canvas>
+        <pre aria-hidden="true">  . : + * # * + : .
+ : + * # @ # * + :
+  . : + * # * + : .</pre>
+        <div class="callout" aria-hidden="true"><span class="callout__lead"></span><span class="callout__box"><strong></strong><span class="callout__meta"></span></span></div>
+        <figcaption class="scene__key"><span><b data-count>700</b> memories</span><span>Grouped by topic</span><span><b>Lime</b> just pushed</span><span>Hover to read</span></figcaption>
+      </figure>
+      <div>
+        <h1 id="hero-title">Every push grows the project’s memory.</h1>
+        <p class="lead">Press push. One session’s memories land beside related ones.</p>
+        <div class="hero__actions"><button class="btn" type="button" data-push>Run stash push</button></div>
+        <ol class="steps" aria-live="polite"><li><span>$ stash push</span><span>ready</span></li></ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="read" aria-labelledby="read-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="read-title">How to read the cloud.</h2>
+        <p>A sample project. Each push adds one session.</p>
+      </div>
+      <ul class="key">
+        <li><span class="glyph">. : +</span><h3>One character, one memory</h3><p>Extracted from a pushed session, citing its events.</p></li>
+        <li><span class="glyph">#%@</span><h3>Topics form groups</h3><p>Atlas Vector Search places memories by meaning.</p></li>
+        <li><span class="glyph glyph--lime">@ @</span><h3>Lime just landed</h3><p>The newest session’s memories, for a few seconds.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" id="push" aria-labelledby="push-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="push-title">What a push keeps.</h2>
+        <p>Run it inside Claude Code. It finds the session itself.</p>
+      </div>
+      <ul class="rows">
+        <li><h3>Secrets stay on your laptop</h3><p>Keys and tokens are removed before anything uploads.</p></li>
+        <li><h3>Events never change</h3><p>Memories are interpretations that point back to them.</p></li>
+        <li><h3>Pushing twice adds nothing</h3><p>Only new events make a new version.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="install" aria-labelledby="install-title">
+    <div class="container close">
+      <div class="measure ticks">
+        <p class="num">0<span class="u"> model keys</span></p>
+        <p>The CLI needs only a Stash token. Processing runs on the server.</p>
+      </div>
+      <div>
+        <h2 id="install-title">Push your first session.</h2>
+        <div class="install" data-copy-box><code data-copy-text>npm install -g @stash/cli</code><button class="btn" type="button" data-copy>Copy</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark" aria-hidden="true">stash</p>
+    <div class="foot__row"><p>Built for Agents in Context Toronto, a MongoDB hackathon.</p><ul><li><a href="#read">How to read it</a></li><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li></ul></div>
+  </div>
+</footer>
+
+<script src="../vantage-shared/cloud.js"></script>
+<script>
+(() => {
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const b = box.querySelector('[data-copy]'), t = box.querySelector('[data-copy-text]');
+    b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(t.textContent); b.classList.add('is-done'); b.textContent = 'Copied'; setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'Copy'; }, 1400); } catch (e) {} });
+  });
+  const S = window.StashCloud, centers = S.ring(), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mem = S.memories({ n: 700, seed: 21, centers, spread: 0.13 });
+  const SESSIONS = [
+    { topics: ['auth', 'auth', 'auth', 'cache', 'db', 'db', 'client', 'client', 'auth', 'cache', 'build', 'db'], agent: 'claude-code', events: 148, secrets: 1 },
+    { topics: ['cache', 'cache', 'cache', 'db', 'db', 'auth', 'cache', 'db', 'rate', 'cache', 'db', 'auth'], agent: 'claude-code', events: 131, secrets: 0 },
+    { topics: ['rate', 'rate', 'rate', 'build', 'client', 'rate', 'build', 'rate', 'client', 'build', 'rate', 'rate'], agent: 'claude-code', events: 96, secrets: 2 },
+  ];
+  const r = S.rng(77);
+  let pushes = 0, landing = [], startAt = -1e9, pinIdx = -1;
+  const DUR = 1800, STAG = 90;
+  const fall = (m, now) => { if (m.born == null) return null; const t = Math.min(1, Math.max(0, (now - m.born) / DUR)); const e = 1 - Math.pow(1 - t, 3); return [0, (1 - e) * -1.6, 0]; };
+  const cloud = S.scene(document.querySelector('.scene'), {
+    points: () => mem, period: 120000, zoom: 1.1, fitH: 1.4, splat: 3, splatR: 0.022, cy: 0.55,
+    offset: (m, now) => (reduce ? null : fall(m, now)),
+    hidden: (m, now) => m.born != null && now < m.born,
+    lit: (m, now) => m.born != null && now - m.born < DUR + 5000,
+    animating: (now) => now - startAt < landing.length * STAG + DUR + 5200,
+    labels: () => S.TOPICS.map((t) => ({ pos: centers[t.id], text: t.label })),
+    pin: (now) => (pinIdx >= 0 && now - mem[pinIdx].born > DUR && now - mem[pinIdx].born < DUR + 5000 ? pinIdx : -1),
+    describe: (m) => ({ title: m.text, meta: [m.kind, m.born != null ? 'just pushed' : m.status, m.session, m.event] }),
+    after: (ctx, project, now, { w, scale, C }) => {
+      if (now - startAt > landing.length * STAG + DUR) return;
+      ctx.font = `400 14px ${C.face}`; ctx.textAlign = 'center'; ctx.fillStyle = C.lime; ctx.globalAlpha = 1;
+      const [, Y] = project(0, -1.25, 0); ctx.fillText(`$ stash push   ${S.sessionId(500 + pushes)}`, w / 2, Math.max(8, Y)); ctx.textAlign = 'left';
+    },
+  });
+  const btn = document.querySelector('[data-push]'), steps = document.querySelector('.steps'), count = document.querySelector('[data-count]');
+  btn.addEventListener('click', () => {
+    const s = SESSIONS[pushes % SESSIONS.length], id = S.sessionId(500 + pushes + 1), now = performance.now();
+    pushes++; startAt = now; btn.disabled = true;
+    landing = s.topics.map((topic, k) => {
+      const type = topic === 'client' || topic === 'rate' ? (k % 2 ? 2 : 0) : k % 5, c = centers[topic];
+      const m = { topic, type, text: S.TEXT[topic][type], kind: S.TYPES[type], status: 'evidenced', session: id, event: 'e_' + (10 + k * 7), born: now + k * STAG, i: mem.length,
+        pos: [c[0] + (r() - 0.5) * 0.2, c[1] + (r() - 0.5) * 0.14, c[2] + (r() - 0.5) * 0.2] };
+      mem.push(m); return m;
+    });
+    pinIdx = landing[landing.length - 1].i;
+    const lines = [['$ stash push', id], ['capturing session', s.agent], ['secrets redacted', String(s.secrets)], ['events uploaded', String(s.events)], ['memories extracted', String(s.topics.length)], ['placed by meaning', 'done']];
+    steps.innerHTML = '';
+    lines.forEach(([a, b], k) => setTimeout(() => { const li = document.createElement('li'); li.className = k === lines.length - 1 ? 'is-new' : ''; li.innerHTML = `<span>${a}</span><span>${b}</span>`; steps.appendChild(li); }, reduce ? 0 : k * 300));
+    setTimeout(() => { count.textContent = mem.length.toLocaleString('en-US'); btn.disabled = false; btn.textContent = 'Push the next session'; }, reduce ? 0 : landing.length * STAG + DUR);
+    cloud.kick();
+  });
+})();
+</script>
+</body>
+</html>

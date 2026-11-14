@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: every agent session, on the record</title>
+<meta name="description" content="Stash keeps what your coding agents saw, decided and ruled out.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500&family=Atkinson+Hyperlegible+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="mast">
+  <div class="container mast__inner">
+    <ul><li><a href="#merge">Merge</a></li><li><a href="#guardrails">Guardrails</a></li></ul>
+    <a class="wordmark" href="#top">stash</a>
+    <ul><li><a href="#memory">Memory</a></li><li><a href="#install">Install</a></li></ul>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero__grid">
+      <div>
+        <h1 id="hero-title">Every agent session, on the record.</h1>
+        <p class="lead">Stash keeps what your coding agents saw, decided and ruled out.</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="#install">Install the CLI</a>
+          <a class="btn" href="#merge">Read a merge</a>
+        </div>
+      </div>
+      <figure class="stream" aria-label="Two agent sessions side by side, with the findings their merge produced between them">
+        <canvas aria-hidden="true"></canvas>
+<pre aria-hidden="true">e_014 test: 3 failed    = duplicate      e_207 refresh x2
+e_026 db ping ok        ! conflicting    e_188 db slow?
+                        + complementary  e_184 cache hit
+e_030 build overwrote   only in a</pre>
+        <p class="stream__legend measured" aria-hidden="true"><span class="instrument">ses_8kq2v</span><span>m_789</span><span class="instrument">ses_3mx7r</span></p>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section section--deep" id="merge" aria-labelledby="merge-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="merge-title">Two investigations, one record.</h2>
+        <p>Disagreements stay, with evidence on both sides.</p>
+      </div>
+      <div class="panels diff">
+        <div>
+          <div class="diff__head measured"><span>stash merge ses_8kq2v ses_3mx7r</span><span class="instrument">m_789</span></div>
+          <ul class="diff__rows">
+            <li class="row--plus"><span class="g">=</span><span class="kind">Duplicate</span><span>Refresh fires twice. <span class="measured">e_014 e_207</span></span></li>
+            <li><span class="g">+</span><span class="kind">Complementary</span><span>A stale cache explains path two. <span class="measured">e_184</span></span></li>
+            <li class="row--minus"><span class="g">!</span><span class="kind">Conflicting</span><span>A cleared the database. B did not. <span class="measured">e_026 e_188</span></span></li>
+            <li><span class="g">&lt;</span><span class="kind">Only in A</span><span>Generated client edits broke the build.</span></li>
+          </ul>
+        </div>
+        <div class="diff__note">
+          <p>Neither source changes. The conflict lives in the merge.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="guardrails" aria-labelledby="guardrails-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="guardrails-title">A rule needs a person.</h2>
+        <p>Stash proposes. Only a human approves. Agents read the result.</p>
+      </div>
+      <ol class="trail">
+        <li class="is-instrument"><h3>Failure seen twice</h3><p>Edits to src/client/generated.ts were overwritten by the build.</p><span class="measured instrument">ses_8kq2v, ses_3mx7r</span></li>
+        <li class="is-instrument"><h3>Rule proposed</h3><p>Edit schema/api.yaml and regenerate. Never edit the client.</p><span class="measured instrument">g_12 proposed</span></li>
+        <li class="is-person"><h3>Approved by a person</h3><p>On the website, with the approver secret. The CLI cannot approve.</p><span class="measured person">g_12 approved</span></li>
+        <li class="is-instrument"><h3>In every Briefing</h3><p>The next agent reads the rule before it starts.</p><span class="measured instrument">stash pull</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section section--deep" id="memory" aria-labelledby="memory-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="memory-title">A guess is labelled a guess.</h2>
+        <p>Every memory carries its status and its source events.</p>
+      </div>
+      <div class="panels status">
+        <div><span class="chip chip--cool">Hypothesis</span><p class="reading">e_031</p><h3>The cache may serve a stale session.</h3></div>
+        <div><span class="chip chip--cool">Evidenced</span><p class="reading">e_014</p><h3>Refresh fires twice under load.</h3></div>
+        <div><span class="chip chip--amber">Verified</span><p class="reading">human</p><h3>Only a person can confirm a memory.</h3></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="install" aria-labelledby="install-title">
+    <div class="container close">
+      <div>
+        <h2 id="install-title">Start the record.</h2>
+        <div class="install" data-copy-box>
+          <code data-copy-text>npm install -g @stash/cli</code>
+          <button class="btn btn--primary" type="button" data-copy>Copy</button>
+        </div>
+      </div>
+<pre class="screen"><span class="instrument">$ stash push</span>
+capturing session        claude-code ses_8kq2v
+scanning for secrets     1 redacted
+uploading transcript     148 events
+extracting memories      12 found
+checking repeat failures g_12 proposed
+
+session ses_8kq2v  version 2</pre>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container foot__inner">
+    <div>
+      <p class="foot__sign">Made for agents that build on each other.</p>
+      <p>Built for Agents in Context Toronto, a MongoDB hackathon, November 2026.</p>
+    </div>
+    <ul><li><a href="#merge">Merge</a></li><li><a href="#guardrails">Guardrails</a></li><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li></ul>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const root = getComputedStyle(document.documentElement), tok = (n) => root.getPropertyValue(n).trim();
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const b = box.querySelector('[data-copy]'), t = box.querySelector('[data-copy-text]');
+    b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(t.textContent); b.classList.add('is-done'); b.textContent = 'Copied'; setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'Copy'; }, 1400); } catch (e) {} });
+  });
+
+  // merge field: two sessions' events, scrubbed by the pointer; findings form in the seam at the read head
+  const fig = document.querySelector('.stream'), cv = fig.querySelector('canvas'), ctx = cv.getContext('2d');
+  const face = tok('--font-outlier');
+  const C = { faint: tok('--color-rule-2'), muted: tok('--color-muted'), ink: tok('--color-ink'), cool: tok('--color-cool'), ok: tok('--color-ok'), bad: tok('--color-bad'), amber: tok('--color-accent') };
+  const ROWS = [
+    ['e_001 user: logins fail', null, 'e_170 user: check the db'],
+    ['e_002 ls src/auth', null, 'e_171 ls src/cache'],
+    ['e_003 read package.json', null, 'e_176 read cache.ts'],
+    ['e_009 read refresh.ts', null, 'e_179 grep ttl'],
+    ['e_011 grep refresh(', null, 'e_181 run dev server'],
+    ['e_014 test: 3 failed', ['= duplicate', 'ok'], 'e_207 refresh fires x2'],
+    ['e_017 log: refresh x2', null, 'e_183 login fails 1/4'],
+    ['e_019 add trace ids', null, 'e_184 cache hit, expired', ],
+    ['', ['+ complementary', 'cool'], 'e_184 stale session'],
+    ['e_022 timeout to 30s', null, 'e_186 explain query'],
+    ['e_026 db ping ok', ['! conflicting', 'bad'], 'e_188 db slow?'],
+    ['e_029 edit generated.ts', null, 'e_190 ttl 3600s'],
+    ['e_030 build overwrote', ['< only in a', 'muted'], ''],
+    ['e_033 revert edit', null, 'e_194 flush cache'],
+    ['e_036 lock refresh', null, 'e_198 test: 3 failed'],
+    ['e_041 test: 1 failed', null, 'e_201 still flaky'],
+  ];
+  const LH = 30;
+  let w = 0, h = 0, s = 0, target = 0, raf = 0, glitch = 0;
+  function size() { const r = fig.getBoundingClientRect(); w = r.width; h = r.height - 44; const d = Math.min(2, window.devicePixelRatio || 1); cv.width = Math.round(w * d); cv.height = Math.round(r.height * d); ctx.setTransform(d, 0, 0, d, 0, 0); }
+  const span = () => ROWS.length * LH;
+  function draw() {
+    raf = 0;
+    s += (target - s) * (reduce ? 1 : 0.18);
+    ctx.clearRect(0, 0, w, h + 44); ctx.textBaseline = 'middle';
+    const head = h / 2, laneA = 20, laneB = w - 20, mid = w / 2;
+    ctx.font = `400 11px ${face}`; ctx.fillStyle = C.faint; ctx.globalAlpha = 0.35; ctx.textAlign = 'left';
+    for (let y = 0; y < h; y += 15) for (let x = 0; x < w; x += 9) { const v = Math.sin(x * 12.9898 + (y + Math.round(s * 0.5 / 15) * 15) * 78.233) * 43758.5453, f = v - Math.floor(v); if (f > 0.93) ctx.fillText(f > 0.985 ? '+' : '.', x, y); }
+    ctx.globalAlpha = 1; ctx.font = `400 12px ${face}`; ctx.fillStyle = C.faint;
+    const dash = '- '.repeat(Math.ceil(w / 14)); ctx.fillText(dash, 0, head);
+    ROWS.forEach(([a, f, b], i) => {
+      const y = 40 + i * LH - s; if (y < -LH || y > h + LH) return;
+      const near = 1 - Math.min(1, Math.abs(y - head) / (LH * 1.6));
+      ctx.font = `400 12px ${face}`;
+      ctx.textAlign = 'left'; ctx.fillStyle = near > 0.5 ? C.ink : near > 0.1 ? C.cool : C.muted; ctx.fillText(a, laneA, y);
+      ctx.textAlign = 'right'; ctx.fillText(b, laneB, y);
+      if (f) {
+        ctx.textAlign = 'center';
+        if (near > 0.35) {
+          const col = C[f[1]];
+          const reach = Math.max(0, mid - 90 - (laneA + a.length * 7.2));
+          ctx.fillStyle = C.faint;
+          if (a) ctx.fillText('-'.repeat(Math.floor(reach / 7.2)) + '>', laneA + a.length * 7.2 + reach / 2 + 6, y);
+          if (b) ctx.fillText('<' + '-'.repeat(Math.floor(reach / 7.2)), laneB - b.length * 7.2 - reach / 2 - 6, y);
+          ctx.font = `500 13px ${face}`; ctx.fillStyle = col; ctx.fillText(f[0], mid, y);
+        } else { ctx.fillStyle = C.faint; ctx.fillText(':', mid, y); }
+      }
+    });
+    if (Math.abs(target - s) > 0.5 && !reduce) raf = requestAnimationFrame(draw);
+  }
+  const kick = () => { if (!raf) raf = requestAnimationFrame(draw); };
+  const rest = () => { target = 40 + 5 * LH - h / 2; };
+  fig.addEventListener('pointermove', (e) => { const r = fig.getBoundingClientRect(); const p = Math.min(1, Math.max(0, (e.clientY - r.top) / h)); target = p * (span() - LH) + 40 - h / 2; kick(); });
+  new ResizeObserver(() => { size(); rest(); s = target; kick(); }).observe(fig);
+  document.fonts.ready.then(() => { size(); rest(); s = target; kick(); });
+})();
+</script>
+</body>
+</html>

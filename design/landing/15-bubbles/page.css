@@ -1,0 +1,55 @@
+/* Hallmark · shape: Marquee Hero · genre: modern-minimal · theme: Vantage (by request: the user picked direction 5) · job: try · draw: 8a6288
+ * hero: Poster (the bubbles fill the screen and fade out on the left, where the head sits) · nav: floating pill · footer: mast · imagery: an ASCII cloud of bubbles arranged like a flower; the outer bubbles are agents, the middle is Stash · signature: each agent sends a pulse across the gap, the middle brightens as each lands and, when full, sends lime back to every agent · vantage: object/steel
+ * axes: dark/grotesk-sans/chromatic-lime · posture: restrained · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · user request: the hero animation runs without a pause control (stated by the user); it stops under reduced motion and off screen */
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4 · weakest: V, the rest of the page is text-led; the one picture is the hero and everything else is said in type at size */
+@import url("./tokens.css");
+@import url("./base.css");
+@import url("../vantage-shared/vantage.css");
+
+/* hero: Poster */
+.hero { position: relative; min-height: 100dvh; display: grid; align-content: center; padding-block: var(--space-4xl) var(--space-2xl); overflow: hidden; }
+.bubbles { position: absolute; inset: 0; margin: 0; }
+.bubbles canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: pan-y; }
+.bubbles pre { position: absolute; right: 10%; top: 25%; margin: 0; font: 400 0.875rem/1.2 var(--font-body); color: var(--point-mid); }
+.js .bubbles pre { display: none; }
+.hero__text { position: relative; z-index: var(--z-raised); }
+.hero h1 { font-size: clamp(3rem, 5.4vw + 0.5rem, 6rem); max-width: 10ch; }
+.hero .lead { margin-top: var(--space-lg); max-width: 30ch; }
+.hero__actions { display: flex; gap: var(--space-md); margin-top: var(--space-xl); flex-wrap: wrap; }
+
+/* statement */
+.statement { font: 300 var(--text-display-s)/1.1 var(--font-display); font-variation-settings: "SHRP" 100; letter-spacing: var(--tracking-display); color: var(--color-ink); max-width: 26ch; }
+.statement span { color: var(--color-muted); }
+
+/* how it works: four steps set large */
+.steps { list-style: none; margin: 0; padding: 0; border-top: var(--rule-hair) solid var(--color-rule); }
+.steps li { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 5fr) minmax(0, 3fr); gap: var(--gap-columns); align-items: baseline; padding-block: var(--space-xl); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.steps h3 { font-size: var(--text-section); font-weight: 200; }
+.steps p { font-size: var(--text-lead); max-width: 34ch; }
+.steps code { justify-self: end; padding: var(--space-xs) var(--space-md); border-radius: var(--radius-pill); background: var(--color-paper-2); box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule-2); font: 400 var(--text-md)/1.2 var(--font-body); color: var(--color-accent); white-space: nowrap; }
+
+/* handoff vs stash */
+.compare { width: 100%; border-collapse: collapse; }
+.compare th { text-align: left; font-size: var(--text-sm); font-weight: 400; color: var(--color-muted); padding: var(--space-sm) var(--space-md); border-bottom: var(--rule-hair) solid var(--color-rule-2); }
+.compare thead th:last-child { color: var(--color-accent); }
+.compare td, .compare tbody th { padding: var(--space-lg) var(--space-md); border-bottom: var(--rule-hair) solid var(--color-rule); vertical-align: baseline; }
+.compare tbody th { color: var(--color-ink); font-size: var(--text-md); font-weight: 400; }
+.compare td:nth-child(2) { color: var(--color-muted); }
+.compare td:last-child { color: var(--color-ink); }
+
+/* install */
+.handoff { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-2xl); align-items: end; }
+.handoff h2 { font-size: clamp(2.75rem, 4.6vw + 0.5rem, 5rem); max-width: 13ch; }
+.handoff p { color: var(--color-ink-2); font-size: var(--text-lead); max-width: 32ch; }
+
+@media (max-width: 60rem) {
+  .hero { padding-top: 56dvh; }
+  .steps li, .handoff { grid-template-columns: minmax(0, 1fr); }
+  .steps code { justify-self: start; }
+  .compare td:nth-child(2), .compare thead th:nth-child(2) { display: none; }
+}
+
+/* the install line shrinks on a phone instead of pushing past the screen */
+.install { max-width: 100%; }
+.install code { min-width: 0; }

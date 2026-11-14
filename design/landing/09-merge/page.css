@@ -1,0 +1,33 @@
+/* Hallmark · shape: Marquee Hero · genre: modern-minimal · theme: Vantage (by request: the user picked direction 5) · job: try · draw: 8a6288
+ * hero: Stage (the head and the merge control beside the two clouds) · nav: floating pill · footer: mast · imagery: two ASCII clouds, one per agent session · signature: drag the two sessions together; the same finding overlaps and lights lime, the disagreement stays labelled · vantage: object/steel
+ * axes: dark/grotesk-sans/chromatic-lime · posture: restrained · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · waive 44c · the text column holds the head, the merge control and the finding counts · the clouds centre on that whole column */
+/* Hallmark · pre-emit critique: P5 H4 E4 S5 R4 V5 · weakest: H, two clouds and a slider compete; the slider sits under the head and the clouds carry their session names */
+@import url("./tokens.css");
+@import url("./base.css");
+@import url("../vantage-shared/vantage.css");
+
+.hero { min-height: 100dvh; display: grid; align-items: center; padding-block: var(--space-3xl) var(--space-2xl); }
+.hero .scene { height: clamp(440px, 68dvh, 640px); }
+.hero__base { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-2xl); align-items: center; }
+.hero .lead { margin-top: var(--space-md); }
+.hero h1 { font-size: clamp(2.5rem, 3.6vw + 0.5rem, 4.25rem); max-width: 13ch; }
+.hero .lead { max-width: 36ch; }
+.merge { margin-top: var(--space-md); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-sm) var(--space-md); align-items: center; }
+.merge .range { grid-column: 1 / -1; }
+.merge__ends { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: var(--text-sm); color: var(--color-muted); }
+.findings { margin: var(--space-md) 0 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-md); }
+.findings div { padding-top: var(--space-xs); border-top: var(--rule-hair) solid var(--color-rule-2); }
+.findings dt { font-size: var(--text-sm); color: var(--color-muted); }
+.findings dd { margin: 0; font-size: var(--text-2xl); font-weight: 200; color: var(--color-ink); font-variant-numeric: tabular-nums; }
+.findings .is-lime dd { color: var(--color-accent); }
+
+/* finding types as rows */
+.types { list-style: none; margin: 0; padding: 0; border-top: var(--rule-hair) solid var(--color-rule); }
+.types li { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--gap-columns); align-items: baseline; padding-block: var(--space-xl); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.types h3 { font-size: var(--text-title); font-weight: 400; }
+
+@media (max-width: 60rem) { .hero__base, .types li { grid-template-columns: minmax(0, 1fr); } .findings { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.statement { font: 300 var(--text-display-s)/1.08 var(--font-display); font-variation-settings: "SHRP" 100; letter-spacing: var(--tracking-display); color: var(--color-ink); max-width: 26ch; }
+.statement span { color: var(--color-muted); }

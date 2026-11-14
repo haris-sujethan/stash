@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: let the next agent continue</title>
+<meta name="description" content="Stash carries a coding agent’s context, evidence and failures to the next agent.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="bar">
+  <div class="container bar__inner">
+    <a class="wordmark" href="#top">stash</a>
+    <div class="cmd" data-copy-box>
+      <code data-copy-text>npm install -g @stash/cli</code>
+      <button class="btn btn--secondary btn--sm" type="button" data-copy>copy</button>
+    </div>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="#paths">two paths</a></li>
+        <li><a href="#briefing">briefing</a></li>
+        <li><a href="#memory">memory</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero__grid">
+      <div>
+        <h1 id="hero-title">let the next agent <span class="verb">continue</span></h1>
+        <p class="lead">Stash carries a session’s context, evidence and failures to the next agent.</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="#install">install the cli</a>
+          <a class="btn btn--secondary" href="#paths">see the path</a>
+        </div>
+      </div>
+      <figure class="map" aria-label="Session lineage map: two Claude Code sessions merge, and Codex continues from the first">
+        <canvas aria-hidden="true"></canvas>
+        <pre aria-hidden="true">[ ses_8kq2v ]        [ ses_3mx7r ]
+      |    +----------+     |
+      |    |     [ m_789 ]--+
+      v    v          |
+[ ses_b41c ]          v
+                [ ses_f02e ]</pre>
+        <figcaption>hover a session to light the context it inherited</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section" id="paths" aria-labelledby="paths-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="paths-title">a handoff is the slow path</h2>
+        <p>One path loses the evidence. The other keeps every event.</p>
+      </div>
+      <div class="paths" role="img" aria-label="Diagram of two handoff paths between agents">
+        <div class="path"><span class="path__name">today</span><span class="node">copy the chat</span><span class="node">write handoff.md</span><span class="node">paste it in</span><span class="node">investigate again</span></div>
+        <div class="path path--stash"><span class="path__name">with stash</span><span class="node">stash push</span><span class="node">MongoDB Atlas</span><span class="node">stash pull</span><span class="node">continue</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--band" id="briefing" aria-labelledby="briefing-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="briefing-title">what the next agent reads</h2>
+        <p>A Briefing, rendered from stored data. No model runs at pull.</p>
+      </div>
+      <div class="surface">
+        <div class="surface__side">
+          <div class="tabs" role="tablist" aria-label="Pull from">
+            <button class="tab" role="tab" id="t-ses" aria-controls="p-ses" aria-selected="true">session</button>
+            <button class="tab" role="tab" id="t-merge" aria-controls="p-merge" aria-selected="false" tabindex="-1">merge</button>
+          </div>
+          <dl>
+            <div><dt>source</dt><dd class="readout" data-src>ses_8kq2v@v2</dd></div>
+            <div><dt>budget</dt><dd class="readout">6,000 tokens</dd></div>
+            <div><dt>secrets</dt><dd class="readout">removed before upload</dd></div>
+          </dl>
+        </div>
+<pre role="tabpanel" id="p-ses" aria-labelledby="t-ses"><span class="c">$ stash pull ses_8kq2v</span>
+<span class="b">stash:briefing ses_8kq2v@v2 pull=p_91</span>
+
+<span class="c"># approved guardrails</span>
+edit schema/api.yaml, never the generated client
+
+<span class="c"># discoveries</span>
+refresh fires twice under load      <span class="l">evidenced</span>   e_014
+cache serves a stale session        hypothesis  e_031
+
+<span class="c"># failed approaches</span>
+a longer db timeout changed nothing             e_022</pre>
+<pre role="tabpanel" id="p-merge" aria-labelledby="t-merge" hidden><span class="c">$ stash pull m_789</span>
+<span class="b">stash:briefing m_789 pull=p_92</span>
+
+<span class="c"># findings</span>
+duplicate       both found the refresh race
+complementary   the stale cache explains path two
+conflicting     a ruled out the database, b did not
+only in a       edits to the generated client</pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="memory" aria-labelledby="memory-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="memory-title">memory that cites its source</h2>
+        <p>Five kinds. A guess is labelled a guess.</p>
+      </div>
+      <ul class="rows">
+        <li><h3>decision</h3><p>Investigate token refresh first.</p><span class="readout">e_009 e_014</span></li>
+        <li><h3>discovery</h3><p>Refresh fires twice under load.</p><span class="readout">evidenced</span></li>
+        <li><h3>failed approach</h3><p>A longer db timeout changed nothing.</p><span class="readout">e_022</span></li>
+        <li><h3>constraint</h3><p>The project supports Node 22.</p><span class="readout">e_003</span></li>
+        <li><h3>open question</h3><p>Does the cache explain path two?</p><span class="readout">hypothesis</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--band" id="install" aria-labelledby="install-title">
+    <div class="container close">
+      <div>
+        <h2 id="install-title">push once, pull anywhere</h2>
+        <div class="cmd" data-copy-box>
+          <code data-copy-text>npm install -g @stash/cli</code>
+          <button class="btn btn--primary btn--sm" type="button" data-copy>copy</button>
+        </div>
+      </div>
+<pre class="well"><span class="c">$ stash guardrails</span>
+<span class="b">approved</span>   edit schema/api.yaml, never
+           src/client/generated.ts
+           from ses_8kq2v and ses_3mx7r
+
+proposed   back off and retry after HTTP 429
+           waiting for a human</pre>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container foot__grid">
+    <a class="wordmark" href="#top">stash</a>
+    <p>Stash is shared memory for coding agents, built for Agents in Context Toronto, a MongoDB hackathon. Sessions, memories and merges live in <a href="https://www.mongodb.com/atlas">MongoDB Atlas</a>. Claude Code pushes today; any agent with a shell can pull.</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const root = getComputedStyle(document.documentElement), tok = (n) => root.getPropertyValue(n).trim();
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const b = box.querySelector('[data-copy]'), t = box.querySelector('[data-copy-text]');
+    b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(t.textContent); b.classList.add('is-done'); b.textContent = 'copied'; setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'copy'; }, 1400); } catch (e) {} });
+  });
+
+  const tabs = [...document.querySelectorAll('.tab')], src = document.querySelector('[data-src]');
+  const pick = (n, f) => tabs.forEach((t, j) => { const on = j === n; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; document.getElementById(t.getAttribute('aria-controls')).hidden = !on; if (on && f) t.focus(); src.textContent = n ? 'm_789' : 'ses_8kq2v@v2'; });
+  tabs.forEach((t, i) => { t.addEventListener('click', () => pick(i)); t.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); pick((i + 1) % tabs.length, true); } }); });
+
+  // lineage map in ASCII
+  const fig = document.querySelector('.map'), cv = fig.querySelector('canvas'), ctx = cv.getContext('2d');
+  const face = tok('--font-outlier'), C = { muted: tok('--color-muted'), ink: tok('--color-ink'), ink2: tok('--color-ink-2'), rule: tok('--color-rule-2'), brass: tok('--color-accent'), faint: tok('--color-rule') };
+  const CW = 8, CH = 18;
+  const NODES = {
+    a: { fx: 0.07, fy: 0.12, id: 'ses_8kq2v', sub: 'claude-code v2', parents: [] },
+    b: { fx: 0.6, fy: 0.12, id: 'ses_3mx7r', sub: 'claude-code v1', parents: [] },
+    m: { fx: 0.34, fy: 0.44, id: 'm_789', sub: 'merge a + b', parents: ['a', 'b'] },
+    c: { fx: 0.07, fy: 0.74, id: 'ses_b41c', sub: 'codex, from a', parents: ['a'] },
+    d: { fx: 0.56, fy: 0.74, id: 'ses_f02e', sub: 'claude-code, from m', parents: ['m'] },
+  };
+  let cols = 0, rows = 0, w = 0, h = 0, edges = [], scatter = [], hot = null, lit = new Set(), pkt = 0, pktStart = 0, raf = 0, mx = -1e4, my = -1e4;
+  function layout() {
+    const r = fig.getBoundingClientRect(); w = r.width; h = r.height;
+    const dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cols = Math.floor(w / CW); rows = Math.floor(h / CH);
+    for (const n of Object.values(NODES)) { n.x = Math.round(n.fx * cols); n.y = Math.round(n.fy * rows); n.w = n.id.length + 4; }
+    edges = [];
+    for (const [k, n] of Object.entries(NODES)) for (const p of n.parents) {
+      const P = NODES[p], cells = [];
+      const x1 = P.x + 2 + Math.floor(P.id.length / 2), y1 = P.y + 2, x2 = n.x + 2 + Math.floor(n.id.length / 2), y2 = n.y - 1;
+      const mid = Math.round((y1 + y2) / 2);
+      for (let y = y1; y < mid; y++) cells.push([x1, y, '|']);
+      cells.push([x1, mid, '+']);
+      const dir = Math.sign(x2 - x1);
+      for (let x = x1 + dir; dir && x !== x2; x += dir) cells.push([x, mid, '-']);
+      if (dir) cells.push([x2, mid, '+']);
+      for (let y = mid + 1; y < y2; y++) cells.push([x2, y, '|']);
+      cells.push([x2, y2, 'v']);
+      edges.push({ from: p, to: k, cells });
+    }
+    scatter = [];
+    const glyphs = 'decision discovery failed constraint question evidenced hypothesis e_014 e_022 e_031 ';
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      const v = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453, f = v - Math.floor(v);
+      if (f > 0.9) scatter.push([x, y, f > 0.975 ? glyphs[(x * 3 + y * 7) % glyphs.length] : '.']);
+    }
+  }
+  const ancestors = (k, set = new Set()) => { set.add(k); NODES[k].parents.forEach((p) => ancestors(p, set)); return set; };
+  function draw(now) {
+    raf = 0; ctx.clearRect(0, 0, w, h); ctx.textBaseline = 'top'; ctx.font = `400 12px ${face}`;
+    for (const [x, y, ch] of scatter) {
+      const d = Math.hypot(x * CW - mx, y * CH - my);
+      ctx.fillStyle = d < 90 ? C.muted : C.faint; ctx.fillText(ch, x * CW, y * CH + 3);
+    }
+    const t = reduce ? 1 : Math.min(1, (now - pktStart) / 900);
+    for (const e of edges) {
+      const on = lit.has(e.from) && lit.has(e.to);
+      e.cells.forEach(([x, y, ch], i) => {
+        const head = on && !reduce && t < 1 && Math.abs(i / e.cells.length - t) < 0.06;
+        ctx.fillStyle = head ? C.ink : on ? C.brass : C.rule; ctx.fillText(head ? '*' : ch, x * CW, y * CH + 3);
+      });
+    }
+    for (const [k, n] of Object.entries(NODES)) {
+      const on = lit.has(k);
+      ctx.fillStyle = on ? C.brass : C.ink2; ctx.fillText(`[ ${n.id} ]`, n.x * CW, n.y * CH + 3);
+      ctx.fillStyle = on ? C.ink2 : C.muted; ctx.fillText(n.sub, (n.x + 2) * CW, (n.y + 1) * CH + 3);
+    }
+    if (t < 1 && !reduce) raf = requestAnimationFrame(draw);
+  }
+  const kick = () => { if (!raf) raf = requestAnimationFrame(draw); };
+  fig.addEventListener('pointermove', (e) => {
+    const r = fig.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top;
+    let best = null, bd = 1e9;
+    for (const [k, n] of Object.entries(NODES)) { const d = Math.hypot(mx - (n.x + n.w / 2) * CW, my - (n.y + 0.5) * CH); if (d < bd) { bd = d; best = k; } }
+    const next = bd < 120 ? best : null;
+    if (next !== hot) { hot = next; lit = hot ? ancestors(hot) : new Set(); pktStart = performance.now(); }
+    kick();
+  });
+  fig.addEventListener('pointerleave', () => { hot = null; lit = new Set(); mx = my = -1e4; kick(); });
+  new ResizeObserver(() => { layout(); kick(); }).observe(fig);
+  document.fonts.ready.then(() => { layout(); hot = 'd'; lit = ancestors('d'); pktStart = performance.now(); kick(); });
+})();
+</script>
+</body>
+</html>

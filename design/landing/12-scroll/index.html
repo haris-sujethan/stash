@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: one memory for every agent</title>
+<meta name="description" content="Stash keeps what your coding agents learn, so the next one picks up where the last stopped.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="pill">
+  <a class="wordmark" href="#top">stash</a>
+  <nav aria-label="Main"><ul><li><a href="#how">How it works</a></li><li><a href="#why">Why</a></li><li><a class="btn btn--sm" href="#install">Install</a></li></ul></nav>
+</header>
+
+<main id="top">
+  <section class="story" aria-label="Stash, and how it works">
+    <div class="stage">
+      <figure class="flower" aria-label="A flower drawn in characters. The petals are agents and the center is Stash; a wave moves from the petals into the center and back out.">
+        <canvas aria-hidden="true"></canvas>
+        <pre aria-hidden="true">   .:+*+:.   .:+*+:.
+ .:+*#%#*+: :+*#%#*+:.
+      .:+*#%@@%#*+:.
+ .:+*#%#*+: :+*#%#*+:.
+   .:+*+:.   .:+*+:.</pre>
+      </figure>
+      <button class="pause" type="button" data-pause aria-pressed="false">Pause</button>
+    </div>
+
+      <div class="frame frame--hero" data-step="0" data-scene="hero">
+        <div class="container hero__base">
+          <h1>One memory for every agent.</h1>
+          <div>
+            <p class="lead">Stash keeps what your coding agents learn. Nothing gets lost.</p>
+            <div class="hero__actions"><a class="btn" href="#install">Install the CLI</a><a class="btn btn--line" href="#how">How it works</a></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame frame--step" id="how" data-step="1" data-scene="apart">
+        <div class="container"><div><h2>Every session is an island.</h2><p>Your agents work alone. When a session ends, what it learned is gone.</p></div></div>
+      </div>
+      <div class="frame frame--step" data-step="2" data-scene="push">
+        <div class="container"><div><h2>Push it to Stash.</h2><p>One command saves the session: what was tried, what worked, what failed.</p><code>stash push</code></div></div>
+      </div>
+      <div class="frame frame--step" data-step="3" data-scene="remember">
+        <div class="container"><div><h2>Stash remembers.</h2><p>Every session joins one shared memory for the whole project.</p></div></div>
+      </div>
+      <div class="frame frame--step" data-step="4" data-scene="pull">
+        <div class="container"><div><h2>Pull it anywhere.</h2><p>Any agent, on any model, picks up exactly where the last one stopped.</p><code>stash pull</code></div></div>
+      </div>
+      <div class="frame frame--step" data-step="5" data-scene="guard">
+        <div class="container"><div><h2>It gets smarter.</h2><p>Mistakes made twice become rules every agent follows, once you approve them.</p></div></div>
+      </div>
+      <div class="frame frame--step frame--last" data-step="6" data-scene="whole">
+        <div class="container"><div><h2>Every agent, one memory.</h2><p>Claude Code, Codex or whatever comes next. They all build on each other.</p></div></div>
+      </div>
+
+  </section>
+
+  <section class="section section--first" id="why" aria-labelledby="why-title">
+    <div class="container">
+      <div class="head"><h2 id="why-title">What changes.</h2><p>Less explaining. More building.</p></div>
+      <ul class="values">
+        <li><h3>Never lose context</h3><p>Close the laptop, switch machines, come back next week. The work is still there.</p></li>
+        <li><h3>Never repeat a dead end</h3><p>What failed is remembered, so the next agent skips it.</p></li>
+        <li><h3>Switch models mid-task</h3><p>Start in one agent and finish in another, with the same context.</p></li>
+        <li><h3>One memory for the team</h3><p>Your teammates’ agents build on what yours already found.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="install" aria-labelledby="install-title">
+    <div class="container">
+      <div class="handoff">
+        <h2 id="install-title">Never write a handoff.md again.</h2>
+        <div>
+          <p>Install the CLI, then push your first session.</p>
+          <div class="install" data-copy-box><code data-copy-text>npm install -g @stash/cli</code><button class="btn" type="button" data-copy>Copy</button></div>
+        </div>
+      </div>
+      <div class="platforms">
+        <div class="ticks"><strong>Claude Code</strong><span>Pushes and pulls</span></div>
+        <div class="ticks"><strong>Any agent with a shell</strong><span>Pulls</span></div>
+        <div class="ticks"><strong>MongoDB Atlas</strong><span>Holds the memory</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark" aria-hidden="true">stash</p>
+    <div class="foot__row"><p>Built for Agents in Context Toronto, a MongoDB hackathon.</p><ul><li><a href="#how">How it works</a></li><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li></ul></div>
+  </div>
+</footer>
+
+<script src="./flower3d.js"></script>
+<script>
+(() => {
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const b = box.querySelector('[data-copy]'), t = box.querySelector('[data-copy-text]');
+    b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(t.textContent); b.classList.add('is-done'); b.textContent = 'Copied'; setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'Copy'; }, 1400); } catch (e) {} });
+  });
+
+  const narrow = () => innerWidth < 960;
+  const flower = window.StashFlower3D(document.querySelector('.flower'), { cx: 0.5, cy: 0.4, zoom: 0.68 });
+  // each scene: where the flower sits and what it does
+  const SCENES = {
+    hero:     () => ({ sep: 0.1, core: 1, ring: 0, cx: 0.5, cy: narrow() ? 0.36 : 0.4, zoom: 0.68, pitch: 0.95, glow: 0, waves: 'both', period: 7000 }),
+    apart:    () => ({ sep: 1, core: 0, ring: 0, cx: narrow() ? 0.5 : 0.68, cy: narrow() ? 0.36 : 0.5, zoom: 0.58, pitch: 0.8, glow: 0, waves: 'none' }),
+    push:     () => ({ sep: 0.08, core: 1, ring: 0, cx: narrow() ? 0.5 : 0.68, cy: narrow() ? 0.36 : 0.5, zoom: 0.62, pitch: 0.9, glow: 0, waves: 'in', period: 3200 }),
+    remember: () => ({ sep: 0.04, core: 1.25, ring: 0, cx: narrow() ? 0.5 : 0.68, cy: narrow() ? 0.36 : 0.5, zoom: 0.66, pitch: 1.05, glow: 1, waves: 'none' }),
+    pull:     () => ({ sep: 0.08, core: 1, ring: 0, cx: narrow() ? 0.5 : 0.68, cy: narrow() ? 0.36 : 0.5, zoom: 0.62, pitch: 0.9, glow: 0, waves: 'out', period: 3200 }),
+    guard:    () => ({ sep: 0.08, core: 1, ring: 1, cx: narrow() ? 0.5 : 0.68, cy: narrow() ? 0.36 : 0.5, zoom: 0.62, pitch: 0.95, glow: 0, waves: 'out', period: 4200 }),
+    whole:    () => ({ sep: 0.08, core: 1, ring: 1, cx: narrow() ? 0.5 : 0.68, cy: narrow() ? 0.36 : 0.5, zoom: 0.62, pitch: 0.95, glow: 0, waves: 'both', period: 7000 }),
+  };
+  const frames = [...document.querySelectorAll('.frame')];
+  let current = '';
+  const show = (f) => { if (f.dataset.scene === current) return; current = f.dataset.scene; flower.set(SCENES[current]()); };
+  const io = new IntersectionObserver((entries) => entries.forEach((en) => en.isIntersecting && show(en.target)), { rootMargin: '-45% 0px -45% 0px' });
+  frames.forEach((f) => io.observe(f));
+  addEventListener('resize', () => { const c = current; current = ''; show(frames.find((f) => f.dataset.scene === c) || frames[0]); });
+  show(frames[0]);
+
+  // links into the story land on the right frame
+
+  const pauseBtn = document.querySelector('[data-pause]');
+  pauseBtn.addEventListener('click', () => { const p = pauseBtn.getAttribute('aria-pressed') !== 'true'; pauseBtn.setAttribute('aria-pressed', p); pauseBtn.textContent = p ? 'Play' : 'Pause'; flower.pause(p); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: find what your agents already learned</title>
+<meta name="description" content="Stash turns coding agent sessions into searchable memory in MongoDB Atlas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="pill">
+  <a class="wordmark" href="#top">stash</a>
+  <nav aria-label="Main">
+    <ul>
+      <li><a href="#memory">Memory</a></li>
+      <li><a href="#sessions">Sessions</a></li>
+      <li><a class="btn btn--sm" href="#install">Install</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <figure class="cloud" aria-label="Every memory in a sample project, drawn as a slowly turning cloud of characters">
+      <canvas aria-hidden="true"></canvas>
+      <pre aria-hidden="true">      . : + * # * + : .
+   : + * # # @ # # * + :
+  + * # @ @ @ @ @ # * +
+   : + * # # @ # # * + :
+      . : + * # * + : .</pre>
+    </figure>
+    <div class="container hero__base">
+      <h1 id="hero-title">Find what your agents already learned.</h1>
+      <div class="hero__side">
+        <p class="lead">Stash turns coding agent sessions into searchable memory in MongoDB Atlas.</p>
+        <div class="hero__actions">
+          <a class="btn" href="#install">Install the CLI</a>
+          <a class="btn btn--line" href="#memory">Filter the cloud</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="memory" aria-labelledby="memory-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="memory-title">Five kinds of memory.</h2>
+        <p>Each one points back to the events that prove it.</p>
+      </div>
+      <div class="layers">
+        <ul class="switches">
+          <li><label><span><span class="name">Decision</span><small>A choice, and why</small></span><input type="checkbox" data-kind="0" checked></label></li>
+          <li><label><span><span class="name">Discovery</span><small>Something learned</small></span><input type="checkbox" data-kind="1"></label></li>
+          <li><label><span><span class="name">Failed approach</span><small>Tried, and why it failed</small></span><input type="checkbox" data-kind="2" checked></label></li>
+          <li><label><span><span class="name">Constraint</span><small>A known limit</small></span><input type="checkbox" data-kind="3"></label></li>
+          <li><label><span><span class="name">Open question</span><small>Still unresolved</small></span><input type="checkbox" data-kind="4"></label></li>
+        </ul>
+        <figure class="frame ticks" aria-label="The memory cloud with the switched-on kinds lit">
+          <canvas aria-hidden="true"></canvas>
+          <figcaption>Lit points match the switches</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="sessions" aria-labelledby="sessions-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="sessions-title">Sessions, versioned.</h2>
+        <p>A sample project. Pushing again adds only what is new.</p>
+      </div>
+      <table class="log">
+        <thead><tr><th scope="col">Session</th><th scope="col">Agent</th><th scope="col">Version</th><th scope="col">Continued from</th></tr></thead>
+        <tbody>
+          <tr><td><span class="live">ses_f02e</span></td><td>Claude Code</td><td class="num">v1</td><td>m_789</td></tr>
+          <tr><td>ses_b41c</td><td>Codex</td><td class="num">v1</td><td>ses_8kq2v at v2</td></tr>
+          <tr><td>ses_3mx7r</td><td>Claude Code</td><td class="num">v1</td><td>None</td></tr>
+          <tr><td>ses_8kq2v</td><td>Claude Code</td><td class="num">v2</td><td>None</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="install" aria-labelledby="install-title">
+    <div class="container close">
+      <div class="measure ticks">
+        <p class="num">6,000<span class="u"> tokens</span></p>
+        <p>The default Briefing budget. Approved guardrails are never cut.</p>
+      </div>
+      <div>
+        <h2 id="install-title">Pull it into any agent.</h2>
+        <div class="install" data-copy-box>
+          <code data-copy-text>npm install -g @stash/cli</code>
+          <button class="btn" type="button" data-copy>Copy</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark" aria-hidden="true">stash</p>
+    <div class="foot__row">
+      <p>Built for Agents in Context Toronto, a MongoDB hackathon.</p>
+      <ul><li><a href="#memory">Memory</a></li><li><a href="#sessions">Sessions</a></li><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li></ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const root = getComputedStyle(document.documentElement), tok = (n) => root.getPropertyValue(n).trim();
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const b = box.querySelector('[data-copy]'), t = box.querySelector('[data-copy-text]');
+    b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(t.textContent); b.classList.add('is-done'); b.textContent = 'Copied'; setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'Copy'; }, 1400); } catch (e) {} });
+  });
+
+  // the memory cloud: points in five clusters (one per memory type), drawn as characters by depth
+  const face = tok('--font-body');
+  const ramp = [tok('--point-lo'), tok('--point-mid'), tok('--point-hi')];
+  const lime = tok('--color-accent');
+  const GLYPH = ' .:-+*#%@';
+  let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const POINTS = [];
+  for (let k = 0; k < 5; k++) {
+    const a = (k / 5) * Math.PI * 2, cx = Math.cos(a) * 0.55, cz = Math.sin(a) * 0.55, cy = (k % 2 ? 0.12 : -0.12);
+    for (let i = 0; i < 700; i++) {
+      const u = rnd() * Math.PI * 2, v = Math.acos(2 * rnd() - 1), r = 0.3 * Math.cbrt(rnd());
+      POINTS.push([cx + r * Math.sin(v) * Math.cos(u), cy + r * Math.cos(v) * 0.8, cz + r * Math.sin(v) * Math.sin(u), k]);
+    }
+  }
+  function cloud(fig, opts) {
+    const cv = fig.querySelector('canvas'), ctx = cv.getContext('2d');
+    const CW = 9, CH = 15;
+    let w = 0, h = 0, cols = 0, rows = 0, raf = 0, last = 0, on = true, tilt = 0, tiltT = 0, yaw = 0.2, pitch = 0.32;
+    const size = () => { const r = fig.getBoundingClientRect(); w = r.width; h = r.height; const d = Math.min(2, window.devicePixelRatio || 1); cv.width = Math.round(w * d); cv.height = Math.round(h * d); ctx.setTransform(d, 0, 0, d, 0, 0); cols = Math.floor(w / CW); rows = Math.floor(h / CH); };
+    function frame(now) {
+      raf = 0;
+      if (!reduce && now - last < 33) { raf = requestAnimationFrame(frame); return; }
+      const dt = last ? Math.min(100, now - last) : 16; last = now;
+      if (!reduce) yaw += dt * (Math.PI * 2) / opts.period;
+      tilt += (tiltT - tilt) * 0.08;
+      const cy = Math.cos(yaw), sy = Math.sin(yaw), p = pitch + tilt, cp = Math.cos(p), sp = Math.sin(p);
+      const sweep = reduce ? 0.1 : ((now % 7000) / 7000) * 2.6 - 1.3;
+      const zbuf = new Float32Array(cols * rows).fill(-9), lev = new Uint8Array(cols * rows), kind = new Int8Array(cols * rows).fill(-1), hiY = new Float32Array(cols * rows), lit = new Uint8Array(cols * rows);
+      const scale = Math.min(w / 1.9, h / 1.25) * opts.zoom, ox = w * opts.cx, oy = h * opts.cy;
+      for (const [x, y, z, k] of POINTS) {
+        const x1 = x * cy - z * sy, z1 = x * sy + z * cy;
+        const y1 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
+        const sx = Math.floor((ox + x1 * scale) / CW), sy2 = Math.floor((oy + y1 * scale) / CH);
+        if (sx < 0 || sy2 < 0 || sx >= cols || sy2 >= rows) continue;
+        const i = sy2 * cols + sx;
+        lev[i] = Math.min(8, lev[i] + 1);
+        if (z2 > zbuf[i]) { zbuf[i] = z2; kind[i] = k; hiY[i] = y; lit[i] = Math.abs(x1 - sweep) < 0.06 ? 1 : 0; }
+      }
+      ctx.clearRect(0, 0, w, h); ctx.font = `400 13px ${face}`; ctx.textBaseline = 'top';
+      for (let i = 0; i < cols * rows; i++) {
+        if (!lev[i]) continue;
+        const depth = (zbuf[i] + 1) / 2;
+        const found = opts.found.has(kind[i]);
+        ctx.fillStyle = found ? lime : lit[i] ? ramp[2] : ramp[Math.min(2, Math.floor((0.5 - hiY[i]) * 1.6 + depth * 1.4))] || ramp[0];
+        ctx.globalAlpha = found ? 1 : 0.35 + depth * 0.65;
+        ctx.fillText(GLYPH[Math.min(8, lev[i] + (lit[i] ? 2 : 0))], (i % cols) * CW, Math.floor(i / cols) * CH);
+      }
+      ctx.globalAlpha = 1;
+      if (!reduce && on) raf = requestAnimationFrame(frame);
+    }
+    const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+    fig.addEventListener('pointermove', (e) => { const r = fig.getBoundingClientRect(); tiltT = ((e.clientY - r.top) / r.height - 0.5) * 0.35; yaw += ((e.movementX || 0) * 0.002); if (reduce) kick(); });
+    fig.addEventListener('pointerleave', () => { tiltT = 0; });
+    new IntersectionObserver(([en]) => { on = en.isIntersecting; if (on) kick(); }).observe(fig);
+    new ResizeObserver(() => { size(); kick(); }).observe(fig);
+    document.fonts.ready.then(() => { size(); kick(); });
+    return { kick };
+  }
+  const heroFound = new Set([2]);
+  cloud(document.querySelector('.cloud'), { period: 120000, zoom: 1.05, cx: 0.5, cy: 0.52, found: heroFound });
+  const found = new Set([0, 2]);
+  const second = cloud(document.querySelector('.frame'), { period: 70000, zoom: 0.95, cx: 0.5, cy: 0.5, found });
+  document.querySelectorAll('.switches input').forEach((inp) => inp.addEventListener('change', () => { const k = +inp.dataset.kind; inp.checked ? found.add(k) : found.delete(k); second.kick(); }));
+})();
+</script>
+</body>
+</html>

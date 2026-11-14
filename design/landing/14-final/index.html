@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: your agents forget, Stash remembers</title>
+<meta name="description" content="Shared memory for AI coding agents, across sessions, models and teammates.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="pill">
+  <a class="wordmark" href="#top">stash</a>
+  <nav aria-label="Main"><ul><li><a href="#how">How it works</a></li><li><a href="#why">Why</a></li><li><a class="btn btn--sm" href="#install">Install</a></li></ul></nav>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <figure class="bloom" aria-label="A flower drawn in characters. Each petal sends light into the center, which grows brighter and fuller, then sends light back out.">
+      <canvas aria-hidden="true"></canvas>
+      <pre aria-hidden="true">   .-.   .-.
+  (   ) (   )
+   '-(@@@)-'
+  (   ) (   )
+   '-'   '-'</pre>
+    </figure>
+    <button class="pause" type="button" data-pause="bloom" aria-pressed="false">Pause</button>
+    <div class="container hero__base">
+      <h1 id="hero-title">Your agents forget. Stash remembers.</h1>
+      <div>
+        <p class="lead">Shared memory for AI coding agents, across sessions, models and teammates.</p>
+        <div class="hero__actions"><a class="btn" href="#install">Install the CLI</a><a class="btn btn--line" href="#how">How it works</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-label="The problem">
+    <div class="container">
+      <p class="statement">Every new session starts from zero. <span>You explain the bug again. The agent rereads the same files, then retries what already failed.</span></p>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="how" aria-labelledby="how-title">
+    <div class="container">
+      <div class="head"><h2 id="how-title">How it works.</h2><p>Your laptops push to Stash. Any agent can pull from it.</p></div>
+      <div class="how">
+        <div class="tabs" role="tablist" aria-label="How Stash works" aria-orientation="vertical">
+          <button role="tab" id="t-push" aria-controls="p-net" aria-selected="true" data-mode="push"><strong>Push</strong><span>When a session ends, <code>stash push</code> sends what your agent learned to Stash.</span></button>
+          <button role="tab" id="t-pull" aria-controls="p-net" aria-selected="false" tabindex="-1" data-mode="pull"><strong>Pull</strong><span>On any machine, with any model, <code>stash pull</code> hands the next agent everything it needs.</span></button>
+          <button role="tab" id="t-merge" aria-controls="p-net" aria-selected="false" tabindex="-1" data-mode="merge"><strong>Merge</strong><span>Two agents chased the same bug? <code>stash merge</code> combines what both found.</span></button>
+          <button role="tab" id="t-learn" aria-controls="p-net" aria-selected="false" tabindex="-1" data-mode="learn"><strong>Learn</strong><span>A mistake made twice becomes a rule. Once you approve it, every agent follows it.</span></button>
+        </div>
+        <figure class="net ticks" id="p-net" role="tabpanel" aria-labelledby="t-push" aria-label="Three laptops connected to the Stash cloud. Packets rise from a laptop on push and fall to a laptop on pull.">
+          <canvas aria-hidden="true"></canvas>
+          <pre aria-hidden="true">          .--------.
+     .---(  stash   )---.
+          '--------'
+       .       .       .
+  .--------. .--------. .--------.
+  |  > _   | |  > _   | |        |
+  '--------' '--------' '--------'</pre>
+          <button class="pause" type="button" data-pause="net" aria-pressed="false">Pause</button>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="why" aria-labelledby="why-title">
+    <div class="container">
+      <div class="head"><h2 id="why-title">What changes.</h2><p>Less explaining. More building.</p></div>
+      <ul class="values">
+        <li><h3>Never lose context</h3><p>Close the laptop, switch machines, come back next week. The work is still there.</p></li>
+        <li><h3>Never repeat a dead end</h3><p>What failed is remembered, so the next agent skips it.</p></li>
+        <li><h3>Switch models mid-task</h3><p>Start in one agent and finish in another, with the same context.</p></li>
+        <li><h3>One memory for the team</h3><p>Your teammates’ agents build on what yours already found.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="install" aria-labelledby="install-title">
+    <div class="container">
+      <div class="handoff">
+        <h2 id="install-title">Never write a handoff.md again.</h2>
+        <div>
+          <p>Install the CLI, then push your first session.</p>
+          <div class="install" data-copy-box><code data-copy-text>npm install -g @stash/cli</code><button class="btn" type="button" data-copy>Copy</button></div>
+        </div>
+      </div>
+      <div class="platforms">
+        <div class="ticks"><strong>Claude Code</strong><span>Pushes and pulls</span></div>
+        <div class="ticks"><strong>Any agent with a shell</strong><span>Pulls</span></div>
+        <div class="ticks"><strong>MongoDB Atlas</strong><span>Holds the memory</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark" aria-hidden="true">stash</p>
+    <div class="foot__row"><p>Built for Agents in Context Toronto, a MongoDB hackathon.</p><ul><li><a href="#how">How it works</a></li><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li></ul></div>
+  </div>
+</footer>
+
+<script src="./bloom.js?v=3"></script>
+<script src="./net.js?v=3"></script>
+<script>
+(() => {
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const b = box.querySelector('[data-copy]'), t = box.querySelector('[data-copy-text]');
+    b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(t.textContent); b.classList.add('is-done'); b.textContent = 'Copied'; setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'Copy'; }, 1400); } catch (e) {} });
+  });
+  const narrow = innerWidth < 960;
+  const anim = {
+    bloom: window.StashBloom(document.querySelector('.bloom'), { cx: 0.5, cy: 0.54, zoom: narrow ? 0.8 : 1.12, pitch: 0.3 }),
+    net: window.StashNet(document.querySelector('.net')),
+  };
+
+  // how it works: tabs drive the network, and it steps on by itself until someone picks a tab
+  const tabs = [...document.querySelectorAll('[role="tab"]')], panel = document.getElementById('p-net');
+  let i = 0, auto = true, timer = 0;
+  function select(n, focus) {
+    i = n;
+    tabs.forEach((t, j) => { const on = j === n; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; if (on && focus) t.focus(); });
+    panel.setAttribute('aria-labelledby', tabs[n].id);
+    anim.net.set(tabs[n].dataset.mode);
+  }
+  const tick = () => { clearTimeout(timer); if (!auto) return; timer = setTimeout(() => { select((i + 1) % tabs.length); tick(); }, 6500); };
+  tabs.forEach((t, n) => {
+    t.addEventListener('click', () => { auto = false; clearTimeout(timer); select(n); });
+    t.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); auto = false; clearTimeout(timer); select((n + (e.key === 'ArrowDown' ? 1 : -1) + tabs.length) % tabs.length, true); } });
+  });
+  new IntersectionObserver(([en]) => { if (en.isIntersecting && auto && !timer) tick(); }).observe(panel);
+  select(0);
+
+  document.querySelectorAll('[data-pause]').forEach((b) => b.addEventListener('click', () => {
+    const p = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', p); b.textContent = p ? 'Play' : 'Pause';
+    anim[b.dataset.pause].pause(p);
+    if (b.dataset.pause === 'net') { auto = !p && auto; if (p) clearTimeout(timer); }
+  }));
+})();
+</script>
+</body>
+</html>

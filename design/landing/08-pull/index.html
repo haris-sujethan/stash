@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: pull only what the next agent needs</title>
+<meta name="description" content="Stash builds a Briefing from project memory, sized to the next agent's context window.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="pill">
+  <a class="wordmark" href="#top">stash</a>
+  <nav aria-label="Main"><ul><li><a href="#read">How to read it</a></li><li><a class="btn btn--sm" href="#install">Install</a></li></ul></nav>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero__grid">
+      <div>
+        <h1 id="hero-title">Pull only what the next agent needs.</h1>
+        <p class="lead">Pick a task and a budget. Lime memories make the Briefing.</p>
+        <div class="controls">
+          <div class="chips" role="group" aria-label="Task">
+            <button class="chip" type="button" data-task="login" aria-pressed="true">fix the login bug</button>
+            <button class="chip" type="button" data-task="client" aria-pressed="false">stop the build breaking</button>
+            <button class="chip" type="button" data-task="import" aria-pressed="false">speed up the import</button>
+          </div>
+          <div class="budget"><label class="label" for="budget">Token budget</label><output for="budget" data-out>2,400</output><input class="range" id="budget" type="range" min="800" max="8000" step="200" value="2400" style="grid-column: 1 / -1"></div>
+        </div>
+        <div class="brief" aria-live="polite">
+          <span class="brief__marker" data-marker>stash:briefing ses_8kq2v@v2</span>
+          <dl data-sections></dl>
+        </div>
+      </div>
+      <figure class="scene" aria-label="A cloud of memories grouped by topic. The memories chosen for the Briefing are lit.">
+        <canvas aria-hidden="true"></canvas>
+        <pre aria-hidden="true">  . : + * # * + : .
+ : + * # @ # * + :
+  . : + * # * + : .</pre>
+        <div class="callout" aria-hidden="true"><span class="callout__lead"></span><span class="callout__box"><strong></strong><span class="callout__meta"></span></span></div>
+        <figcaption class="scene__key"><span>1 character, 1 memory</span><span>Grouped by topic</span><span><b>Lime</b> in the Briefing</span><span>Hover to read</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="read" aria-labelledby="read-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="read-title">How to read the cloud.</h2>
+        <p>A sample project with 1,200 memories.</p>
+      </div>
+      <ul class="key">
+        <li><span class="glyph">. : +</span><h3>One character, one memory</h3><p>From a pushed session, citing its events.</p></li>
+        <li><span class="glyph">#%@</span><h3>Many sessions, one line</h3><p>Twelve sessions found the same thing; the Briefing says it once.</p></li>
+        <li><span class="glyph glyph--lime">@ @</span><h3>Lime made the cut</h3><p>Most relevant first, verified before guessed, until the budget runs out.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-label="Pull at pull time">
+    <div class="container">
+      <p class="statement">No model runs at pull time. <span>The Briefing is read from Atlas and sized to fit, so every agent gets the same answer.</span></p>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="install" aria-labelledby="install-title">
+    <div class="container close">
+      <div class="measure ticks">
+        <p class="num">6,000<span class="u"> tokens</span></p>
+        <p>The default budget. Approved guardrails are never cut.</p>
+      </div>
+      <div>
+        <h2 id="install-title">Pull into any agent with a shell.</h2>
+        <div class="install" data-copy-box><code data-copy-text>npm install -g @stash/cli</code><button class="btn" type="button" data-copy>Copy</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark" aria-hidden="true">stash</p>
+    <div class="foot__row"><p>Built for Agents in Context Toronto, a MongoDB hackathon.</p><ul><li><a href="#read">How to read it</a></li><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li></ul></div>
+  </div>
+</footer>
+
+<script src="../vantage-shared/cloud.js"></script>
+<script>
+(() => {
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const b = box.querySelector('[data-copy]'), t = box.querySelector('[data-copy-text]');
+    b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(t.textContent); b.classList.add('is-done'); b.textContent = 'Copied'; setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'Copy'; }, 1400); } catch (e) {} });
+  });
+  const S = window.StashCloud, centers = S.ring();
+  const mem = S.memories({ n: 1200, seed: 31, centers, spread: 0.13 });
+  const TASKS = { login: { auth: 1, cache: 0.8, db: 0.6, build: 0.2 }, client: { client: 1, build: 0.7 }, import: { rate: 1, db: 0.5 } };
+  const GUARDRAILS = 300, SECTION = ['Decisions', 'Discoveries', 'Failed approaches', 'Constraints', 'Open questions'];
+  let task = 'login', chosen = new Set(), best = -1;
+  function build() {
+    const budget = +document.getElementById('budget').value, weights = TASKS[task];
+    const lines = new Map();
+    mem.forEach((m) => { const w = weights[m.topic]; if (!w) return; const key = m.text; const score = w + (m.status === 'verified' ? 0.3 : m.status === 'evidenced' ? 0.2 : 0) + (m.type === 2 ? 0.15 : 0); const cur = lines.get(key); if (!cur) lines.set(key, { score, type: m.type, ids: [m.i] }); else { cur.ids.push(m.i); cur.score = Math.max(cur.score, score); } });
+    const ranked = [...lines.entries()].sort((a, b) => b[1].score - a[1].score);
+    let used = GUARDRAILS; chosen = new Set(); const counts = [0, 0, 0, 0, 0];
+    for (const [text, l] of ranked) { const cost = 160 + text.length * 2; if (used + cost > budget) continue; used += cost; counts[l.type]++; l.ids.forEach((i) => chosen.add(i)); }
+    best = ranked.length && chosen.has(ranked[0][1].ids[0]) ? ranked[0][1].ids[0] : -1;
+    document.querySelector('[data-out]').textContent = budget.toLocaleString('en-US');
+    document.querySelector('[data-sections]').innerHTML = `<dt>Approved guardrails</dt><dd>2</dd>` + SECTION.map((s, k) => `<dt>${s}</dt><dd>${counts[k]}</dd>`).join('') + `<dt>Tokens used</dt><dd>${used.toLocaleString('en-US')}</dd>`;
+    cloud.kick();
+  }
+  const cloud = S.scene(document.querySelector('.scene'), {
+    points: () => mem, period: 120000, zoom: 1.12, fitH: 1.35, splat: 3, splatR: 0.022,
+    lit: (m) => chosen.has(m.i),
+    labels: () => S.TOPICS.map((t) => ({ pos: centers[t.id], text: t.label, lime: !!TASKS[task][t.id] && TASKS[task][t.id] >= 0.5, quiet: !TASKS[task][t.id] })),
+    pin: () => best,
+    describe: (m) => ({ title: m.text, meta: [m.kind, chosen.has(m.i) ? 'in the Briefing' : 'left out', m.session, m.event] }),
+  });
+  document.getElementById('budget').addEventListener('input', build);
+  document.querySelectorAll('[data-task]').forEach((c) => c.addEventListener('click', () => { task = c.dataset.task; document.querySelectorAll('[data-task]').forEach((x) => x.setAttribute('aria-pressed', x === c)); build(); }));
+  build();
+})();
+</script>
+</body>
+</html>

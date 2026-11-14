@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: never write a handoff.md again</title>
+<meta name="description" content="Stash gives your coding agents one shared memory. The next agent starts where the last one stopped.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="pill">
+  <a class="wordmark" href="#top">stash</a>
+  <nav aria-label="Main"><ul><li><a href="#how">How it works</a></li><li><a href="#why">Why</a></li><li><a class="btn btn--sm" href="#install">Install</a></li></ul></nav>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <figure class="flower" data-flower="hero" aria-label="A flower drawn in characters. Each petal is an agent; the center is Stash. Pulses flow in when an agent pushes and out when an agent pulls.">
+      <canvas aria-hidden="true"></canvas>
+      <pre aria-hidden="true">    .:+*+:.   .:+*+:.
+  .:+*#*+:. .:+*#*+:.
+      .:+*#%@%#*+:.
+  .:+*#*+:. .:+*#*+:.
+    .:+*+:.   .:+*+:.</pre>
+    </figure>
+    <div class="container">
+      <p class="hero__key"><span><b>Petals</b> are your agents</span><span><b>The center</b> is Stash</span><span>Hover a petal to <span class="lime">push</span></span><span>Click the center to <span class="lime">pull</span></span><button class="pause" type="button" data-pause aria-pressed="false">Pause motion</button></p>
+      <div class="hero__base">
+        <h1 id="hero-title">Never write a handoff.md again.</h1>
+        <div>
+          <p class="lead">One memory for your agents. Each picks up where the last stopped.</p>
+          <div class="hero__actions"><a class="btn" href="#install">Install the CLI</a><a class="btn btn--line" href="#how">See how it works</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-label="The problem">
+    <div class="container">
+      <p class="statement">Every new session starts from zero. <span>You explain the bug again. The agent rereads the same files, then retries what already failed.</span></p>
+    </div>
+  </section>
+
+  <section id="how" aria-labelledby="how-title">
+    <div class="container story__head"><h2 id="how-title">How Stash works.</h2></div>
+    <div class="container story">
+      <div class="story__pin">
+        <figure class="flower" data-flower="story" aria-label="The same flower, showing the step you are reading.">
+          <canvas aria-hidden="true"></canvas>
+          <pre aria-hidden="true">      .:+*#%@%#*+:.</pre>
+          <figcaption class="story__now" aria-live="polite" data-now><b>Step 1</b> Sessions apart</figcaption>
+        </figure>
+      </div>
+      <ol class="steps">
+        <li data-mode="apart" data-name="Sessions apart"><h3>Today, every session is an island.</h3><p>When a session ends, what the agent read, tried and decided ends with it.</p></li>
+        <li data-mode="push" data-name="Push"><h3>Push saves the session.</h3><p>What happened becomes memory in MongoDB Atlas, with secrets removed and evidence attached.</p><code>stash push</code></li>
+        <li data-mode="pull" data-name="Pull"><h3>Pull powers the next agent.</h3><p>Any agent, on any model, gets a Briefing and picks up where the last one stopped.</p><code>stash pull</code></li>
+        <li data-mode="merge" data-name="Merge"><h3>Merge joins two investigations.</h3><p>Two agents chased the same bug. Stash combines what both found and keeps where they disagree.</p><code>stash merge</code></li>
+        <li data-mode="guard" data-name="Guardrails"><h3>Mistakes become rules.</h3><p>A failure seen twice becomes a proposed guardrail. Once a person approves it, every agent gets it.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="why" aria-labelledby="why-title">
+    <div class="container">
+      <div class="head"><h2 id="why-title">What changes.</h2><p>Less explaining. More building.</p></div>
+      <ul class="values">
+        <li><h3>Never lose context</h3><p>Close the laptop, switch machines, come back next week. The work is still there.</p></li>
+        <li><h3>Never repeat a dead end</h3><p>Failed approaches are saved, so the next agent skips them.</p></li>
+        <li><h3>Switch models mid-task</h3><p>Start in Claude Code. Continue in another agent with the same context.</p></li>
+        <li><h3>One memory for the team</h3><p>Your teammates’ agents build on what yours already found.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" id="install" aria-labelledby="install-title">
+    <div class="container close">
+      <ul class="close__list ticks">
+        <li><strong>Claude Code pushes</strong><span>Run it inside your session.</span></li>
+        <li><strong>Any agent with a shell pulls</strong><span>The Briefing is plain text.</span></li>
+        <li><strong>Stored in MongoDB Atlas</strong><span>Secrets never leave your laptop.</span></li>
+      </ul>
+      <div>
+        <h2 id="install-title">Start with one push.</h2>
+        <div class="install" data-copy-box><code data-copy-text>npm install -g @stash/cli</code><button class="btn" type="button" data-copy>Copy</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark" aria-hidden="true">stash</p>
+    <div class="foot__row"><p>Built for Agents in Context Toronto, a MongoDB hackathon.</p><ul><li><a href="#how">How it works</a></li><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li></ul></div>
+  </div>
+</footer>
+
+<script src="./flower.js"></script>
+<script>
+(() => {
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const b = box.querySelector('[data-copy]'), t = box.querySelector('[data-copy-text]');
+    b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(t.textContent); b.classList.add('is-done'); b.textContent = 'Copied'; setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'Copy'; }, 1400); } catch (e) {} });
+  });
+  const hero = window.StashFlower(document.querySelector('[data-flower="hero"]'), { mode: 'live', zoom: 0.94, cy: 0.56 });
+  const story = window.StashFlower(document.querySelector('[data-flower="story"]'), { mode: 'apart', zoom: 0.92, seed: 9 });
+  story.setMode('apart');
+  const pauseBtn = document.querySelector('[data-pause]');
+  pauseBtn.addEventListener('click', () => { const p = pauseBtn.getAttribute('aria-pressed') !== 'true'; pauseBtn.setAttribute('aria-pressed', p); pauseBtn.textContent = p ? 'Play motion' : 'Pause motion'; hero.pause(p); story.pause(p); });
+  const steps = [...document.querySelectorAll('.steps li')], now = document.querySelector('[data-now]');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      if (!en.isIntersecting) return;
+      const li = en.target, i = steps.indexOf(li);
+      steps.forEach((s) => s.classList.toggle('is-on', s === li));
+      story.setMode(li.dataset.mode);
+      now.innerHTML = `<b>Step ${i + 1}</b> ${li.dataset.name}`;
+    });
+  }, { rootMargin: '-45% 0px -45% 0px' });
+  steps.forEach((s) => io.observe(s));
+})();
+</script>
+</body>
+</html>

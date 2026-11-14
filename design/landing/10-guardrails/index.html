@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: repeated failures become guardrails</title>
+<meta name="description" content="When agents fail the same way twice, Stash proposes a rule for a human to approve.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="pill">
+  <a class="wordmark" href="#top">stash</a>
+  <nav aria-label="Main"><ul><li><a href="#life">How a rule is made</a></li><li><a class="btn btn--sm" href="#install">Install</a></li></ul></nav>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero__grid">
+      <div>
+        <h1 id="hero-title">Repeated failures become guardrails.</h1>
+        <p class="lead">Scrub through eight sessions. A failure seen twice proposes a rule.</p>
+        <div class="scrub">
+          <label class="label" for="sessions">Sessions pushed</label>
+          <output for="sessions" data-out>1 of 8</output>
+          <input class="range" id="sessions" type="range" min="1" max="8" value="1">
+          <button class="btn btn--line btn--sm" type="button" data-play style="justify-self: start">Play all eight</button>
+        </div>
+        <ol class="rules" aria-live="polite" aria-label="Proposed guardrails"><li class="rules__empty">No failure has repeated yet.</li></ol>
+      </div>
+      <figure class="scene" aria-label="A terrain of failures: sessions run left to right, topics run front to back, and each failure is a peak.">
+        <canvas aria-hidden="true"></canvas>
+        <pre aria-hidden="true">  . . . . ^ . . . . . . .
+ . . ^ . . . . ^ . . . .
+. . . . . . . . . . . .</pre>
+        <div class="callout" aria-hidden="true"><span class="callout__lead"></span><span class="callout__box"><strong></strong><span class="callout__meta"></span></span></div>
+        <figcaption class="scene__key"><span>Across: sessions</span><span>Deep: topics</span><span>A peak is a failure</span><span><b>Lime</b> failed twice</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="life" aria-labelledby="life-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="life-title">How a rule is made.</h2>
+        <p>Stash proposes. Only a person approves.</p>
+      </div>
+      <ul class="life">
+        <li><h3>Seen in two sessions</h3><p>The same failed approach, in different sessions, checked against the evidence.</p></li>
+        <li><h3>Proposed, not active</h3><p>A draft rule with its sources. No agent sees it yet.</p></li>
+        <li><h3>Approved on the website</h3><p>By a human with the approver secret. The CLI cannot approve.</p></li>
+        <li><h3>In every Briefing</h3><p>The next agent reads the rule before it starts.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-label="What a guardrail can never do">
+    <div class="container">
+      <p class="statement">A learned rule never weakens a security control. <span>Agents cannot approve their own instructions.</span></p>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="install" aria-labelledby="install-title">
+    <div class="container close">
+      <div class="measure ticks">
+        <p class="num">2<span class="u"> sessions</span></p>
+        <p>The fewest that can propose a guardrail. One bad session never makes a rule.</p>
+      </div>
+      <div>
+        <h2 id="install-title">Let your agents learn from each other.</h2>
+        <div class="install" data-copy-box><code data-copy-text>npm install -g @stash/cli</code><button class="btn" type="button" data-copy>Copy</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark" aria-hidden="true">stash</p>
+    <div class="foot__row"><p>Built for Agents in Context Toronto, a MongoDB hackathon.</p><ul><li><a href="#life">How a rule is made</a></li><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li></ul></div>
+  </div>
+</footer>
+
+<script src="../vantage-shared/cloud.js"></script>
+<script>
+(() => {
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const b = box.querySelector('[data-copy]'), t = box.querySelector('[data-copy-text]');
+    b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(t.textContent); b.classList.add('is-done'); b.textContent = 'Copied'; setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'Copy'; }, 1400); } catch (e) {} });
+  });
+  const S = window.StashCloud, r = S.rng(13), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ROWS = ['auth', 'cache', 'db', 'client', 'rate', 'build'];
+  const F = { auth: [0, 0, 1, 0, 0, 0, 0, 0], cache: [0, 0, 0, 0, 0, 0, 1, 0], db: [1, 0, 0, 0, 0, 0, 0, 0], client: [0, 1, 0, 0, 1, 0, 0, 1], rate: [0, 0, 0, 1, 0, 0, 1, 0], build: [0, 0, 0, 0, 0, 0, 0, 0] };
+  const RULE = { client: 'Change schema/api.yaml, then regenerate.', rate: 'Back off and retry after HTTP 429.' };
+  const sx = (s) => -0.875 + s * 0.25, rz = (j) => -0.6 + j * 0.24;
+  const pts = [];
+  for (let s = 0; s < 8; s++) ROWS.forEach((topic, j) => {
+    const fail = F[topic][s];
+    for (let k = 0; k < (fail ? 120 : 34); k++) {
+      const dx = (r() - 0.5) * 0.24, dz = (r() - 0.5) * 0.2, d2 = (dx * dx + dz * dz * 1.4) / 0.0045;
+      const y = fail ? -0.36 * Math.exp(-d2) : (r() - 0.5) * 0.012;
+      const peak = fail && y < -0.05;
+      pts.push({ s, topic, peak, pos: [sx(s) + dx, y + 0.05, rz(j) + dz], text: S.TEXT[topic][2], kind: 'failed approach', session: 's' + (s + 1), event: 'e_' + (40 + s * 31 + j * 7) });
+    }
+  });
+  let shown = 1, newest = null;
+  const repeated = () => ROWS.filter((t) => F[t].slice(0, shown).reduce((a, b) => a + b, 0) >= 2);
+  const firstTwo = (t) => F[t].map((v, i) => (v ? i : -1)).filter((i) => i >= 0 && i < shown).slice(0, 2);
+  function update() {
+    document.querySelector('[data-out]').textContent = `${shown} of 8`;
+    const rules = document.querySelector('.rules'), rep = repeated();
+    if (!rep.length) { rules.innerHTML = '<li class="rules__empty">No failure has repeated yet.</li>'; newest = null; }
+    else {
+      const prev = rules.dataset.rep || '';
+      rules.innerHTML = rep.map((t) => { const [a, b] = firstTwo(t); return `<li class="${prev.includes(t) ? '' : 'is-new'}"><strong>${RULE[t]}</strong><span>Proposed after s${a + 1} and s${b + 1}. Waiting for a person.</span></li>`; }).join('');
+      newest = rep.slice().sort((x, y) => firstTwo(y)[1] - firstTwo(x)[1])[0];
+      rules.dataset.rep = rep.join(',');
+    }
+    cloud.kick();
+  }
+  const peakOf = (t) => { const s = firstTwo(t)[1]; let bi = -1, by = 0; pts.forEach((p, i) => { if (p.topic === t && p.s === s && p.pos[1] < by) { by = p.pos[1]; bi = i; } }); return bi; };
+  const cloud = S.scene(document.querySelector('.scene'), {
+    points: () => pts, period: 0, yaw: -0.42, pitch: 0.62, zoom: 0.92, fitW: 2.3, fitH: 1.5, cx: 0.56, cy: 0.52, tiltRange: 0.2,
+    hidden: (p) => p.s >= shown,
+    noHover: (p) => !p.peak,
+    tone: (p) => 0.25 + (-p.pos[1] + 0.05) * 2.2,
+    lit: (p) => p.peak && repeated().includes(p.topic),
+    labels: () => ROWS.map((t, j) => ({ pos: [-1.12, 0.05, rz(j)], text: S.TOPICS.find((x) => x.id === t).label, lift: -0.02, lime: repeated().includes(t) }))
+      .concat([...Array(8)].map((_, s) => ({ pos: [sx(s), 0.05, 0.86], text: 's' + (s + 1), lift: -0.08, quiet: s >= shown }))),
+    pin: () => (newest ? peakOf(newest) : -1),
+    describe: (p) => (newest && p.topic === newest && p.peak && cloud.hover < 0
+      ? { title: 'Proposed guardrail: ' + RULE[newest], meta: [`failed in s${firstTwo(newest)[0] + 1} and s${firstTwo(newest)[1] + 1}`, 'waiting for a person'] }
+      : { title: p.text, meta: [p.kind, 'session ' + p.session, p.event] }),
+  });
+  const range = document.getElementById('sessions');
+  range.addEventListener('input', () => { shown = +range.value; update(); });
+  document.querySelector('[data-play]').addEventListener('click', () => {
+    shown = 1; range.value = 1; update();
+    const step = () => { if (shown >= 8) return; shown++; range.value = shown; update(); setTimeout(step, reduce ? 0 : 650); };
+    setTimeout(step, reduce ? 0 : 650);
+  });
+  update();
+})();
+</script>
+</body>
+</html>

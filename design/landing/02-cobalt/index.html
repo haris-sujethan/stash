@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: agent sessions become project memory</title>
+<meta name="description" content="Push a Claude Code session. Any agent can pull what it learned.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="bar">
+  <div class="container bar__inner">
+    <a class="wordmark" href="#top">stash</a>
+    <div class="chip" data-copy-box>
+      <code><span class="p">$ </span><span data-copy-text>npm install -g @stash/cli</span></code>
+      <button class="copy" type="button" aria-label="Copy install command">Copy</button>
+    </div>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="#memory">Memory</a></li>
+        <li><a href="#cli">CLI</a></li>
+        <li><a href="#budget">Briefings</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="field" aria-hidden="true"><canvas></canvas></div>
+    <div class="container hero__grid">
+      <div class="hero__text">
+        <h1 id="hero-title">Agent sessions become project memory.</h1>
+        <p class="lead">Push a Claude Code session. Any agent can pull what it learned.</p>
+        <div class="hero__actions">
+          <a class="key key--primary" href="#install">Get the CLI</a>
+          <a class="key" href="#memory">See a session resolve</a>
+        </div>
+      </div>
+      <p class="hero__legend"><span>Raw transcript</span><span>Resolved memory</span></p>
+    </div>
+  </section>
+
+  <section class="section section--rule" id="memory" aria-labelledby="memory-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="memory-title">Events in, memories out.</h2>
+        <p>Every memory cites the events it came from.</p>
+      </div>
+      <div class="map" data-map>
+        <div class="pane">
+          <div class="pane__head"><span>Transcript</span><span>ses_8kq2v v2</span></div>
+          <ol>
+            <li data-e="e_009"><span>e_009</span><span><span class="t">Read</span> src/auth/refresh.ts</span></li>
+            <li data-e="e_014"><span>e_014</span><span><span class="t">npm test</span> 3 failed, refresh called twice</span></li>
+            <li data-e="e_022"><span>e_022</span><span><span class="t">npm test</span> timeout 30s, same 3 failures</span></li>
+            <li data-e="e_031"><span>e_031</span><span><span class="t">log</span> cache hit for an expired session</span></li>
+          </ol>
+        </div>
+        <div class="elbows" aria-hidden="true"><svg></svg></div>
+        <div class="pane">
+          <div class="pane__head"><span>Memories</span><span>status</span></div>
+          <ol>
+            <li data-from="e_009 e_014" tabindex="0"><span>decision</span><span>Investigate token refresh first</span></li>
+            <li data-from="e_014" tabindex="0"><span>found</span><span>Refresh fires twice, <span class="t">evidenced</span></span></li>
+            <li data-from="e_022" tabindex="0"><span>failed</span><span>A longer db timeout changed nothing</span></li>
+            <li data-from="e_031" tabindex="0"><span>found</span><span>Stale cache, <span class="t">hypothesis</span></span></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--rule" id="cli" aria-labelledby="cli-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="cli-title">Eight commands, one store.</h2>
+        <p>No model key on your laptop.</p>
+      </div>
+      <table class="api">
+        <thead><tr><th scope="col">Command</th><th scope="col">What it does</th><th scope="col">Where it runs</th></tr></thead>
+        <tbody>
+          <tr><td>stash push</td><td>Captures this session, secrets removed</td><td>Inside Claude Code</td></tr>
+          <tr class="is-lead"><td>stash pull &lt;id&gt;</td><td>Prints a Briefing for the agent you are in</td><td>Any agent with a shell</td></tr>
+          <tr><td>stash merge &lt;a&gt; &lt;b&gt;</td><td>Finds duplicates and conflicts</td><td>Your terminal</td></tr>
+          <tr><td>stash guardrails</td><td>Lists rules a human approved</td><td>Read only</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section section--rule" id="budget" aria-labelledby="budget-title">
+    <div class="container budget">
+      <div>
+        <h2 id="budget-title">Briefings fit the window.</h2>
+        <p class="budget__figure"><output id="budget-out" for="budget-range">6,000</output> <small>tokens</small></p>
+        <label for="budget-range">Budget for a sample Briefing of ses_8kq2v</label>
+        <input id="budget-range" type="range" min="2000" max="10000" step="500" value="6000">
+        <div class="meter" aria-hidden="true"></div>
+      </div>
+      <ol class="sections" aria-live="polite">
+        <li data-cost="300" data-rank="0" class="is-fixed"><span class="n">1</span><span class="name">Approved guardrails</span><span class="cost">300, always kept</span></li>
+        <li data-cost="500" data-rank="1"><span class="n">2</span><span class="name">Objective and progress</span><span class="cost">500</span></li>
+        <li data-cost="900" data-rank="3"><span class="n">3</span><span class="name">Decisions</span><span class="cost">900</span></li>
+        <li data-cost="1400" data-rank="4"><span class="n">4</span><span class="name">Discoveries</span><span class="cost">1,400</span></li>
+        <li data-cost="800" data-rank="2"><span class="n">5</span><span class="name">Failed approaches</span><span class="cost">800</span></li>
+        <li data-cost="300" data-rank="5"><span class="n">6</span><span class="name">Constraints</span><span class="cost">300</span></li>
+        <li data-cost="400" data-rank="6"><span class="n">7</span><span class="name">Open questions</span><span class="cost">400</span></li>
+        <li data-cost="2600" data-rank="7"><span class="n">8</span><span class="name">Key evidence</span><span class="cost">2,600</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section section--rule" id="install" aria-labelledby="install-title">
+    <div class="container close">
+      <div>
+        <h2 id="install-title">Install, then push.</h2>
+        <p>Run it inside Claude Code. It finds the session itself.</p>
+        <div class="chip chip--lg" data-copy-box>
+          <code><span class="p">$ </span><span data-copy-text>npm install -g @stash/cli</span></code>
+          <button class="copy" type="button" aria-label="Copy install command">Copy</button>
+        </div>
+      </div>
+<pre class="graphite"><span class="c">$</span> stash pull ses_8kq2v
+<span class="t">stash:briefing</span> ses_8kq2v@v2 pull=p_91
+
+<span class="c"># approved guardrails</span>
+edit schema/api.yaml, never the generated client
+
+<span class="c"># objective</span>
+find why logins fail intermittently
+
+<span class="c"># failed approaches</span>
+a longer db timeout changed nothing   <span class="t">e_022</span></pre>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <div class="foot__grid">
+      <a class="wordmark" href="#top">stash</a>
+      <div><h2>Product</h2><ul><li><a href="#memory">Memory</a></li><li><a href="#cli">CLI</a></li><li><a href="#budget">Briefings</a></li></ul></div>
+      <div><h2>Built on</h2><ul><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li><li><a href="https://www.anthropic.com/claude-code">Claude Code</a></li></ul></div>
+    </div>
+    <p class="foot__legal">Built for Agents in Context Toronto, a MongoDB hackathon.</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const root = getComputedStyle(document.documentElement);
+  const tok = (n) => root.getPropertyValue(n).trim();
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // copy chips
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const btn = box.querySelector('.copy'), text = box.querySelector('[data-copy-text]');
+    btn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(text.textContent); btn.classList.add('is-done'); btn.textContent = 'Copied'; setTimeout(() => { btn.classList.remove('is-done'); btn.textContent = 'Copy'; }, 1400); } catch (e) {}
+    });
+  });
+
+  // the field: raw transcript on the left resolves into memory rows on the right; the pointer lens resolves what it touches
+  const field = document.querySelector('.field'), cv = field.querySelector('canvas'), ctx = cv.getContext('2d');
+  const CW = parseFloat(tok('--cell-w')), CH = parseFloat(tok('--cell-h'));
+  const tints = [tok('--color-glyph-1'), tok('--color-glyph-2'), tok('--color-glyph-3'), tok('--color-glyph-4')];
+  const deep = tok('--color-accent-deep'), face = tok('--font-outlier');
+  const RAMP = ' .:-=+*#';
+  const RAW = 'tool_use Read src/auth/refresh.ts tool_result npm test 3 failed refresh called twice timeout 30s cache hit expired session edit src/client/generated.ts overwritten by build ';
+  const MEM = ['decision   investigate token refresh first', 'discovery  refresh fires twice under load', 'failed     a longer db timeout changed nothing', 'discovery  cache may serve a stale session', 'constraint the project supports node 22', 'question   does the cache explain path two'];
+  let cols = 0, rows = 0, w = 0, h = 0, px = -1e4, py = -1e4, last = 0, raf = 0, on = true;
+  const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const noise = (x, y, t) => (Math.sin(x * 0.21 + t * 0.9) + Math.sin(y * 0.53 - t * 0.6) + Math.sin((x + y) * 0.13 + t * 0.4)) / 3;
+  function size() {
+    const r = field.getBoundingClientRect(); w = r.width; h = r.height;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cols = Math.ceil(w / CW); rows = Math.ceil(h / CH);
+  }
+  function frame(now) {
+    raf = 0;
+    if (now - last < 33 && !reduce) { raf = requestAnimationFrame(frame); return; }
+    last = now; const t = reduce ? 4 : now / 1000;
+    ctx.clearRect(0, 0, w, h); ctx.font = `400 12px ${face}`; ctx.textBaseline = 'top';
+    const narrow = w < 960;
+    const hash = (x, y) => { const v = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return v - Math.floor(v); };
+    for (let y = 0; y < rows; y++) {
+      const memRow = y % 3 === 1 ? MEM[Math.floor(y / 3) % MEM.length] : null;
+      for (let x = 0; x < cols; x++) {
+        const cx = x * CW, cy = y * CH, u = x / cols;
+        const d = Math.hypot(cx - px, (cy - py) * 1.2);
+        const lens = 1 - ss(70, 170, d);
+        const resolve = Math.max(ss(0.6, 0.8, u + noise(x, y, t * 0.5) * 0.04), lens);
+        const band = narrow ? 0.35 : ss(0.36, 0.5, u) * (1 - ss(0.72, 0.86, u)) + 0.06;
+        let ch = '', col = null;
+        if (hash(x, y) < resolve) {
+          if (memRow) { const start = Math.floor(cols * 0.6); const k = x - start; if (k >= 0 && k < memRow.length && memRow[k] !== ' ') { ch = memRow[k]; col = lens > 0.25 ? deep : tints[3]; } }
+        } else {
+          const n = ((noise(x * 1.7, y * 1.3, t) + 1) / 2) * band * 1.6;
+          if (n > 0.3) { ch = n > 0.62 ? RAW[(x * 7 + y * 13 + Math.floor(t * 2)) % RAW.length] : RAMP[Math.min(RAMP.length - 1, Math.floor((n - 0.3) * 18))]; col = tints[Math.min(3, Math.floor((n - 0.3) * 6))]; }
+        }
+        if (ch && ch !== ' ') { ctx.fillStyle = col; ctx.fillText(ch, cx, cy + 2); }
+      }
+    }
+    if (!reduce && on) raf = requestAnimationFrame(frame);
+  }
+  const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+  document.querySelector('.hero').addEventListener('pointermove', (e) => { const r = field.getBoundingClientRect(); px = e.clientX - r.left; py = e.clientY - r.top; if (reduce) kick(); });
+  document.querySelector('.hero').addEventListener('pointerleave', () => { px = py = -1e4; });
+  new IntersectionObserver(([en]) => { on = en.isIntersecting; if (on) kick(); }).observe(field);
+  new ResizeObserver(() => { size(); kick(); }).observe(field);
+  document.fonts.ready.then(() => { size(); kick(); });
+
+  // mapping elbows
+  const map = document.querySelector('[data-map]'), svg = map.querySelector('svg'), ns = 'http://www.w3.org/2000/svg';
+  function elbows() {
+    svg.textContent = '';
+    if (getComputedStyle(map.querySelector('.elbows')).display === 'none') return;
+    const box = svg.getBoundingClientRect();
+    map.querySelectorAll('[data-from]').forEach((m) => {
+      m.dataset.from.split(' ').forEach((id) => {
+        const e = map.querySelector(`[data-e="${id}"]`); if (!e) return;
+        const a = e.getBoundingClientRect(), b = m.getBoundingClientRect();
+        const y1 = a.top + a.height / 2 - box.top, y2 = b.top + b.height / 2 - box.top, mid = box.width / 2;
+        const p = document.createElementNS(ns, 'path');
+        p.setAttribute('d', `M0 ${y1}H${mid}V${y2}H${box.width}`); p.dataset.m = id + '>' + m.dataset.from;
+        p.__m = m; svg.appendChild(p);
+      });
+    });
+  }
+  const light = (m, onoff) => {
+    m.classList.toggle('is-on', onoff);
+    m.dataset.from.split(' ').forEach((id) => map.querySelector(`[data-e="${id}"]`).classList.toggle('is-on', onoff));
+    svg.querySelectorAll('path').forEach((p) => { if (p.__m === m) p.classList.toggle('is-on', onoff); });
+  };
+  map.querySelectorAll('[data-from]').forEach((m) => {
+    ['pointerenter', 'focus'].forEach((ev) => m.addEventListener(ev, () => light(m, true)));
+    ['pointerleave', 'blur'].forEach((ev) => m.addEventListener(ev, () => light(m, false)));
+  });
+  new ResizeObserver(elbows).observe(map);
+  document.fonts.ready.then(elbows);
+
+  // budget: drop the least important sections first, never the guardrails
+  const range = document.getElementById('budget-range'), out = document.getElementById('budget-out');
+  const items = [...document.querySelectorAll('.sections li')], meter = document.querySelector('.meter');
+  meter.innerHTML = '<span></span>';
+  function fit() {
+    const budget = +range.value; let used = 0;
+    [...items].sort((a, b) => a.dataset.rank - b.dataset.rank).forEach((li) => {
+      const c = +li.dataset.cost, keep = li.classList.contains('is-fixed') || used + c <= budget;
+      if (keep) used += c; li.classList.toggle('is-out', !keep);
+    });
+    out.textContent = budget.toLocaleString('en-US');
+    meter.style.setProperty('--used', Math.min(1, used / budget).toFixed(3));
+  }
+  range.addEventListener('input', fit); fit();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: your agents forget, Stash remembers</title>
+<meta name="description" content="Shared memory for AI coding agents, across sessions, models and teammates.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="pill">
+  <a class="wordmark" href="#top">stash</a>
+  <nav aria-label="Main"><ul><li><a href="#how">How it works</a></li><li><a href="#compare">Why</a></li><li><a class="btn btn--sm" href="#install">Install</a></li></ul></nav>
+</header>
+
+<main id="top">
+  <div class="story" id="how">
+    <section class="stage hero" aria-label="Stash, and how it works">
+      <figure class="bloom" aria-label="A flower drawn in characters. The petals are agents and the seed head is Stash. Light streams from every petal into the seed head until it is full, then streams back out to the petals.">
+        <canvas aria-hidden="true"></canvas>
+        <pre aria-hidden="true">      \ | /
+   -- (@@@) --
+      / | \</pre>
+      </figure>
+      <div class="container stage__text">
+        <div data-hero>
+          <h1>Your agents forget. Stash remembers.</h1>
+          <p class="lead">Shared memory for AI coding agents, across sessions, models and teammates.</p>
+          <div class="hero__actions"><a class="btn" href="#install">Install the CLI</a><a class="btn btn--line" href="#compare">Why Stash</a></div>
+        </div>
+        <div data-step aria-live="polite"></div>
+      </div>
+      <button class="pause" type="button" data-pause aria-pressed="false">Pause</button>
+    </section>
+    <ol class="fallback container" data-fallback>
+      <li data-scene="empty"><h2>Every session starts from zero.</h2><p>Your agent spends an hour learning your codebase. The session ends, and all of it is gone.</p></li>
+      <li data-scene="push"><h2>Push what it learned.</h2><p>One command saves the session: what it tried, what worked, what failed.</p><code>stash push</code></li>
+      <li data-scene="full"><h2>One memory, always growing.</h2><p>Every session, from every agent and every teammate, fills the same memory.</p></li>
+      <li data-scene="pull"><h2>Pull it into any agent.</h2><p>Claude, GPT or whatever comes next starts exactly where the last one stopped.</p><code>stash pull</code></li>
+      <li data-scene="merge"><h2>Merge what two agents found.</h2><p>Two investigations become one. Disagreements kept, evidence attached.</p><code>stash merge</code></li>
+      <li data-scene="guard"><h2>Learn from every mistake.</h2><p>A mistake made twice becomes a rule you approve. Every agent follows it.</p></li>
+    </ol>
+  </div>
+
+  <section class="section" aria-label="The idea">
+    <div class="container"><p class="statement">Git shares code. <span>Stash shares the context behind it.</span></p></div>
+  </section>
+
+  <section class="section section--quiet" id="compare" aria-labelledby="compare-title">
+    <div class="container">
+      <div class="head"><h2 id="compare-title">A handoff doc says what happened.</h2><p>Stash keeps how, why, and what failed.</p></div>
+      <table class="compare">
+        <thead><tr><th scope="col"></th><th scope="col">handoff.md</th><th scope="col">Stash</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">After the session ends</th><td>Only what you wrote down</td><td>Everything the agent learned</td></tr>
+          <tr><th scope="row">Dead ends</th><td>Usually left out</td><td>Kept, so no one retries them</td></tr>
+          <tr><th scope="row">Evidence</th><td>A summary</td><td>Every memory cites its source</td></tr>
+          <tr><th scope="row">Another model</th><td>Copy and paste</td><td>One pull, any agent</td></tr>
+          <tr><th scope="row">Your team</th><td>Lost in a folder</td><td>One shared memory</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="install" aria-labelledby="install-title">
+    <div class="container">
+      <div class="handoff">
+        <h2 id="install-title">Never write a handoff.md again.</h2>
+        <div>
+          <p>Install the CLI, then push your first session.</p>
+          <div class="install" data-copy-box><code data-copy-text>npm install -g @stash/cli</code><button class="btn" type="button" data-copy>Copy</button></div>
+        </div>
+      </div>
+      <div class="platforms">
+        <div class="ticks"><strong>Claude Code</strong><span>Pushes and pulls</span></div>
+        <div class="ticks"><strong>Any agent with a shell</strong><span>Pulls</span></div>
+        <div class="ticks"><strong>MongoDB Atlas</strong><span>Holds the memory</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark" aria-hidden="true">stash</p>
+    <div class="foot__row"><p>Built for Agents in Context Toronto, a MongoDB hackathon.</p><ul><li><a href="#how">How it works</a></li><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li></ul></div>
+  </div>
+</footer>
+
+<script src="./bloom.js"></script>
+<script>
+(() => {
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const b = box.querySelector('[data-copy]'), t = box.querySelector('[data-copy-text]');
+    b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(t.textContent); b.classList.add('is-done'); b.textContent = 'Copied'; setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'Copy'; }, 1400); } catch (e) {} });
+  });
+
+  // the story lives in the fallback list; with script it moves into the pinned stage, one step at a time
+  const list = document.querySelector('[data-fallback]');
+  const STEPS = [...list.children].map((li) => ({ scene: li.dataset.scene, html: li.innerHTML }));
+  list.remove();
+  const heroEl = document.querySelector('[data-hero]'), stepEl = document.querySelector('[data-step]');
+  const narrow = () => innerWidth < 960;
+  const place = () => ({ cx: narrow() ? 0.5 : 0.68, cy: narrow() ? 0.36 : 0.52, zoom: narrow() ? 0.62 : 0.8 });
+  const bloom = window.StashBloom(document.querySelector('.bloom'), { scene: 'live', ...place() });
+  const LAYOUT = { live: { sep: 0, ring: 0, glow: 0, pitch: 0.32 }, empty: { sep: 1, ring: 0, glow: 0, pitch: 0.4 }, push: { sep: 0, ring: 0, glow: 0, pitch: 0.32 }, full: { sep: 0, ring: 0, glow: 1, pitch: 0.45 }, pull: { sep: 0, ring: 0, glow: 0, pitch: 0.32 }, merge: { sep: 0, ring: 0, glow: 0, pitch: 0.32 }, guard: { sep: 0, ring: 1, glow: 0, pitch: 0.38 } };
+  const story = document.querySelector('.story');
+  let current = -1;
+  function update() {
+    const r = story.getBoundingClientRect(), span = story.offsetHeight - innerHeight;
+    const p = Math.min(0.999, Math.max(0, -r.top / Math.max(1, span)));
+    const i = Math.floor(p * (STEPS.length + 1));
+    if (i === current) return;
+    current = i;
+    if (i === 0) { stepEl.innerHTML = ''; heroEl.hidden = false; heroEl.classList.remove('is-swap'); void heroEl.offsetWidth; heroEl.classList.add('is-swap'); bloom.set('live', { ...LAYOUT.live, ...place() }); return; }
+    const s = STEPS[i - 1];
+    heroEl.hidden = true;
+    stepEl.innerHTML = s.html; stepEl.classList.remove('is-swap'); void stepEl.offsetWidth; stepEl.classList.add('is-swap');
+    bloom.set(s.scene, { ...LAYOUT[s.scene], ...place() });
+  }
+  addEventListener('scroll', update, { passive: true });
+  addEventListener('resize', () => { current = -1; update(); });
+  update();
+
+  const pauseBtn = document.querySelector('[data-pause]');
+  pauseBtn.addEventListener('click', () => { const p = pauseBtn.getAttribute('aria-pressed') !== 'true'; pauseBtn.setAttribute('aria-pressed', p); pauseBtn.textContent = p ? 'Play' : 'Pause'; bloom.pause(p); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: your agents forget, Stash remembers</title>
+<meta name="description" content="Shared memory for AI coding agents, across sessions, models and teammates.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="pill">
+  <a class="wordmark" href="#top">stash</a>
+  <nav aria-label="Main"><ul><li><a href="#how">How it works</a></li><li><a href="#why">Why</a></li><li><a href="./docs.html">Docs</a></li><li><a class="btn btn--sm" href="#install">Install</a></li></ul></nav>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <figure class="bubbles" aria-label="Bubbles of characters arranged like a flower. The outer bubbles, your agents, send what they learn into the middle one, Stash, which grows brighter; when full it briefs every agent, they turn green, use it, fade back to grey and start again.">
+      <canvas aria-hidden="true"></canvas>
+      <pre aria-hidden="true">   .:::.     .:::.
+  :::::::   :::::::
+   ':::'  .:::::.  ':::'
+         :::@@@:::
+   .:::.  ':::::'  .:::.
+  :::::::   :::::::
+   ':::'     ':::'</pre>
+    </figure>
+    <div class="container hero__text">
+      <h1 id="hero-title">Your agents forget. Stash remembers.</h1>
+      <p class="lead">Shared memory for AI coding agents, across sessions, models and teammates.</p>
+      <div class="hero__actions"><a class="btn" href="#install">Install the CLI</a><a class="btn btn--line" href="#how">How it works</a></div>
+    </div>
+  </section>
+
+  <section class="section" aria-label="The problem">
+    <div class="container">
+      <p class="statement">Every new session starts from zero. <span>You explain the bug again. The agent rereads the same files, then retries what already failed.</span></p>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="how" aria-labelledby="how-title">
+    <div class="container">
+      <div class="head"><h2 id="how-title">How it works.</h2><p>Your agents put what they learn in one place, and take it out anywhere.</p></div>
+      <ol class="steps">
+        <li><h3>Push</h3><p>When a session ends, save what the agent learned: what it tried, what worked, what failed.</p><code>stash push</code></li>
+        <li><h3>Pull</h3><p>Any agent, on any model, starts exactly where the last one stopped.</p><code>stash pull</code></li>
+        <li><h3>Merge</h3><p>Two agents chased the same bug? Combine what both found, disagreements kept.</p><code>stash merge</code></li>
+        <li><h3>Learn</h3><p>A mistake made twice becomes a rule you approve. Every agent follows it.</p><code>stash guardrails</code></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" id="why" aria-labelledby="why-title">
+    <div class="container">
+      <div class="head"><h2 id="why-title">Git shares code. Stash shares the context behind it.</h2><p>A handoff doc says what happened. Stash keeps how, why, and what failed.</p></div>
+      <table class="compare">
+        <thead><tr><th scope="col"></th><th scope="col">handoff.md</th><th scope="col">Stash</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">After the session ends</th><td>Only what you wrote down</td><td>Everything the agent learned</td></tr>
+          <tr><th scope="row">Dead ends</th><td>Usually left out</td><td>Kept, so no one retries them</td></tr>
+          <tr><th scope="row">Evidence</th><td>A summary</td><td>Every memory cites its source</td></tr>
+          <tr><th scope="row">Another model</th><td>Copy and paste</td><td>One pull, any agent</td></tr>
+          <tr><th scope="row">Your team</th><td>Lost in a folder</td><td>One shared memory</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="install" aria-labelledby="install-title">
+    <div class="container">
+      <div class="handoff">
+        <h2 id="install-title">Never write a handoff.md again.</h2>
+        <div>
+          <p>Install the CLI, then push your first session.</p>
+          <div class="install" data-copy-box><code data-copy-text>npm install -g @stash/cli</code><button class="btn" type="button" data-copy>Copy</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark" aria-hidden="true">stash</p>
+    <div class="foot__row"><p>Built for Agents in Context Toronto, a MongoDB hackathon.</p><ul><li><a href="#how">How it works</a></li><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li></ul></div>
+  </div>
+</footer>
+
+<script src="./bubbles.js?v=9"></script>
+<script>
+(() => {
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const b = box.querySelector('[data-copy]'), t = box.querySelector('[data-copy-text]');
+    b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(t.textContent); b.classList.add('is-done'); b.textContent = 'Copied'; setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'Copy'; }, 1400); } catch (e) {} });
+  });
+  // the layout follows the window: beside the head on wide screens, above it on phones
+  const opts = { area: document.querySelector('.hero') };
+  const fit = () => Object.assign(opts, innerWidth < 960 ? { cx: 0.5, cy: 0.28, fit: 0.2, fitW: 0.36, fadeLeft: null } : { cx: 0.7, cy: 0.5, fit: 0.35, fitW: 0.32, fadeLeft: [0.32, 0.46] });
+  fit(); addEventListener('resize', fit);
+  window.StashBubbles(document.querySelector('.bubbles'), opts);
+})();
+</script>
+</body>
+</html>

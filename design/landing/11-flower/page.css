@@ -1,0 +1,66 @@
+/* Hallmark · shape: Marquee Hero with a pinned story · genre: modern-minimal · theme: Vantage (by request: the user picked direction 5) · job: try · draw: 8a6288
+ * hero: Ledge (the flower above, the head at its base) · nav: floating pill · footer: mast · imagery: an ASCII flower, petals are agents and the center is Stash · signature: pulses run from a petal into the center on push and back out to every petal on pull; the same flower tells the story as you scroll · vantage: object/steel
+ * axes: dark/grotesk-sans/chromatic-lime · posture: restrained · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · waive 77 · the close is the install action beside three platform facts in a 320px framed list · it is the page's last band, once */
+/* Hallmark · pre-emit critique: P5 H4 E4 S5 R4 V5 · weakest: H, a moving picture and a scroll story compete; the hero flower is the invitation, the pinned flower is the explanation, and each panel changes one thing */
+@import url("./tokens.css");
+@import url("./base.css");
+@import url("../vantage-shared/vantage.css");
+
+/* hero: Ledge */
+.hero { min-height: 100dvh; display: grid; grid-template-rows: minmax(0, 1fr) auto; padding-bottom: var(--space-2xl); }
+.flower { position: relative; margin: 0; min-height: 360px; }
+.flower canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: pan-y; }
+.flower pre { position: absolute; inset: 20% 35%; margin: 0; font: 400 0.75rem/1.2 var(--font-body); color: var(--point-mid); }
+.js .flower pre { display: none; }
+.hero__key { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-xs) var(--space-xl); padding-block: var(--space-md) var(--space-xl); font-size: var(--text-sm); color: var(--color-muted); }
+.hero__key b { color: var(--color-ink); font-weight: 400; }
+.hero__key .lime { color: var(--color-accent); }
+.pause { min-height: 44px; padding: 0 var(--space-md); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-muted); font: 300 var(--text-sm)/1 var(--font-body); box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule-2); cursor: pointer; transition: color var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out); }
+.pause:hover { color: var(--color-ink); background: var(--color-paper-2); }
+.pause:active { background: var(--color-paper-3); }
+.pause:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.pause[disabled] { opacity: 0.5; cursor: not-allowed; }
+.hero__base { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--gap-columns); align-items: end; }
+.hero h1 { font-size: clamp(3rem, 5.4vw + 0.5rem, 6rem); max-width: 12ch; }
+.hero .lead { max-width: 32ch; }
+.hero__actions { display: flex; gap: var(--space-md); margin-top: var(--space-lg); flex-wrap: wrap; }
+
+/* statement */
+.statement { font: 300 var(--text-display-s)/1.1 var(--font-display); font-variation-settings: "SHRP" 100; letter-spacing: var(--tracking-display); color: var(--color-ink); max-width: 28ch; }
+.statement span { color: var(--color-muted); }
+
+/* pinned story */
+.story { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-2xl); }
+.story__pin { position: sticky; top: 0; height: 100dvh; display: grid; align-items: center; }
+.story__pin .flower { height: min(78dvh, 700px); }
+.story__now { position: absolute; left: 0; bottom: var(--space-xl); font-size: var(--text-sm); color: var(--color-muted); }
+.story__now b { color: var(--color-accent); font-weight: 400; }
+.steps { list-style: none; margin: 0; padding: 0; }
+.steps li { min-height: 88dvh; display: grid; align-content: center; gap: var(--space-md); border-left: var(--rule-hair) solid var(--color-rule); padding-left: var(--space-xl); transition: border-color var(--dur-short) var(--ease-out); }
+.steps li.is-on { border-left-color: var(--color-accent); }
+.steps h3 { font-size: var(--text-section); max-width: 12ch; }
+.steps p { max-width: 38ch; font-size: var(--text-lead); line-height: 1.5; }
+.steps code { display: inline-block; justify-self: start; padding: var(--space-xs) var(--space-md); border-radius: var(--radius-pill); background: var(--color-paper-2); box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule-2); font: 400 var(--text-md)/1.2 var(--font-body); color: var(--color-ink); }
+.story__head { padding-top: var(--section-gap); }
+.story__head h2 { font-size: var(--text-section); }
+
+/* value rows */
+.values { list-style: none; margin: 0; padding: 0; border-top: var(--rule-hair) solid var(--color-rule); }
+.values li { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); gap: var(--gap-columns); align-items: baseline; padding-block: var(--space-xl); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.values h3 { font-size: var(--text-2xl); font-weight: 300; }
+.values p { font-size: var(--text-lead); max-width: 40ch; }
+
+/* close */
+.close__list { list-style: none; margin: 0; padding: var(--space-2xl); display: grid; align-content: center; gap: var(--space-lg); min-height: 320px; }
+.close__list li { display: grid; gap: var(--space-2xs); }
+.close__list strong { color: var(--color-ink); font-weight: 400; font-size: var(--text-title); }
+.close__list span { color: var(--color-muted); }
+
+@media (max-width: 60rem) {
+  .hero__base, .values li { grid-template-columns: minmax(0, 1fr); }
+  .story { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .story__pin { height: 50dvh; z-index: var(--z-raised); background: var(--color-paper); }
+  .story__pin .flower { height: 46dvh; }
+  .steps li { min-height: 60dvh; }
+}

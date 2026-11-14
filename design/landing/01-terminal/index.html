@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: shared context for coding agents</title>
+<meta name="description" content="Stash saves a coding agent’s working context so another agent can continue.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@75..112.5,400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="slab">
+  <div class="container slab__inner">
+    <a class="wordmark" href="#top">stash</a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="#commands">Commands</a></li>
+        <li><a href="#handoff">Handoff vs Briefing</a></li>
+        <li><a href="#reference">Reference</a></li>
+        <li><a class="btn btn--primary" href="#install">Install</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero__grid">
+      <div>
+        <h1 id="hero-title">Push the session. Pull the context.</h1>
+        <p class="lead">Stash saves a coding agent’s working context so another agent can continue.</p>
+        <div class="install well" data-install>
+          <div class="install__tabs" role="tablist" aria-label="Package manager">
+            <button role="tab" aria-selected="true" data-cmd="npm install -g @stash/cli">npm</button>
+            <button role="tab" aria-selected="false" tabindex="-1" data-cmd="pnpm add -g @stash/cli">pnpm</button>
+            <button role="tab" aria-selected="false" tabindex="-1" data-cmd="bun add -g @stash/cli">bun</button>
+          </div>
+          <div class="install__line">
+            <code><span class="prompt">$ </span><span data-cmd-text>npm install -g @stash/cli</span></code>
+            <button class="copy" type="button" aria-label="Copy install command">
+              <svg class="glyph" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><rect x="5" y="5" width="9" height="9"/><path d="M2 11V2h9"/></svg>
+              <svg class="tick" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <figure class="art" aria-label="The word stash, printed in characters from a real agent session transcript">
+        <canvas aria-hidden="true"></canvas>
+        <pre aria-hidden="true">
+ #####  ######   ###    #####  #    #
+#         ##    #   #  #       #    #
+ ####     ##    #####   ####   ######
+     #    ##    #   #       #  #    #
+#####     ##    #   #  #####   #    #</pre>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section" id="commands" aria-labelledby="commands-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="commands-title">Three commands carry the context.</h2>
+        <p>Claude Code on one laptop. Any agent on the next.</p>
+      </div>
+      <div class="switch">
+        <div class="switch__list" role="tablist" aria-orientation="vertical" aria-label="Commands">
+          <button role="tab" id="t-push" aria-controls="p-push" aria-selected="true"><strong>push</strong><span>Capture, redact, extract</span></button>
+          <button role="tab" id="t-pull" aria-controls="p-pull" aria-selected="false" tabindex="-1"><strong>pull</strong><span>A Briefing, sized to fit</span></button>
+          <button role="tab" id="t-merge" aria-controls="p-merge" aria-selected="false" tabindex="-1"><strong>merge</strong><span>Two investigations, one picture</span></button>
+        </div>
+        <div class="well">
+<pre class="session" role="tabpanel" id="p-push" aria-labelledby="t-push"><span class="prompt">~ $ </span><span class="hi">stash push</span>
+capturing session        claude-code  ses_8kq2v
+scanning for secrets     1 redacted
+uploading transcript     148 events
+generating digest        done
+extracting memories      12 found
+
+<span class="hi">session ses_8kq2v  version 2</span></pre>
+<pre class="session" role="tabpanel" id="p-pull" aria-labelledby="t-pull" hidden><span class="prompt">~ $ </span><span class="hi">stash pull ses_8kq2v</span>
+stash:briefing ses_8kq2v@v2 pull=p_91
+
+<span class="hi"># guardrails</span>
+edit schema/api.yaml, never the generated client
+
+<span class="hi"># discoveries</span>
+refresh fires twice under load      evidenced   e_014
+cache serves a stale session        hypothesis  e_031
+
+<span class="hi"># failed approaches</span>
+raising the db timeout changed nothing          e_022</pre>
+<pre class="session" role="tabpanel" id="p-merge" aria-labelledby="t-merge" hidden><span class="prompt">~ $ </span><span class="hi">stash merge ses_8kq2v ses_3mx7r</span>
+duplicate       both found the refresh race
+complementary   stale cache explains the second path
+conflicting     a ruled out the database, b did not
+only in a       edits to the generated client
+
+<span class="hi">merge m_789  from ses_8kq2v@v2 ses_3mx7r@v1</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="handoff" aria-labelledby="handoff-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="handoff-title">A handoff says what happened.</h2>
+        <p>A Briefing keeps the evidence, the failures and the rules.</p>
+      </div>
+      <div class="diff well" role="figure" aria-label="A handoff note compared with a Stash Briefing">
+        <div class="diff__file">--- a/handoff.md<br>+++ b/stash pull ses_8kq2v</div>
+        <ol>
+          <li class="del"><span class="sign">-</span><span>fixed most of the auth bug, see the auth files</span></li>
+          <li class="add"><span class="sign">+</span><span>objective: find why logins fail intermittently</span></li>
+          <li class="add"><span class="sign">+</span><span>discovery: refresh fires twice under load, evidenced in e_014</span></li>
+          <li class="add"><span class="sign">+</span><span>failed: raising the db timeout changed nothing</span></li>
+          <li class="add"><span class="sign">+</span><span>guardrail: edit schema/api.yaml, never the generated client</span></li>
+          <li class="add"><span class="sign">+</span><span>open: does the cache explain the second path?</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="reference" aria-labelledby="reference-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="reference-title">What it runs on.</h2>
+        <p>MongoDB Atlas holds it. Secrets stay local.</p>
+      </div>
+      <ul class="ref">
+        <li><code><span class="prompt">$ </span>stash init</code><p>Joins your repo’s project.</p></li>
+        <li><code><span class="prompt">$ </span>stash push</code><p>Captures this Claude Code session.</p></li>
+        <li><code><span class="prompt">$ </span>stash pull <span class="arg">&lt;id&gt;</span></code><p>Prints a Briefing for any agent.</p></li>
+        <li><code><span class="prompt">$ </span>stash merge <span class="arg">&lt;a&gt; &lt;b&gt;</span></code><p>Reconciles two sessions.</p></li>
+      </ul>
+      <dl class="needs">
+        <div><dt>Claude Code</dt><dd>Pushes sessions today</dd></div>
+        <div><dt>Any shell agent</dt><dd>Pulls Briefings</dd></div>
+        <div><dt>A Stash token</dt><dd>No model key needed</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section" id="install" aria-labelledby="install-title">
+    <div class="container close">
+      <div>
+        <h2 id="install-title">Install the CLI.</h2>
+        <div class="install well" data-install>
+          <div class="install__line">
+            <code><span class="prompt">$ </span><span data-cmd-text>npm install -g @stash/cli</span></code>
+            <button class="copy" type="button" aria-label="Copy install command">
+              <svg class="glyph" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><rect x="5" y="5" width="9" height="9"/><path d="M2 11V2h9"/></svg>
+              <svg class="tick" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+<div class="well">
+        <div class="diff__file"><span class="prompt">~ $ </span>stash guardrails</div>
+        <ul class="rules">
+          <li><span class="state state--on">approved</span><p>Edit schema/api.yaml, never the generated client.<small>Seen in ses_8kq2v and ses_3mx7r</small></p></li>
+          <li><span class="state">proposed</span><p>Back off and retry after HTTP 429.<small>Waiting for a human</small></p></li>
+          <li><span class="state">rejected</span><p>Skip the auth tests in CI.<small>Never proposed again</small></p></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <div class="foot__grid">
+      <a class="wordmark" href="#top">stash</a>
+      <div><h2>Product</h2><ul><li><a href="#commands">Commands</a></li><li><a href="#handoff">Handoff vs Briefing</a></li><li><a href="#install">Install</a></li></ul></div>
+      <div><h2>Built on</h2><ul><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li><li><a href="https://www.anthropic.com/claude-code">Claude Code</a></li></ul></div>
+    </div>
+    <p class="foot__legal">Built for Agents in Context Toronto, a MongoDB hackathon.</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  // install tabs and copy
+  document.querySelectorAll('[data-install]').forEach((box) => {
+    const tabs = [...box.querySelectorAll('[role="tab"]')];
+    const text = box.querySelector('[data-cmd-text]');
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => select(i));
+      t.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); const n = (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; select(n); tabs[n].focus(); }
+      });
+    });
+    function select(n) { tabs.forEach((t, j) => { t.setAttribute('aria-selected', j === n); t.tabIndex = j === n ? 0 : -1; }); text.textContent = tabs[n].dataset.cmd; }
+    const copy = box.querySelector('.copy');
+    copy.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(text.textContent); copy.classList.add('is-done'); copy.setAttribute('aria-label', 'Copied'); setTimeout(() => { copy.classList.remove('is-done'); copy.setAttribute('aria-label', 'Copy install command'); }, 1400); } catch (e) { /* clipboard blocked: leave the text selectable */ }
+    });
+  });
+
+  // command switcher
+  const list = document.querySelector('.switch__list');
+  const tabs = [...list.querySelectorAll('[role="tab"]')];
+  const show = (n, focus) => tabs.forEach((t, j) => { const on = j === n; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; document.getElementById(t.getAttribute('aria-controls')).hidden = !on; if (on && focus) t.focus(); });
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => show(i));
+    t.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); show((i + (e.key === 'ArrowDown' ? 1 : -1) + tabs.length) % tabs.length, true); } });
+  });
+
+  // glyph picture: the wordmark printed in a session transcript, stirred by the cursor
+  const fig = document.querySelector('.art');
+  const cv = fig.querySelector('canvas');
+  const ctx = cv.getContext('2d');
+  const root = getComputedStyle(document.documentElement);
+  const ramp = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => root.getPropertyValue('--glyph-' + i).trim());
+  const accent = root.getPropertyValue('--color-accent').trim();
+  const face = root.getPropertyValue('--font-display').trim();
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const TEXT = ('user: logins fail now and then, find out why. read src/auth/refresh.ts. run npm test: 3 failed. ' +
+    'token refresh fires twice under load. tried raising the db timeout: no change. edit src/client/generated.ts: ' +
+    'overwritten by the build. read src/cache/session.ts. stash push ses_8kq2v. ').replace(/\s+/g, '');
+  const CW = 7, CH = 13;
+  let cols = 0, rows = 0, w = 0, h = 0, level = [], glyph = [], flare = [], start = 0, raf = 0, visible = true;
+
+  function build() {
+    const r = fig.getBoundingClientRect();
+    w = r.width; h = r.height;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cols = Math.floor(w / CW); rows = Math.floor(h / CH);
+    const m = document.createElement('canvas'); m.width = cols; m.height = rows;
+    const mc = m.getContext('2d');
+    const stretch = CH / CW;
+    let size = rows * 0.62;
+    mc.font = `700 ${size}px ${face}`;
+    const tw = mc.measureText('stash').width * stretch;
+    if (tw > cols * 0.94) size *= (cols * 0.94) / tw;
+    mc.font = `700 ${size}px ${face}`;
+    mc.fillStyle = accent; mc.textBaseline = 'middle'; mc.textAlign = 'center';
+    mc.setTransform(stretch, 0, 0, 1, cols / 2, rows / 2);
+    mc.fillText('stash', 0, 0);
+    const a = mc.getImageData(0, 0, cols, rows).data;
+    level = new Array(cols * rows); glyph = new Array(cols * rows); flare = new Float32Array(cols * rows);
+    let k = 0;
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      const i = y * cols + x, alpha = a[i * 4 + 3] / 255;
+      let lv = 0;
+      if (alpha > 0.08) lv = 3 + Math.round(alpha * 5);
+      else {
+        const f = Math.sin(x * 0.11 + y * 0.31) + Math.sin(x * 0.047 - y * 0.19) + Math.cos((x + y) * 0.07);
+        if (f > 1.55) lv = 1; if (f > 2.2) lv = 2;
+      }
+      level[i] = Math.min(8, lv);
+      glyph[i] = lv ? TEXT[k++ % TEXT.length] : '';
+    }
+  }
+
+  function draw(now) {
+    const p = reduce ? 1 : Math.min(1, (now - start) / 1500);
+    const doneRows = Math.floor(p * rows);
+    ctx.clearRect(0, 0, w, h);
+    ctx.textBaseline = 'top';
+    let active = p < 1;
+    for (const pass of [0, 1]) {
+      ctx.font = pass ? `500 ${CH - 2}px ${face}` : `400 ${Math.round((CH - 2) * 0.62)}px ${face}`;
+      for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+        const i = y * cols + x;
+        let lv = level[i], ch = glyph[i];
+        if (y >= doneRows) { const n = (Math.sin(i * 12.9898 + now * 0.02) * 43758.5) % 1; lv = Math.abs(n) > 0.86 ? 1 + Math.floor(Math.abs(n) * 3) : 0; ch = ch || TEXT[i % TEXT.length]; }
+        if (!lv) continue;
+        const f = flare[i];
+        const small = lv <= 2 && f < 0.2;
+        if ((pass === 1) === small) continue;
+        ctx.fillStyle = f > 0.45 ? accent : f > 0.15 ? ramp[7] : ramp[Math.min(7, lv - 1)];
+        ctx.fillText(ch, x * CW + (small ? 1.3 : 0), y * CH + (small ? 2.5 : 0));
+        if (f > 0.01) { flare[i] = f * 0.9; active = true; } else if (f) flare[i] = 0;
+      }
+    }
+    raf = active && visible ? requestAnimationFrame(draw) : 0;
+  }
+  const kick = () => { if (!raf) raf = requestAnimationFrame(draw); };
+
+  fig.addEventListener('pointermove', (e) => {
+    if (reduce) return;
+    const r = fig.getBoundingClientRect();
+    const cx = (e.clientX - r.left) / CW, cy = (e.clientY - r.top) / CH;
+    for (let y = Math.max(0, Math.floor(cy - 4)); y < Math.min(rows, cy + 4); y++)
+      for (let x = Math.max(0, Math.floor(cx - 8)); x < Math.min(cols, cx + 8); x++) {
+        const d = Math.hypot((x - cx) / 8, (y - cy) / 4);
+        if (d < 1) { const i = y * cols + x; flare[i] = Math.max(flare[i], 1 - d); if (!level[i]) { level[i] = 1; glyph[i] = TEXT[i % TEXT.length]; } }
+      }
+    kick();
+  });
+  new IntersectionObserver(([en]) => { visible = en.isIntersecting; if (visible) kick(); }).observe(fig);
+  new ResizeObserver(() => { build(); kick(); }).observe(fig);
+  document.fonts.ready.then(() => { build(); start = performance.now(); kick(); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash: merge two investigations into one</title>
+<meta name="description" content="Stash merges two agent sessions, keeping duplicates, gaps and disagreements visible.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./page.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<header class="pill">
+  <a class="wordmark" href="#top">stash</a>
+  <nav aria-label="Main"><ul><li><a href="#findings">Findings</a></li><li><a class="btn btn--sm" href="#install">Install</a></li></ul></nav>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero__base">
+      <div>
+        <h1 id="hero-title">Merge two investigations into one.</h1>
+        <p class="lead">Two agents chased the same bug. Drag them together.</p>
+        <div class="merge">
+          <label class="label" for="merge">stash merge ses_8kq2v ses_3mx7r</label>
+          <button class="btn btn--line btn--sm" type="button" data-run>Run it</button>
+          <input class="range" id="merge" type="range" min="0" max="100" value="0">
+          <span class="merge__ends"><span>Apart</span><span>Merged as m_789</span></span>
+        </div>
+        <dl class="findings" aria-live="polite">
+          <div class="is-lime"><dt>Duplicate</dt><dd data-f="dup">0</dd></div>
+          <div><dt>Complementary</dt><dd data-f="comp">0</dd></div>
+          <div><dt>Conflicting</dt><dd data-f="conf">0</dd></div>
+          <div><dt>Only in one</dt><dd data-f="only">0</dd></div>
+        </dl>
+      </div>
+      <figure class="scene" aria-label="Two clouds of memories, one per agent session. Drag the slider to merge them.">
+      <canvas aria-hidden="true"></canvas>
+      <pre aria-hidden="true">  . : + * + : .            . : + * + : .
+ : + * # * + :            : + * # * + :</pre>
+      <div class="callout" aria-hidden="true"><span class="callout__lead"></span><span class="callout__box"><strong></strong><span class="callout__meta"></span></span></div>
+      <figcaption class="scene__key"><span>Each patch is one memory</span><span><b>Lime</b> both sessions found it</span><span>Hover to read</span></figcaption>
+    </figure>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="findings" aria-labelledby="findings-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="findings-title">Four kinds of finding.</h2>
+        <p>Each one cites the memories and events behind it.</p>
+      </div>
+      <ul class="types">
+        <li><h3>Duplicate</h3><p>Both sessions found refresh firing twice under load.</p></li>
+        <li><h3>Complementary</h3><p>Session B’s stale cache explains a path Session A never checked.</p></li>
+        <li><h3>Conflicting</h3><p>A ruled out the database. B suspects it. Stash keeps both.</p></li>
+        <li><h3>Only in one</h3><p>Only A tried editing the generated client, and it failed.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-label="Pull the merge">
+    <div class="container">
+      <p class="statement">stash pull m_789 <span>gives the next agent both investigations, the evidence and the open disagreement.</span></p>
+    </div>
+  </section>
+
+  <section class="section section--quiet" id="install" aria-labelledby="install-title">
+    <div class="container close">
+      <div class="measure ticks">
+        <p class="num">0<span class="u"> sources changed</span></p>
+        <p>A merge is a new record. Both sessions read the same as before.</p>
+      </div>
+      <div>
+        <h2 id="install-title">Merge your own sessions.</h2>
+        <div class="install" data-copy-box><code data-copy-text>npm install -g @stash/cli</code><button class="btn" type="button" data-copy>Copy</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark" aria-hidden="true">stash</p>
+    <div class="foot__row"><p>Built for Agents in Context Toronto, a MongoDB hackathon.</p><ul><li><a href="#findings">Findings</a></li><li><a href="https://www.mongodb.com/atlas">MongoDB Atlas</a></li></ul></div>
+  </div>
+</footer>
+
+<script src="../vantage-shared/cloud.js"></script>
+<script>
+(() => {
+  document.querySelectorAll('[data-copy-box]').forEach((box) => {
+    const b = box.querySelector('[data-copy]'), t = box.querySelector('[data-copy-text]');
+    b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(t.textContent); b.classList.add('is-done'); b.textContent = 'Copied'; setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'Copy'; }, 1400); } catch (e) {} });
+  });
+  const S = window.StashCloud, r = S.rng(5), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const local = {}; ['auth', 'cache', 'db', 'client', 'build'].forEach((t, i) => { const a = (i / 5) * Math.PI * 2 + 0.4; local[t] = [Math.cos(a) * 0.3, (i % 2 ? 0.08 : -0.08), Math.sin(a) * 0.3]; });
+  const near = (t) => [local[t][0] + (r() - 0.5) * 0.16, local[t][1] + (r() - 0.5) * 0.1, local[t][2] + (r() - 0.5) * 0.16];
+  const A = 'ses_8kq2v', B = 'ses_3mx7r', SEP = 0.78;
+  const defs = [
+    ['A', 'auth', 1, 'Refresh fires twice under load', 'dup', 'd1'],
+    ['A', 'auth', 0, 'Lock token refresh behind a mutex', 'only'],
+    ['A', 'auth', 2, 'Retrying refresh on a 401 made it worse', 'only'],
+    ['A', 'db', 2, 'Raising the db timeout changed nothing', 'only'],
+    ['A', 'db', 1, 'Database ruled out: the login query is fast', 'conf', 'c1'],
+    ['A', 'client', 2, 'Hand edits to generated.ts were overwritten', 'only'],
+    ['A', 'client', 0, 'Change schema/api.yaml, then regenerate', 'only'],
+    ['A', 'build', 3, 'The project must support Node 22', 'dup', 'd2'],
+    ['B', 'cache', 1, 'The cache serves a session after it expires', 'comp'],
+    ['B', 'cache', 0, 'Invalidate the session cache on logout', 'comp'],
+    ['B', 'cache', 2, 'A shorter TTL did not stop stale reads', 'comp'],
+    ['B', 'auth', 1, 'Refresh fires twice under load', 'dup', 'd1'],
+    ['B', 'db', 1, 'The database is slow at peak, maybe the cause', 'conf', 'c1'],
+    ['B', 'build', 3, 'The project must support Node 22', 'dup', 'd2'],
+    ['B', 'db', 4, 'Is the pool too small at peak?', 'only'],
+  ];
+  const pairPos = {};
+  const mem = defs.map(([side, topic, type, text, finding, pair], i) => {
+    let p = pair && pairPos[pair] ? pairPos[pair].slice() : near(topic);
+    if (finding === 'conf' && pairPos[pair]) p = [p[0] + 0.1, p[1] - 0.12, p[2]];
+    if (pair && !pairPos[pair]) pairPos[pair] = p.slice();
+    const base = side === 'A' ? -SEP : SEP;
+    return { i, side, topic, type, text, kind: S.TYPES[type], finding, pair, session: side === 'A' ? A : B, event: 'e_' + (side === 'A' ? 14 + i * 4 : 180 + i * 3), status: finding === 'conf' ? 'hypothesis' : 'evidenced', pos: [p[0] + base, p[1], p[2]] };
+  });
+  let t = 0, target = 0, conflict = mem.findIndex((m) => m.side === 'B' && m.finding === 'conf');
+  const ease = (x) => x * x * (3 - 2 * x);
+  const range = document.getElementById('merge');
+  const cloud = S.scene(document.querySelector('.scene'), {
+    points: () => mem, period: 0, yaw: 0, pitch: 0.28, zoom: 1.12, fitW: 2.5, fitH: 1.2, splat: 70, splatR: 0.1, densDiv: 1.3, cy: 0.5, tiltRange: 0.25,
+    offset: (m) => { const e = ease(t); return [(m.side === 'A' ? SEP : -SEP) * e, 0, 0]; },
+    lit: (m) => m.finding === 'dup' && t > 0.85,
+    animating: () => Math.abs(target - t) > 0.002,
+    labels: () => t < 0.5
+      ? [{ pos: [-SEP, -0.12, 0], text: A + ', the auth investigation', lift: 0.32 }, { pos: [SEP, -0.12, 0], text: B + ', the cache investigation', lift: 0.32 }]
+      : [{ pos: [0, -0.12, 0], text: 'm_789, merged from both', lift: 0.32, lime: t > 0.85 }],
+    pin: () => (t > 0.85 ? conflict : -1),
+    describe: (m) => (m.finding === 'conf' && t > 0.85
+      ? { title: 'Conflicting: A ruled out the database. B suspects it.', meta: ['kept as a finding', 'both sources unchanged'] }
+      : { title: m.text, meta: [m.kind, m.session, m.event, t > 0.85 ? ({ dup: 'duplicate', comp: 'complementary', conf: 'conflicting', only: 'only in one' })[m.finding] : m.status] }),
+    after: () => { if (Math.abs(target - t) > 0.002) { t += (target - t) * (reduce ? 1 : 0.12); } else t = target; update(); },
+  });
+  const counts = { dup: 2, comp: 3, conf: 1, only: 6 };
+  function update() { const on = t > 0.85; document.querySelectorAll('[data-f]').forEach((d) => { d.textContent = on ? counts[d.dataset.f] : 0; }); }
+  range.addEventListener('input', () => { target = range.value / 100; cloud.kick(); });
+  document.querySelector('[data-run]').addEventListener('click', () => { target = target > 0.5 ? 0 : 1; range.value = target * 100; cloud.kick(); });
+})();
+</script>
+</body>
+</html>

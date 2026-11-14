@@ -1,0 +1,2329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash docs (private)</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Private docs for Stash: the pitch, the MVP, every decision, the design history and the original blueprint.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./docs.css">
+</head>
+<body>
+<header class="pill">
+  <a class="wordmark" href="./index.html">stash</a>
+  <nav aria-label="Main"><ul><li><a href="./index.html#how">How it works</a></li><li><a href="./docs.html" aria-current="page">Docs</a></li><li><a href="./build.html">Build plan</a></li><li><a class="btn btn--sm" href="./index.html#install">Install</a></li></ul></nav>
+</header>
+<main>
+  <div class="container doc-head">
+    <h1>Stash, everything in one place.</h1>
+    <p>Private docs for the project while it is unpublished: the pitch, the MVP, every decision, the design history and the original blueprint.</p>
+  </div>
+  <div class="container doc">
+    <nav class="rail" aria-label="Contents"><ol>
+<!-- toc -->
+<li><a href="#1-overview">1. Overview</a></li>
+<li><a href="#2-the-hackathon">2. The hackathon</a></li>
+<li><a href="#3-long-term-vision-the-original-blueprint">3. Long-term vision (the original blueprint)</a></li>
+<li><a href="#4-hackathon-mvp-scope">4. Hackathon MVP scope</a></li>
+<li><a href="#5-glossary">5. Glossary</a></li>
+<li><a href="#6-architecture-and-stack">6. Architecture and stack</a></li>
+<li><a href="#7-cli">7. CLI</a></li>
+<li><a href="#8-push-pipeline">8. Push pipeline</a></li>
+<li><a href="#9-memories">9. Memories</a></li>
+<li><a href="#10-pull-and-briefings">10. Pull and Briefings</a></li>
+<li><a href="#11-merge">11. Merge</a></li>
+<li><a href="#12-guardrails">12. Guardrails</a></li>
+<li><a href="#13-session-lineage">13. Session Lineage</a></li>
+<li><a href="#14-security-secrets-and-the-approval-boundary">14. Security, secrets and the approval boundary</a></li>
+<li><a href="#15-website-and-landing-page">15. Website and landing page</a></li>
+<li><a href="#16-demo-repo-and-demo-script">16. Demo repo and demo script</a></li>
+<li><a href="#17-build-order-cut-order-and-stretch-goals">17. Build order, cut order and stretch goals</a></li>
+<li><a href="#18-decision-log">18. Decision log</a></li>
+<li><a href="#19-architecture-decision-records">19. Architecture decision records</a></li>
+<li><a href="#20-known-limitations-open-items-and-environment-facts">20. Known limitations, open items and environment facts</a></li>
+<li><a href="#appendices">Appendices</a></li>
+<!-- /toc -->
+    </ol></nav>
+    <article class="prose">
+<!-- content -->
+<p>Last updated 2026-11-13. A private copy of everything about Stash, kept on the site while it is unpublished.</p>
+<h2 id="1-overview">1. Overview</h2>
+<p>Stash is shared memory infrastructure for AI agents: it captures an agent’s working session, stores it in MongoDB Atlas, and lets another agent, developer or LLM pick it up and continue.</p>
+<p><strong>The one-liner:</strong> Git shares code and code history. Stash shares the context, evidence, decisions and experiences behind agents&#39; work.</p>
+<p><strong>Why it matters:</strong> hundreds of thousands of developers use coding agents every day. When those sessions end, the context behind the work (files read, commands run, approaches ruled out, decisions and their reasons) is lost and never reused.</p>
+<h3 id="the-problem">The problem</h3>
+<ul>
+<li><strong>Isolated sessions.</strong> What an agent learns lives in its own session history. The next agent starts from zero.</li>
+<li><strong>Repeated investigations.</strong> Agents re-check causes that were already ruled out and retry approaches that already failed. That wastes time, tokens and compute.</li>
+<li><strong>No shared project memory.</strong> Knowledge is scattered across local session files, chat histories, handoff docs, different providers and individual laptops.</li>
+<li><strong>Lossy handoffs.</strong> A handoff doc gives a summary. It drops the tool outputs, the sequence of events, the failed experiments and the evidence.</li>
+<li><strong>Repeated mistakes.</strong> Agents keep editing generated files, breaking conventions and hitting rate limits. Nothing turns those failures into evidence-backed rules.</li>
+</ul>
+<h3 id="the-answer">The answer</h3>
+<p>Three commands are the core of the product:</p>
+<pre><code class="language-bash">stash push                          # publish this agent session
+stash pull &lt;session-id&gt;             # give its context to another agent
+stash merge &lt;session-a&gt; &lt;session-b&gt; # reconcile two investigations
+</code></pre>
+<p>Developers use Stash mainly through the CLI. A website is where they browse, search, approve and see everything that’s stored.</p>
+<p><strong>What Stash is not:</strong> another chatbot memory feature, or a replacement for each agent’s own memory. It is a shared layer that connects them.</p>
+<p><strong>Where the design lives in the repo:</strong> BLUEPRINT.md is the long-term vision, MVP.md is the 24-hour build, GLOSSARY.md defines the terms, and docs/adr holds four decision records. This doc combines all of them with every decision we made in chat. Where it differs from BLUEPRINT.md, the MVP decisions win.</p>
+<h2 id="2-the-hackathon">2. The hackathon</h2>
+<p>Stash is our entry for <strong>Agents in Context Toronto: a MongoDB Hackathon</strong>, a one-day, in-person event with teams of up to four. The build window is 24 hours.</p>
+<p><strong>The brief, which works as the rubric:</strong> the next breakthroughs come from agents that</p>
+<ol>
+<li>hold context across sessions,</li>
+<li>adapt their own guardrails,</li>
+<li>operate reliably under real workloads,</li>
+</ol>
+<p>built with MongoDB Atlas, Vector Search and agentic memory tooling. Projects should go past demos and become durable infrastructure that future agents run on.</p>
+<h3 id="how-stash-answers-each-part-of-the-brief">How Stash answers each part of the brief</h3>
+<div class="table"><table><thead><tr>
+<th>Brief asks for</th>
+<th>Stash shows it with</th>
+</tr>
+</thead><tbody><tr>
+<td>Context across sessions</td>
+<td><code>push</code> on laptop 1, <code>pull</code> on laptop 2: a different agent continues the work. Session Lineage records the hand-off.</td>
+</tr>
+<tr>
+<td>Adapting their own guardrails</td>
+<td>A failure repeated across Sessions becomes a Proposed Guardrail. A human approves it, and every later Briefing includes it.</td>
+</tr>
+<tr>
+<td>Reliable under real workloads</td>
+<td>Idempotent pushes, immutable Events, versioned Sessions, provenance on every Memory, and secrets redacted locally</td>
+</tr>
+<tr>
+<td>Infrastructure, not a demo</td>
+<td>A CLI and a shared store any agent can use, with a model-independent format</td>
+</tr>
+<tr>
+<td>Atlas, Vector Search, memory tooling</td>
+<td>Atlas holds everything. Automated Embedding plus Vector Search power merge, Guardrail detection and search.</td>
+</tr>
+</tbody></table></div>
+<h2 id="3-long-term-vision-the-original-blueprint">3. Long-term vision (the original blueprint)</h2>
+<p>This is the product as originally laid out in BLUEPRINT.md. The hackathon builds a slice of it (section 4). Where the two differ, the MVP decisions in sections 4 to 18 win.</p>
+<h3 id="five-core-capabilities">Five core capabilities</h3>
+<ol>
+<li><strong>Context portability:</strong> move working context between sessions, machines, developers and different LLMs.</li>
+<li><strong>Persistent memory:</strong> a searchable knowledge base built from accumulated agent sessions.</li>
+<li><strong>Intelligent merging:</strong> combine independent agent histories, keeping their evidence, disagreements and provenance.</li>
+<li><strong>Adaptive guardrails:</strong> learn from past failures and propose project-specific rules for future agents.</li>
+<li><strong>Reliable context infrastructure:</strong> keep history, track versions, manage permissions, and retrieve what’s relevant without overwhelming agents.</li>
+</ol>
+<h3 id="full-cli-vision">Full CLI (vision)</h3>
+<p><code>stash login</code>, <code>logout</code>, <code>init</code>, <code>push</code>, <code>pull &lt;session-id&gt;</code>, <code>pull --project</code>, <code>merge &lt;a&gt; &lt;b&gt;</code>, <code>sessions</code>, <code>search &quot;&lt;query&gt;&quot;</code>, <code>memory</code>, <code>guardrails</code>, <code>status</code>, <code>config</code>. It would ship as an npm package (illustrative name <code>@stash/cli</code>).</p>
+<h3 id="full-website-vision">Full website (vision)</h3>
+<ul>
+<li><strong>Dashboard:</strong> projects, recent sessions, memory count, recent merges, agent activity, guardrail activity.</li>
+<li><strong>Sessions:</strong> browse sessions and their histories, inspect tool calls, trace any item back to its source.</li>
+<li><strong>Memory Explorer:</strong> search across sessions, ask questions about past work, browse by type, inspect evidence.</li>
+<li><strong>Merge Explorer:</strong> pick sessions, see related findings and disagreements, inspect sources.</li>
+<li><strong>Guardrails:</strong> review, approve or reject, see the motivating sessions, manage expiry.</li>
+<li><strong>Project and Access Management:</strong> projects, invites, permissions, audit history.</li>
+</ul>
+<h3 id="cross-llm-portability">Cross-LLM portability</h3>
+<p>Every agent stores sessions in its own format. Stash converts accessible history into a <strong>Universal Context Format</strong> using an <strong>adapter</strong> per agent: Claude Code → adapter → universal format → storage → universal format → target adapter → target agent. Hidden model reasoning and internal state are never transferred. Where an agent supports restoring its own native sessions, Stash can use that; otherwise it builds a package the target agent can read.</p>
+<h3 id="persistent-memory-vision">Persistent memory (vision)</h3>
+<p>The vision listed eight memory types (decisions, discoveries, failed approaches, constraints, architecture, lessons, open questions, guardrails). Each memory had an ID, project and session references, source events, type, content, confidence, verification status, timestamps, an embedding and provenance. Lifecycle: session → event extraction → memory extraction → dedup and validation → Atlas → semantic retrieval → future agent context. A model-generated summary must never silently become an established fact.</p>
+<h3 id="merge-pipeline-vision">Merge pipeline (vision)</h3>
+<p>Extract → retrieve related items with Vector Search → compare (duplicates, complementary, contradictory, different approaches, repeated failures) → reconcile with an LLM against the original evidence, never by majority vote → generate a unified briefing → keep lineage. Sources are never changed.</p>
+<h3 id="adaptive-guardrails-vision">Adaptive guardrails (vision)</h3>
+<p>Observe → identify patterns → propose → validate against existing policy → human approval → apply in future context. Each guardrail has an ID and version, description, evidence, source sessions, scope, approval status, creation date, expiry or review date, and an audit history. Security policies stay separate from learned preferences, and agents can never weaken controls, grant themselves permissions or override approved restrictions.</p>
+<h3 id="reliability-and-security-requirements-vision">Reliability and security requirements (vision)</h3>
+<p>Versioning and lineage; concurrency (atomic updates, version checks); provenance; access control enforced at retrieval; secret redaction before upload; context budgeting; stale-memory detection; idempotent, retryable ingestion; and an audit of every push, pull, merge and approval.</p>
+<h3 id="original-architecture-superseded-for-the-mvp">Original architecture (superseded for the MVP)</h3>
+<p>The blueprint proposed a TypeScript CLI, a Python FastAPI backend, Atlas with Vector Search, an embedding provider, LLM-based processing, a React website, token auth and cloud hosting. Collections were projects, sessions, events, memories, merges, guardrails and audit_logs. Section 6 records what replaced it.</p>
+<h3 id="how-stash-differs">How Stash differs</h3>
+<div class="table"><table><thead><tr>
+<th>Capability</th>
+<th>Handoff doc</th>
+<th>Individual agent memory</th>
+<th>Stash</th>
+</tr>
+</thead><tbody><tr>
+<td>Save session summaries</td>
+<td>Yes</td>
+<td>Sometimes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Preserve accessible event history</td>
+<td>Limited</td>
+<td>Provider-dependent</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Cross-LLM portability</td>
+<td>Manual</td>
+<td>Limited</td>
+<td>Core feature</td>
+</tr>
+<tr>
+<td>Shared project memory</td>
+<td>Manual</td>
+<td>Usually isolated</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Search across agents</td>
+<td>No</td>
+<td>Limited</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Merge independent histories</td>
+<td>Manual</td>
+<td>No</td>
+<td>Core feature</td>
+</tr>
+<tr>
+<td>Evidence and provenance</td>
+<td>Limited</td>
+<td>Varies</td>
+<td>Core feature</td>
+</tr>
+<tr>
+<td>Learned project guardrails</td>
+<td>Manual</td>
+<td>Varies</td>
+<td>Core feature</td>
+</tr>
+<tr>
+<td>Shared team context</td>
+<td>Manual</td>
+<td>Limited</td>
+<td>Yes</td>
+</tr>
+</tbody></table></div>
+<p>A handoff doc tells an agent what happened. Stash gives agents what happened, why, the original evidence, what failed and what other agents learned.</p>
+<h2 id="4-hackathon-mvp-scope">4. Hackathon MVP scope</h2>
+<p>The MVP shows the core idea through one complete workflow: two agents, two laptops, one shared Project. It does not try to build the whole platform.</p>
+<div class="table"><table><thead><tr>
+<th>#</th>
+<th>Feature</th>
+<th>What the demo proves</th>
+</tr>
+</thead><tbody><tr>
+<td>1</td>
+<td>Session capture</td>
+<td>A Claude Code integration reads accessible session history: messages, tool calls and results, file interactions, metadata. Decisions, discoveries and failed approaches are extracted as Memories, not stored as Events.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Push to Atlas</td>
+<td><code>stash push</code> stores Events and metadata, builds a Digest and Memories, and Atlas embeds them automatically.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Cross-LLM pull</td>
+<td><code>stash pull &lt;id&gt;</code> gives another agent a useful Briefing, not a giant Transcript.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Intelligent merge</td>
+<td><code>stash merge &lt;a&gt; &lt;b&gt;</code> on two real Sessions finds related, duplicate and conflicting findings, keeps the evidence, and produces one Digest.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Adaptive guardrails</td>
+<td>A failure repeated across Sessions becomes a Proposed Guardrail. A human approves it with a simple workflow, and the next agent receives it.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Website</td>
+<td>A lightweight app showing Sessions, Memories, search results, Merges and Guardrails, so the value shows immediately.</td>
+</tr>
+</tbody></table></div>
+<h3 id="in-scope-vs-deferred">In scope vs deferred</h3>
+<div class="table"><table><thead><tr>
+<th>Area</th>
+<th>In the MVP</th>
+<th>Deferred</th>
+</tr>
+</thead><tbody><tr>
+<td>Agents that can push</td>
+<td>Claude Code</td>
+<td>Codex and other adapters</td>
+</tr>
+<tr>
+<td>Agents that can pull</td>
+<td>Any agent with a shell</td>
+<td>Native session restore</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td>login, init, push, pull, merge, sessions, status, guardrails (read-only)</td>
+<td>pull --project, search, memory, logout, config</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>Seeded Workspace, Stash token, approver secret</td>
+<td>Real login (Okta/Auth0 is the stretch goal), invites, roles</td>
+</tr>
+<tr>
+<td>Memory</td>
+<td>Five types, versioned per Session, three statuses</td>
+<td>Project-wide consolidation, stale-memory detection</td>
+</tr>
+<tr>
+<td>Guardrails</td>
+<td>Propose, approve or reject, include in Briefings</td>
+<td>Expiry, versioning, separate security policies</td>
+</tr>
+<tr>
+<td>Hosting</td>
+<td>Next.js runs locally on each laptop, with Atlas in the cloud</td>
+<td>Hosted backend (Vercel or similar), usage quotas, billing</td>
+</tr>
+<tr>
+<td>Website</td>
+<td>Home, Sessions, Memories, Merges, Guardrails, plus the public landing page</td>
+<td>Workspace and access management, audit views</td>
+</tr>
+</tbody></table></div>
+<p><strong>Rule for scope questions:</strong> if a problem only matters for a serious enterprise integration, it’s out of scope for now. A regular user should need at most one LLM key, and with the server-side design they need none.</p>
+<h2 id="5-glossary">5. Glossary</h2>
+<p>These are the settled words. Use the term in the first column, and avoid the words in the last column.</p>
+<div class="table"><table><thead><tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Avoid</th>
+</tr>
+</thead><tbody><tr>
+<td>Workspace</td>
+<td>A team or personal account that owns Projects</td>
+<td>Organization, account, team</td>
+</tr>
+<tr>
+<td>Project</td>
+<td>One shared codebase in a Workspace, identified by its repository rather than a local clone</td>
+<td>Repo, workspace</td>
+</tr>
+<tr>
+<td>Agent</td>
+<td>An AI coding tool that does work and produces Sessions (Claude Code, Codex)</td>
+<td>Model, bot, assistant</td>
+</tr>
+<tr>
+<td>Session</td>
+<td>One continuous conversation with an Agent. One native session maps to exactly one Session.</td>
+<td>Conversation, chat, run</td>
+</tr>
+<tr>
+<td>Session Version</td>
+<td>A snapshot of a Session at push time. Exists only when there are new Events.</td>
+<td>Revision, snapshot</td>
+</tr>
+<tr>
+<td>Event</td>
+<td>One thing that observably happened: a message, tool call, tool result, file read or change, or error. Never edited, never interpreted.</td>
+<td>Log entry, record, step</td>
+</tr>
+<tr>
+<td>Transcript</td>
+<td>A Session’s complete, normalized, ordered Events, with secrets removed</td>
+<td>History, log, raw session</td>
+</tr>
+<tr>
+<td>Universal Context Format</td>
+<td>The model-independent shape of every Transcript and Digest</td>
+<td>Context package, unified context</td>
+</tr>
+<tr>
+<td>Memory</td>
+<td>One piece of knowledge interpreted from Events, citing them as evidence. Belongs to one Session Version and is never worded as an instruction.</td>
+<td>Fact, note, insight, lesson</td>
+</tr>
+<tr>
+<td>Memory Type</td>
+<td>Decision, Discovery, Failed Approach, Constraint or Open Question</td>
+<td>Lesson, architecture, category</td>
+</tr>
+<tr>
+<td>Memory Status</td>
+<td>Hypothesis (inferred), Evidenced (an Event shows it) or Verified (a human confirmed it)</td>
+<td>Confidence, score, certainty</td>
+</tr>
+<tr>
+<td>Digest</td>
+<td>Structured summary of a Session or Merge (objective, work done, decisions, discoveries, failed approaches, open tasks) with evidence references</td>
+<td>Summary, handoff, context package</td>
+</tr>
+<tr>
+<td>Merge</td>
+<td>An immutable artifact reconciling specific Versions of two Sessions into one Digest plus Findings</td>
+<td>Combined session, unified context</td>
+</tr>
+<tr>
+<td>Finding</td>
+<td>One comparison inside a Merge: Duplicate, Complementary, Conflicting or Only in one source. A Conflicting Finding is what “disputed” means.</td>
+<td>Diff, comparison, conflict</td>
+</tr>
+<tr>
+<td>Briefing</td>
+<td>What an Agent receives on pull: built from a Digest, Memories, Events and approved Guardrails, sized to its context window</td>
+<td>Context package, prompt, handoff doc</td>
+</tr>
+<tr>
+<td>Session Lineage</td>
+<td>The record that a Session continued from a pulled Session or Merge, at an exact Version</td>
+<td>Parent, ancestry, history</td>
+</tr>
+<tr>
+<td>Guardrail</td>
+<td>An evidence-backed rule shaping future Agents in a Project. Reaches Agents only once approved by a human.</td>
+<td>Policy, constraint, lesson</td>
+</tr>
+<tr>
+<td>Proposed Guardrail</td>
+<td>A Guardrail suggested by Stash but not yet approved. Never reaches an Agent.</td>
+<td>Draft rule, suggestion</td>
+</tr>
+<tr>
+<td>Approver</td>
+<td>A human who can approve Guardrails and verify Memories. An Agent can never be one.</td>
+<td>Admin, reviewer, owner</td>
+</tr>
+<tr>
+<td>Push</td>
+<td>Publishing a Session’s new Events, which creates a new Session Version. Pushing an unchanged Session does nothing.</td>
+<td>Upload, sync, save</td>
+</tr>
+<tr>
+<td>Pull</td>
+<td>Producing a Briefing from a Session or Merge for the Agent working now</td>
+<td>Download, restore, resume</td>
+</tr>
+</tbody></table></div>
+<p><strong>How the three “context” words relate:</strong> a Transcript is <em>what happened</em>. A Digest is <em>what was learned</em>. A Briefing is <em>what the next agent receives</em>.</p>
+<h2 id="6-architecture-and-stack">6. Architecture and stack</h2>
+<p>The stack is TypeScript everywhere: an npm CLI plus one Next.js app that serves both the website and the API, sharing types through a monorepo (ADR 0001). Anthropic does all the reasoning, and Atlas handles storage, embeddings and vector search.</p>
+<pre><code class="language-text"> Laptop 1                         MongoDB Atlas                      Laptop 2
+ +------------------+            +------------------+            +------------------+
+ | Claude Code      |            | Collections      |            | Any agent        |
+ |   | stash push   |            |  Sessions, Events|            |   ^ stash pull   |
+ | stash CLI        |            |  Memories, Merges|            | stash CLI        |
+ |  capture, redact |            |  Guardrails      |            |  prints Briefing |
+ |   v              |   store    | Auto Embedding   |    read    |   ^              |
+ | Next.js (local)  | ---------&gt; | Vector Search    | ---------&gt; | Next.js (local)  |
+ |  Digest, Memories|            +------------------+            |  fixed template  |
+ +--------+---------+                                            +--------+---------+
+          |                    +------------------+                       |
+          +------------------&gt; | Anthropic Claude | &lt;---------------------+
+                               | push and merge   |
+                               +------------------+
+</code></pre>
+<p>The CLI redacts on the laptop. All LLM work happens in each laptop’s local Next.js, at push or merge time. Pull only reads from Atlas, so the second agent receives the first agent’s context through the shared database.</p>
+<pre><code class="language-text">stash/
+├── apps/
+│   ├── cli/              # npm CLI: capture, redact, push, pull, merge
+│   └── web/              # Next.js: website + API (all processing)
+├── packages/
+│   ├── core/             # shared business logic
+│   ├── context-format/   # Universal Context Format types
+│   └── agent-adapters/   # Claude Code adapter first
+└── package.json
+</code></pre>
+<div class="table"><table><thead><tr>
+<th>Component</th>
+<th>Technology</th>
+<th>Notes</th>
+</tr>
+</thead><tbody><tr>
+<td>CLI</td>
+<td>Node.js / TypeScript, npm</td>
+<td>Capture, redaction and batching all happen locally</td>
+</tr>
+<tr>
+<td>Website + API</td>
+<td>Next.js (TypeScript)</td>
+<td>One app. All LLM processing runs here.</td>
+</tr>
+<tr>
+<td>Reasoning</td>
+<td>Anthropic Claude (Sonnet-class), model set in an environment variable</td>
+<td>One provider for the Digest, Memories, Merge and Guardrails</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>MongoDB Atlas</td>
+<td>Holds Workspaces, Projects, Sessions, Events, Memories, Merges, Guardrails, pulls</td>
+</tr>
+<tr>
+<td>Embeddings</td>
+<td>Atlas Automated Embedding (<code>voyage-4</code>)</td>
+<td>No embedding provider or key. Only Memory text is embedded.</td>
+</tr>
+<tr>
+<td>Retrieval</td>
+<td>Atlas Vector Search, filtered by project</td>
+<td>Used for merge candidates, Guardrail detection and website search</td>
+</tr>
+</tbody></table></div>
+<p><strong>Provider swaps:</strong> keep a thin interface around the LLM so the provider could change later, but spend no hackathon time on multi-provider support.</p>
+<p><strong>What changed from the blueprint and why:</strong></p>
+<ul>
+<li>Python FastAPI and a separate React app became one Next.js app, so we maintain one language and define schemas once.</li>
+<li>OpenAI <code>text-embedding-3-small</code> was proposed and then replaced by Atlas Automated Embedding (generally available since August 2026). That removes an API key and the embedding-migration planning, and it’s the most MongoDB-native option.</li>
+</ul>
+<h3 id="credentials">Credentials</h3>
+<div class="table"><table><thead><tr>
+<th>Credential</th>
+<th>Where it lives</th>
+</tr>
+</thead><tbody><tr>
+<td>Stash token</td>
+<td>Developer’s machine (CLI config)</td>
+</tr>
+<tr>
+<td>Anthropic API key</td>
+<td>Backend environment</td>
+</tr>
+<tr>
+<td>Atlas connection string</td>
+<td>Backend environment</td>
+</tr>
+<tr>
+<td>Approver secret</td>
+<td>Typed by the human into the website and held only in that browser tab. The server stores only a hash.</td>
+</tr>
+</tbody></table></div>
+<p>Developers need only a Stash token, never their own LLM key. Stash pays for LLM use, so usage quotas per Workspace become a later concern. Bring-your-own-key is a possible later option.</p>
+<h3 id="two-laptop-demo-topology">Two-laptop demo topology</h3>
+<p>Each laptop runs the CLI and its own local Next.js (website and API, with the Anthropic key). Both connect to the same Atlas cluster, so they share Projects, Sessions and Memories. Vercel isn’t used for the demo, which avoids its request-size and run-time limits. In short: two local apps, one shared cloud database.</p>
+<h3 id="atlas-setup-the-hackathon-sandbox">Atlas setup (the hackathon Sandbox)</h3>
+<p>Stash must be built in the hackathon’s Atlas Sandbox: the <strong>Agents in Context Toronto</strong> organisation, in your Sandbox project. That is a hard rule of the event.</p>
+<div class="table"><table><thead><tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead><tbody><tr>
+<td>Cluster</td>
+<td><code>Cluster0</code>, tier <strong>M10</strong> (dedicated), MongoDB 9.0.7, AWS, one region, backups on</td>
+</tr>
+<tr>
+<td>Storage auto-scaling</td>
+<td><strong>Must be on.</strong> Automated Embedding on M10+ needs it; if the disk fills, embedding pauses and the index goes stale</td>
+</tr>
+<tr>
+<td>Embedding model</td>
+<td><code>voyage-4</code> (MongoDB’s recommended general model), set in the index</td>
+</tr>
+<tr>
+<td>Embedding cost</td>
+<td>200 million free tokens per model per organisation, one-time</td>
+</tr>
+<tr>
+<td>Embedding rate limits</td>
+<td>Dedicated clusters get the paid limits: 2,000 queries and 2,000 index updates a minute. The 3-a-minute limit only applies to free M0 clusters without a payment method</td>
+</tr>
+<tr>
+<td>Network access</td>
+<td>Add each demo laptop’s IP (or the venue’s) under Database and Network Access, or the backends cannot connect</td>
+</tr>
+<tr>
+<td>Database user</td>
+<td>One user for the backend; its connection string goes in each laptop’s <code>apps/web/.env</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="vector-search-one-index-used-everywhere">Vector Search: one index, used everywhere</h3>
+<p>One Vector Search index on the <code>memories</code> collection does all of Stash’s semantic work:</p>
+<pre><code class="language-json">{
+  &quot;fields&quot;: [
+    { &quot;type&quot;: &quot;autoEmbed&quot;, &quot;modality&quot;: &quot;text&quot;, &quot;path&quot;: &quot;text&quot;, &quot;model&quot;: &quot;voyage-4&quot; },
+    { &quot;type&quot;: &quot;filter&quot;, &quot;path&quot;: &quot;projectId&quot; },
+    { &quot;type&quot;: &quot;filter&quot;, &quot;path&quot;: &quot;sessionId&quot; },
+    { &quot;type&quot;: &quot;filter&quot;, &quot;path&quot;: &quot;type&quot; },
+    { &quot;type&quot;: &quot;filter&quot;, &quot;path&quot;: &quot;status&quot; },
+    { &quot;type&quot;: &quot;filter&quot;, &quot;path&quot;: &quot;current&quot; }
+  ]
+}
+</code></pre>
+<p>Queries pass plain text (<code>&quot;query&quot;: &quot;&lt;text&gt;&quot;</code>) and Atlas embeds it with the same model. Every query is filtered to the Project, and to current Memories.</p>
+<div class="table"><table><thead><tr>
+<th>Where</th>
+<th>What it asks Vector Search</th>
+</tr>
+</thead><tbody><tr>
+<td>Merge</td>
+<td>For each Memory in Session A, the nearest Memories in Session B: the candidates for Duplicate, Complementary or Conflicting</td>
+</tr>
+<tr>
+<td>Guardrails</td>
+<td>For each new Failed Approach, the nearest Failed Approaches in the Project’s other Sessions: a repeat across 2+ Sessions triggers a proposal</td>
+</tr>
+<tr>
+<td>Website search</td>
+<td>The Memories nearest a question, filtered by type and status</td>
+</tr>
+<tr>
+<td>Pull</td>
+<td>The Memories from other Sessions nearest the pulled objective, added to every Briefing as “Related from other Sessions”. Still no LLM at pull time (ADR 0002)</td>
+</tr>
+</tbody></table></div>
+<h2 id="7-cli">7. CLI</h2>
+<p>The MVP CLI has eight commands. Merge is essential, not a stretch goal, and Guardrails are read-only from the CLI.</p>
+<div class="table"><table><thead><tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead><tbody><tr>
+<td><code>stash login</code></td>
+<td>Stores a Stash token</td>
+</tr>
+<tr>
+<td><code>stash init</code></td>
+<td>Creates or joins the Project from the normalized git remote URL. With no remote, asks for a Project name. Never creates one Project per machine.</td>
+</tr>
+<tr>
+<td><code>stash push</code></td>
+<td>Capture → redact → upload → Digest and Memories → Guardrail check, with progress shown</td>
+</tr>
+<tr>
+<td><code>stash pull &lt;session-or-merge-id&gt;</code></td>
+<td>Prints a Briefing. <code>--budget &lt;tokens&gt;</code> (default about 6,000), <code>--output STASH.md</code> to also write a file</td>
+</tr>
+<tr>
+<td><code>stash merge &lt;session-a&gt; &lt;session-b&gt;</code></td>
+<td>Builds a Merge while you wait, with progress, and prints its ID</td>
+</tr>
+<tr>
+<td><code>stash sessions</code></td>
+<td>Lists the Project’s Sessions</td>
+</tr>
+<tr>
+<td><code>stash status</code></td>
+<td>Connection, Project and sync status</td>
+</tr>
+<tr>
+<td><code>stash guardrails</code></td>
+<td>Lists Guardrails and their status. Read-only.</td>
+</tr>
+</tbody></table></div>
+<p><strong>Deferred:</strong> <code>pull --project</code>, <code>search</code> (the website covers it), <code>memory</code>, <code>logout</code>, <code>config</code>.</p>
+<p><strong>Never added:</strong> <code>stash guardrails approve</code> or <code>reject</code>. An agent with a shell could run them on itself (ADR 0004).</p>
+<p>Example push output:</p>
+<pre><code class="language-text">$ stash push
+
+✓ Capturing session
+✓ Scanning transcript for secrets
+✓ 3 secrets redacted
+✓ Uploading transcript (148 events)
+✓ Generating Digest
+✓ Extracting Memories (12 found)
+✓ Checking for repeated failures
+
+Push completed successfully.
+Session: ses_8kq2v
+Version: 2
+</code></pre>
+<p>Pushing again with no changes:</p>
+<pre><code class="language-text">$ stash push
+
+Session: ses_8kq2v
+Events: 230
+No changes detected. Already up to date (v2).
+</code></pre>
+<h2 id="8-push-pipeline">8. Push pipeline</h2>
+<p>A push goes through eight steps. Everything sensitive happens on the laptop. Everything that needs the LLM happens in the backend, and the CLI shows progress throughout.</p>
+<ol>
+<li><strong>Find the session.</strong><ul>
+<li>Inside Claude Code, read <code>CLAUDE_CODE_SESSION_ID</code> (with <code>CLAUDECODE=1</code> identifying the agent). This is the preferred path and the most reliable.</li>
+<li>From a separate terminal, list the local sessions for this folder and ask the user to pick one if more than one matches.</li>
+<li><code>--session &lt;id&gt;</code> overrides both.</li>
+<li>Never silently push the wrong session. If identification isn’t reliable, ask.</li>
+</ul>
+</li>
+<li><strong>Parse</strong> the Claude Code JSONL from <code>~/.claude/projects/&lt;folder&gt;/&lt;session&gt;.jsonl</code>.<ul>
+<li>Keep only the branch the session ended on.</li>
+<li>Each rewind becomes an Event noting that a branch was abandoned; the abandoned branch itself isn’t captured.</li>
+</ul>
+</li>
+<li><strong>Normalize and filter</strong> into the Universal Context Format.<ul>
+<li>Keep: user and assistant messages, tool calls, relevant tool results, file reads and changes, errors, command output, metadata, timestamps.</li>
+<li>Drop: thinking blocks (hidden reasoning isn’t portable), Claude Code’s roughly 15 internal record types, duplicate output.</li>
+<li>Large outputs: keep useful excerpts (error messages, relevant snippets) plus a reference to what was left out, never whole file dumps.</li>
+</ul>
+</li>
+<li><strong>Redact locally, before batching.</strong> See section 14. Nothing secret ever reaches Atlas.</li>
+<li><strong>Upload in batches.</strong> Event IDs are stable, so a retried batch never duplicates. If nothing changed, stop with “Already up to date (vN)” and create no new Version.</li>
+<li><strong>Process in the backend.</strong><ul>
+<li>Build a new Digest from the <em>whole</em> Transcript.</li>
+<li>Extract a complete new Memory set for this Version.</li>
+<li>Mark the Version processed. Its Memories become the Session’s current set, and earlier Versions stay stored and unchanged.</li>
+</ul>
+</li>
+<li><strong>Record lineage</strong> from any <code>stash:briefing</code> markers in the Transcript (section 13).</li>
+<li><strong>Guardrail check</strong> against other Sessions&#39; Failed Approaches (section 12).</li>
+</ol>
+<p><strong>Why push waits for extraction:</strong> the user gets confirmation that their context is ready before switching to the other laptop, and the progress lines make the demo easy to follow.</p>
+<h2 id="9-memories">9. Memories</h2>
+<p>A Memory is an interpretation backed by cited Events. It has one of five types and one of three stored statuses, and it belongs to exactly one Session Version.</p>
+<h3 id="events-vs-memories-the-core-rule">Events vs Memories (the core rule)</h3>
+<p>Events are immutable records of what observably happened. Memories are what an LLM concluded from them. Never store an LLM interpretation as an Event.</p>
+<div class="table"><table><thead><tr>
+<th>Event (observation)</th>
+<th>Memory (interpretation)</th>
+</tr>
+</thead><tbody><tr>
+<td>Database query returned a timeout</td>
+<td>Database latency may be contributing to the login failure (Hypothesis)</td>
+</tr>
+<tr>
+<td><code>npm test</code> returned 3 failures</td>
+<td>Token refresh has a race condition (Evidenced, cites the test output)</td>
+</tr>
+<tr>
+<td>API returned HTTP 429</td>
+<td>Frequent requests hit the API’s rate limit</td>
+</tr>
+</tbody></table></div>
+<p>Even when an agent states a decision outright, the message is the Event and the Decision is a Memory pointing to it.</p>
+<h3 id="five-memory-types">Five Memory Types</h3>
+<div class="table"><table><thead><tr>
+<th>Type</th>
+<th>Represents</th>
+<th>Example</th>
+</tr>
+</thead><tbody><tr>
+<td>Decision</td>
+<td>A choice made, and why</td>
+<td>Investigate token refresh synchronization</td>
+</tr>
+<tr>
+<td>Discovery</td>
+<td>Something learned about the code, system or environment</td>
+<td>The project contains generated files overwritten during builds</td>
+</tr>
+<tr>
+<td>Failed Approach</td>
+<td>Something tried that didn’t work, and why</td>
+<td>Raising the DB timeout didn’t fix the failures</td>
+</tr>
+<tr>
+<td>Constraint</td>
+<td>A known limitation or requirement</td>
+<td>The project must support Node 22</td>
+</tr>
+<tr>
+<td>Open Question</td>
+<td>Something unresolved</td>
+<td>Does the API support batch requests?</td>
+</tr>
+</tbody></table></div>
+<p><strong>Removed from the vision:</strong> <em>Lesson</em> is now what a Guardrail is for, and <em>Architecture</em> folds into Discovery. <em>Guardrail</em> is its own entity, not a Memory type. <strong>Memories describe and never instruct.</strong> A Memory worded as an instruction would reach agents without approval.</p>
+<h3 id="memory-status">Memory Status</h3>
+<div class="table"><table><thead><tr>
+<th>Status</th>
+<th>Meaning</th>
+<th>Who sets it</th>
+</tr>
+</thead><tbody><tr>
+<td>Hypothesis</td>
+<td>Inferred; no Event directly shows it</td>
+<td>LLM</td>
+</tr>
+<tr>
+<td>Evidenced</td>
+<td>A cited Event directly shows it (a test output, a tool result)</td>
+<td>LLM</td>
+</tr>
+<tr>
+<td>Verified</td>
+<td>A human confirmed it on the website</td>
+<td>Human only, with the approver secret</td>
+</tr>
+</tbody></table></div>
+<p>There are no numeric confidence scores, because LLM confidence numbers are noise. “Disputed” is never stored on a Memory. A conflict lives in a Merge as a Conflicting Finding (ADR 0003).</p>
+<h3 id="versions-and-ownership">Versions and ownership</h3>
+<ul>
+<li>Every Session Version gets its own Digest and its own complete Memory set, extracted from the full Transcript.</li>
+<li>The latest processed Version’s Memories are the Session’s <strong>current</strong> Memories. Earlier Versions&#39; Memories stay stored for history.</li>
+<li>A change of mind shows up in the new Version. It isn’t reconciled against outdated Memories, and there’s no cross-Version reconciliation system.</li>
+<li>Pushing identical content twice does nothing, so there’s no duplicate extraction or embedding cost.</li>
+</ul>
+<h3 id="duplicates-across-sessions">Duplicates across Sessions</h3>
+<p>Sessions A and B discovering the same race condition produce <strong>two Memories, each with its own owner</strong>. Nothing is combined across the Project when storing. Duplicates are collapsed in Merges, in Briefings and in search results, and their sources are kept. This avoids write conflicts between concurrent pushes.</p>
+<h3 id="embedding">Embedding</h3>
+<p>Only Memory text is embedded, automatically by Atlas. Transcripts, Digests and Events are stored but not embedded, because embedding whole transcripts adds noise.</p>
+<h2 id="10-pull-and-briefings">10. Pull and Briefings</h2>
+<p>A Briefing is rendered from stored data by a fixed template, with <strong>no LLM call at pull time</strong> (ADR 0002). It also runs one Vector Search query to bring in related Memories from other Sessions. That keeps pull fast and free, and identical for every agent pulling the same Version while the Project’s memory is unchanged.</p>
+<h3 id="delivery">Delivery</h3>
+<p><code>stash pull &lt;id&gt;</code> prints Markdown to the terminal. Any agent with a shell can run it and read the result, so it works with any provider. <code>--output STASH.md</code> writes the same Briefing to a file. MCP delivery is a stretch goal, and native session restore is out of scope.</p>
+<h3 id="section-order">Section order</h3>
+<ol>
+<li>Marker line: <code>stash:briefing &lt;id&gt;@v&lt;version&gt; pull=&lt;pull-id&gt;</code></li>
+<li>Approved Guardrails</li>
+<li>Objective and current progress</li>
+<li>Decisions</li>
+<li>Discoveries</li>
+<li>Failed Approaches</li>
+<li>Constraints</li>
+<li>Open Questions and next steps</li>
+<li>Related from other Sessions</li>
+<li>Key evidence excerpts, with Event IDs</li>
+</ol>
+<p>Every Memory is shown with its status, so an agent never mistakes an inference for a fact. A Briefing from a Merge shows its conflicts as Conflicting Findings.</p>
+<h3 id="related-from-other-sessions-vector-search">Related from other Sessions (Vector Search)</h3>
+<p>One <code>$vectorSearch</code> on the <code>memories</code> index, run at every pull:</p>
+<ul>
+<li><strong>Query:</strong> the pulled Session’s (or Merge’s) objective, as plain text. Atlas embeds it with <code>voyage-4</code>.</li>
+<li><strong>Filter:</strong> the same Project, current Memories only, and never the pulled source itself.</li>
+<li><strong>Result:</strong> the 8 nearest Memories, duplicate texts removed, Failed Approaches first so the next agent sees what others already ruled out. Each shows its status and the Session it came from.</li>
+<li><strong>Record:</strong> the pull stores which Memories it included.</li>
+</ul>
+<p>Example: pulling the auth investigation brings in “The cache serves a session after it expires” (hypothesis, from the cache investigation) and “Raising the db timeout changed nothing” (evidenced, from an earlier session), even though neither was in the session being pulled.</p>
+<h3 id="token-budget">Token budget</h3>
+<p>The default is about 6,000 tokens, set with <code>--budget</code>, e.g. <code>stash pull ses_A --budget 10000</code> or <code>stash pull m_789 --budget 4000</code>. When content must be dropped to fit, Stash drops the least important items first. Related Memories from other Sessions go before the Session’s own. Approved Guardrails are never dropped, and the end is never simply cut off.</p>
+<h3 id="why-not-an-llm-at-pull-time">Why not an LLM at pull time</h3>
+<p>It would be slow on stage, cost money on every pull, and give different output each time. All LLM work happens during <code>push</code> and <code>merge</code>. If Briefings need to be better, the fix is better extraction at push time.</p>
+<h3 id="what-a-briefing-is-built-from">What a Briefing is built from</h3>
+<p>The Digest of the Session Version (or Merge), its current Memories, related Memories from other Sessions found by Vector Search, a few key Events as evidence, and the Project’s approved Guardrails. A Session’s Briefing never includes another Merge’s dispute, because pulling Session A alone always gives the same result.</p>
+<h2 id="11-merge">11. Merge</h2>
+<p>A Merge reconciles exactly two Sessions into one Digest plus Findings. It never changes after it’s created, and it never changes its sources (ADR 0003).</p>
+<h3 id="rules">Rules</h3>
+<ul>
+<li><strong>Inputs:</strong> exactly two Sessions in the MVP. It uses each one’s latest processed Version and records both Session IDs and Version IDs. A Merge can’t be used as a source for another Merge.</li>
+<li><strong>Where it runs:</strong> <code>stash merge &lt;a&gt; &lt;b&gt;</code> from the CLI, while you wait, with progress shown. The website only displays Merges.</li>
+<li><strong>Process:</strong> compare the two Digests, Memories and supporting Events. Use Vector Search to find related items, then the LLM judges them against the original evidence (quality, tool outputs, timestamps, status, whether the code changed in between). The conclusion that appears most often doesn’t win by default.</li>
+<li><strong>Immutable:</strong> if a source gets a newer Version, the old Merge stays tied to the old Versions. A new Merge must be created.</li>
+<li><strong>Pullable:</strong> <code>stash pull m_789</code> builds a Briefing from the Merge’s Digest, Findings, evidence and approved Guardrails.</li>
+</ul>
+<h3 id="finding-types">Finding types</h3>
+<div class="table"><table><thead><tr>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead><tbody><tr>
+<td>Duplicate</td>
+<td>Both Sessions found the same thing</td>
+</tr>
+<tr>
+<td>Complementary</td>
+<td>Different but related things</td>
+</tr>
+<tr>
+<td>Conflicting</td>
+<td>Incompatible conclusions. This is what “disputed” means.</td>
+</tr>
+<tr>
+<td>Only in one source</td>
+<td>Found in one Session but not the other</td>
+</tr>
+</tbody></table></div>
+<p>Every Finding cites its Memories and Events.</p>
+<h3 id="disputes-stay-in-the-merge">Disputes stay in the Merge</h3>
+<div class="table"><table><thead><tr>
+<th>Object</th>
+<th>Status</th>
+</tr>
+</thead><tbody><tr>
+<td>Session A → Memory X</td>
+<td>Evidenced (unchanged)</td>
+</tr>
+<tr>
+<td>Session B → Memory Y</td>
+<td>Evidenced (unchanged)</td>
+</tr>
+<tr>
+<td>Merge M1 → Finding X vs Y</td>
+<td>Conflicting</td>
+</tr>
+</tbody></table></div>
+<p><code>stash pull A</code> shows X as Evidenced. <code>stash pull M1</code> shows X and Y as a conflict. When the website shows a Memory, it can look up “Disputed in Merge m_12”.</p>
+<h3 id="example-output">Example output</h3>
+<pre><code class="language-text">$ stash merge ses_A ses_B
+
+Analyzing session histories...
+Finding related discoveries...
+Checking conflicting conclusions...
+Reconciling evidence...
+
+Merge completed.
+Combined findings: 14
+Duplicate discoveries: 3
+Conflicting conclusions: 2
+Failed approaches preserved: 5
+
+Merge: m_789
+</code></pre>
+<p><strong>Demo case:</strong> Agent A investigates auth, finds a token-refresh race and rules out the database. Agent B investigates the database, finds a stale cache and rules out auth. The Merge shows both findings, the evidence for each, and the unresolved disagreement. The result is more complete than either Session alone.</p>
+<h2 id="12-guardrails">12. Guardrails</h2>
+<p>A Guardrail is proposed only when the same failure appears in two or more different Sessions. It reaches agents only after a human approves it on the website with the approver secret.</p>
+<h3 id="memory-vs-guardrail">Memory vs Guardrail</h3>
+<p>A Memory describes something Stash learned. A Guardrail is a rule that changes what future agents do.</p>
+<ul>
+<li><strong>Memory (Discovery):</strong> “The project contains generated files that are overwritten during builds.” Retrieved automatically.</li>
+<li><strong>Proposed Guardrail:</strong> “Do not edit generated files directly. Modify their source definitions instead.” Inactive until a human approves it.</li>
+</ul>
+<h3 id="proposal-trigger-runs-after-every-successful-push">Proposal trigger (runs after every successful push)</h3>
+<ol>
+<li>Take the new Session’s Failed Approach Memories.</li>
+<li>Use Vector Search to find similar Failed Approaches in the Project’s other Sessions.</li>
+<li>The LLM compares the underlying evidence to decide whether it’s really the same failure. Similar wording alone never triggers one.</li>
+<li>The failure must appear in at least 2 different Sessions. Two failures within one Session don’t count.</li>
+<li>Skip it if an existing Guardrail (proposed, approved or rejected) already covers the pattern.</li>
+<li>Otherwise the LLM drafts a Proposed Guardrail citing the supporting Memories and Events.</li>
+</ol>
+<h3 id="lifecycle">Lifecycle</h3>
+<p>Repeated failure → <strong>Proposed</strong> → <strong>Approved</strong> (included in every Briefing for the Project) or <strong>Rejected</strong> (never proposed again for that pattern).</p>
+<h3 id="who-can-do-what">Who can do what</h3>
+<div class="table"><table><thead><tr>
+<th>Action</th>
+<th>Where</th>
+</tr>
+</thead><tbody><tr>
+<td>Propose</td>
+<td>Backend, from extracted knowledge</td>
+</tr>
+<tr>
+<td>View</td>
+<td>Website and CLI (<code>stash guardrails</code>)</td>
+</tr>
+<tr>
+<td>Approve or reject</td>
+<td>Website only, with the approver secret</td>
+</tr>
+<tr>
+<td>Apply</td>
+<td>Automatically, in Briefings</td>
+</tr>
+</tbody></table></div>
+<h3 id="mvp-constraints">MVP constraints</h3>
+<p>Guardrails apply within one Project, have no expiry or versioning in the MVP, and always need human approval. The vision’s separate “security policies” layer is deferred, but the principle stands: agents can never weaken controls or approve their own instructions.</p>
+<h3 id="example-guardrails-from-the-vision">Example Guardrails from the vision</h3>
+<ul>
+<li>Generated files: “Do not directly modify generated files. Update the source schema and regenerate.”</li>
+<li>API rate limits: “Use request throttling and exponential backoff for this API.”</li>
+<li>Conventions: “Use the existing repository abstraction for database queries.”</li>
+</ul>
+<h2 id="13-session-lineage">13. Session Lineage</h2>
+<p>Every Briefing starts with a marker line. When the receiving Session is pushed, Stash finds that marker in its own Transcript and records which Session or Merge, at which Version, it continued from.</p>
+<pre><code class="language-text">stash:briefing ses_A@v2 pull=p_91
+</code></pre>
+<h3 id="how-it-works-across-two-laptops">How it works across two laptops</h3>
+<ol>
+<li>Laptop 1: Claude Code works, then pushes <code>ses_A</code>.</li>
+<li>Laptop 2: an agent runs <code>stash pull ses_A</code>. The Briefing, marker included, becomes a tool result in that agent’s Transcript.</li>
+<li>The agent continues working, and its session becomes <code>ses_B</code>.</li>
+<li><code>ses_B</code> is pushed. Stash finds the marker and records that <code>ses_B</code> continued from <code>ses_A</code> at v2.</li>
+</ol>
+<h3 id="why-a-marker">Why a marker</h3>
+<ul>
+<li><strong>Works with any agent.</strong> The first idea was to record the parent at pull time using Claude Code’s <code>CLAUDE_CODE_SESSION_ID</code>, but other agents may not expose a session ID. Any agent that runs <code>stash pull</code> through its shell captures the marker.</li>
+<li><strong>Explicit, never guessed.</strong> Lineage is never worked out from similar wording or timestamps.</li>
+<li><strong>Several parents for free.</strong> A Session that pulled twice has two markers and two parent links.</li>
+</ul>
+<h3 id="data-shape-illustrative">Data shape (illustrative)</h3>
+<pre><code class="language-ts">interface SessionLineage {
+  sessionId: string;
+  parentSessionId: string;
+  sourceType: &quot;session&quot; | &quot;merge&quot;;
+  sourceVersionId: string;
+  pullId: string;
+  createdAt: Date;
+}
+</code></pre>
+<p>On the website the Session page shows the chain, e.g. ses_A (Claude Code, laptop 1, original) → Briefing v2 transferred → ses_B (laptop 2, continued from ses_A).</p>
+<h2 id="14-security-secrets-and-the-approval-boundary">14. Security, secrets and the approval boundary</h2>
+<p>Secrets are removed on the laptop before anything is uploaded. Approvals need a secret that only a human holds.</p>
+<h3 id="secret-redaction">Secret redaction</h3>
+<ol>
+<li>The CLI parses the local Transcript.</li>
+<li>It scans messages, tool arguments, tool outputs and file contents for known formats: Anthropic, OpenAI, AWS and GitHub keys, Atlas connection strings, JWTs.</li>
+<li>It reads local <code>.env</code> files and matches their values anywhere in the Transcript.</li>
+<li>Each match becomes a typed placeholder, e.g. <code>ANTHROPIC_API_KEY=[REDACTED:anthropic]</code>.</li>
+<li>Only the sanitized Transcript is uploaded.</li>
+</ol>
+<p>Rules:</p>
+<ul>
+<li>Redact before batching.</li>
+<li>Count <em>distinct</em> secrets, so the same key seen five times counts once.</li>
+<li>Never put original values in logs.</li>
+<li>If scanning fails, upload nothing.</li>
+<li>Excluded or oversized content keeps a reference, so you can see what was left out.</li>
+</ul>
+<h3 id="authentication-mvp">Authentication (MVP)</h3>
+<p>One Workspace, created by a seed script. <code>stash login</code> stores a Stash token. <code>stash init</code> creates or joins the Project from the git remote. The website has no login for the demo. Okta/Auth0 is the stretch goal: it would add user accounts, Workspace membership, Project-level access and proper token issuance.</p>
+<h3 id="the-approval-boundary-adr-0004">The approval boundary (ADR 0004)</h3>
+<p>An agent has a shell and the Stash token, so anything the CLI can do, an agent can do. That’s why:</p>
+<ul>
+<li>The CLI is read-only for Guardrails and Memory Status.</li>
+<li>Approve, reject and Verify require the <strong>approver secret</strong>. The human types it into the website, the browser holds it in tab memory only, and the server stores a hash and checks it on every such request.</li>
+<li>The secret is never stored in a <code>.env</code> file, which agents read routinely. It’s never attached by the website server either, because an agent could <code>curl</code> that route.</li>
+<li>Hiding buttons is not what enforces this. The server checks the secret.</li>
+</ul>
+<p><strong>Honest limitation:</strong> in the two-laptop demo each backend runs locally with the Atlas credentials, so a determined agent could write to the database directly. That’s acceptable for the hackathon. In production the backend is hosted and agents never see its environment. Say this plainly in the pitch.</p>
+<h2 id="15-website-and-landing-page">15. Website and landing page</h2>
+<p>The web app has two parts: a public landing page that people arrive at, and the five-page app a user sees once set up. The landing page design is settled on page 15, “Bubbles”, in <code>design/landing/15-bubbles/</code>.</p>
+<h3 id="the-landing-page-today">The landing page today</h3>
+<ul>
+<li><strong>Look:</strong> the Vantage theme. A blue-black ground, Geologica type, one lime signal colour, hairline frames with corner ticks.</li>
+<li><strong>Hero:</strong> big, dull bubbles of ASCII characters arranged like a flower (six equal bubbles evenly spaced around the middle) fill the right of the first screen and fade out behind the headline on the left. The six outer bubbles are agents; the middle one is Stash. No text sits on the art.</li>
+<li><strong>Headline:</strong> “Your agents forget. Stash remembers.” with “Shared memory for AI coding agents, across sessions, models and teammates.”</li>
+<li><strong>Cursor:</strong> the bubbles tilt slightly toward the pointer. A lime brush trail was tried and removed.</li>
+<li><strong>Sections:</strong> the problem (“Every new session starts from zero”), how it works as four large rows (push, pull, merge, learn), “Git shares code. Stash shares the context behind it.” with a handoff.md vs Stash table, and the install band (“Never write a handoff.md again.” with the install command). A row of three platform cards was tried there and removed.</li>
+<li><strong>Docs:</strong> this page, linked from the nav, for private reading until launch.</li>
+</ul>
+<h3 id="the-hero-loop-and-what-it-means">The hero loop, and what it means</h3>
+<p>The animation is the product’s cycle, told without words. It never ends, and it always returns to the start:</p>
+<ol>
+<li><strong>Agents learn and push.</strong> Grey agent bubbles send pulses across the gap to the middle, each on its own timer. Every pulse that lands makes the middle a step brighter (never bigger).</li>
+<li><strong>Stash fills.</strong> When the middle is full, it holds for a moment.</li>
+<li><strong>Stash briefs every agent.</strong> The middle sends a pulse out to each agent; each one turns green gradually over about three seconds as it takes in the Briefing, and the middle dims.</li>
+<li><strong>Agents use the context.</strong> The green drains away as each agent works with what it received, until it is grey again.</li>
+<li><strong>Back to step 1.</strong> A grey agent starts pushing what it has learned since.</li>
+</ol>
+<h3 id="how-the-design-got-here-decision-log">How the design got here (decision log)</h3>
+<div class="table"><table><thead><tr>
+<th>Round</th>
+<th>What was shown</th>
+<th>Feedback</th>
+<th>Outcome</th>
+</tr>
+</thead><tbody><tr>
+<td>1</td>
+<td>Five directions: Terminal, Cobalt, Lumen, Console, Vantage</td>
+<td>“Vantage is definitely the best”</td>
+<td>Vantage theme kept</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Five Vantage variations (search, push, pull, merge, guardrails)</td>
+<td>Art unclear; what does it represent, what does the cursor do</td>
+<td>Art must stand for the product</td>
+</tr>
+<tr>
+<td>3</td>
+<td>ASCII flower: petals are agents, center is Stash</td>
+<td>Liked the idea; flat; random white flashes; too much explanation on the hero</td>
+<td>3D, one unified animation, quiet hero</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Lit 3D flower with an Apple-style pinned scroll story</td>
+<td>Looked like eggs; center did not fill; text moved on scroll</td>
+<td>Petals, a center that fills, fixed text</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Pointed petals, spiral seed head, fixed swapping text</td>
+<td>Looked like blades; pulses should be staggered; dropped the Apple layout</td>
+<td>Rounded petals, staggered pulses, original layout</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Rounded petals plus a laptops-and-cloud explainer</td>
+<td>Animation ended; build slower; brighter not bigger; no second animation; no pause button</td>
+<td>Full redesign</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Big dull bubbles arranged like a flower (page 15)</td>
+<td>Glyphs misaligned; add a cursor trail; green should not stay forever; add these docs</td>
+<td>Aligned grid, brush trail, meaningful loop, docs page</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Page 15 with the brush trail and platform cards</td>
+<td>Remove the brush; remove the platform cards</td>
+<td>Both removed</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Page 15 without them</td>
+<td>Bubbles not symmetric; turning green too fast</td>
+<td>Six equal bubbles evenly spaced on one ring; green fills over three seconds</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Symmetric ring</td>
+<td>Let them move a little and come back, smoothly; more characters, not brighter</td>
+<td>Each bubble drifts slowly around its home; a finer character grid with proportionally more points</td>
+</tr>
+</tbody></table></div>
+<h3 id="app-pages-mvp">App pages (MVP)</h3>
+<div class="table"><table><thead><tr>
+<th>Page</th>
+<th>Shows</th>
+</tr>
+</thead><tbody><tr>
+<td>Home</td>
+<td>Counts and recent activity (cut first if behind)</td>
+</tr>
+<tr>
+<td>Sessions</td>
+<td>List, plus a detail page: Digest with evidence linked to Transcript Events, and the lineage chain</td>
+</tr>
+<tr>
+<td>Memories</td>
+<td>Vector search, a status filter, and a Verify button (approver secret)</td>
+</tr>
+<tr>
+<td>Merges</td>
+<td>The two sources side by side, with Findings coloured by type</td>
+</tr>
+<tr>
+<td>Guardrails</td>
+<td>Proposed and Approved Guardrails with their evidence, and approve/reject buttons (approver secret)</td>
+</tr>
+</tbody></table></div>
+<p>The website never takes uploads: the CLI handles capture. Workspace and access management, invites and audit views are deferred.</p>
+<h2 id="16-demo-repo-and-demo-script">16. Demo repo and demo script</h2>
+<p>The demo runs on real Claude Code sessions against a small TypeScript API with planted problems. The quality of those sessions decides how convincing Merge and Guardrails look.</p>
+<h3 id="demo-repo-on-github-cloned-on-both-laptops">Demo repo (on GitHub, cloned on both laptops)</h3>
+<ol>
+<li><strong>Intermittent login failure with two plausible causes:</strong> a race condition in token refresh, and a stale cache. Each must be testable on its own, so agents can gather evidence for or against each one. Session A finds the race, Session B finds the cache, and the Merge reconciles them.</li>
+<li><strong>Generated API client</strong> built from a source schema. Agents edit it directly, then the build overwrites the edit or a check fails. When this happens in two or more Sessions, Stash proposes “don’t edit generated files”.</li>
+<li><strong>A fake API key in <code>.env</code></strong> that an agent reads, so the push shows a secret being redacted.</li>
+</ol>
+<p>Both laptops clone the same remote so they resolve to the same Project.</p>
+<h3 id="demo-script">Demo script</h3>
+<ol>
+<li><strong>Laptop 1:</strong> Claude Code investigates the login bug, finds the token-refresh race, and runs <code>stash push</code>. The output shows events captured, 1 secret redacted, Memories extracted.</li>
+<li><strong>Laptop 2:</strong> a different agent runs <code>stash pull ses_A</code> and continues without re-investigating (context across sessions and LLMs).</li>
+<li><strong>Merge:</strong> <code>stash merge ses_A ses_B</code> on the two independent investigations. The Merges page shows the Duplicate, Complementary and Conflicting Findings with their evidence.</li>
+<li><strong>Guardrails:</strong> the Guardrails page shows the Proposed Guardrail built from repeated edits to the generated file. A human approves it with the approver secret, and the next <code>stash pull</code> includes it (adapting its own guardrails).</li>
+<li><strong>Lineage:</strong> the Sessions page shows ses_B continued from ses_A.</li>
+<li><strong>Reliability:</strong> run <code>stash push</code> again, get “Already up to date”, then click any Memory back to its source Event.</li>
+</ol>
+<p>Every Session is a real Claude Code session; none are faked.</p>
+<h2 id="17-build-order-cut-order-and-stretch-goals">17. Build order, cut order and stretch goals</h2>
+<p>Push, pull, merge and Guardrails are never cut, because they are the pitch. The landing page is designed first, ahead of the build order below.</p>
+<h3 id="build-order">Build order</h3>
+<ol start="0">
+<li><strong>Landing page:</strong> five directions, you pick one, then build it.</li>
+<li>Atlas cluster, auto-embed Vector Search index, seed script (Workspace, token, approver secret hash)</li>
+<li>Demo repo with the planted problems, pushed to GitHub</li>
+<li>Claude adapter, redaction, and push storing raw Events</li>
+<li>Digest and Memory extraction</li>
+<li>Pull and Briefing</li>
+<li>Merge</li>
+<li>Guardrail proposal</li>
+<li>Website app, starting with the Guardrails and Merges pages</li>
+<li>Lineage</li>
+<li>Record real sessions</li>
+<li>Rehearse twice</li>
+</ol>
+<h3 id="cut-order-if-behind">Cut order if behind</h3>
+<ol>
+<li>Home page</li>
+<li><code>stash sessions</code> and <code>stash status</code></li>
+<li>The website’s lineage chain (keep the data)</li>
+<li>The Verify button</li>
+</ol>
+<h3 id="stretch-goals">Stretch goals</h3>
+<ul>
+<li>Okta/Auth0 login</li>
+<li>An MCP server (<code>stash_pull</code>, <code>stash_search</code> tools)</li>
+<li>A Codex push adapter (there are 3 old Codex sessions on this machine)</li>
+<li>Auto-push from a Claude Code hook when a session ends</li>
+<li><code>stash pull ... --output</code> wired into CLAUDE.md or AGENTS.md</li>
+</ul>
+<h2 id="18-decision-log">18. Decision log</h2>
+<p>This records every question from the design sessions (2026-11-11 to 11-13) and its final answer. Where you changed my recommendation, the final column says so.</p>
+<h3 id="before-the-grilling">Before the grilling</h3>
+<div class="table"><table><thead><tr>
+<th>Topic</th>
+<th>What happened</th>
+<th>Final</th>
+</tr>
+</thead><tbody><tr>
+<td>Project direction</td>
+<td>I pitched a different concept. You declined.</td>
+<td>You set the direction; Stash is your blueprint.</td>
+</tr>
+<tr>
+<td>Blueprint</td>
+<td>You supplied the full blueprint</td>
+<td>Saved as BLUEPRINT.md, formatted with your wording unchanged</td>
+</tr>
+<tr>
+<td>Scope</td>
+<td>You noted the blueprint is too big for 24 hours</td>
+<td>MVP of six features (section 4)</td>
+</tr>
+</tbody></table></div>
+<h3 id="round-1-foundations-and-core-terms">Round 1: foundations and core terms</h3>
+<div class="table"><table><thead><tr>
+<th>#</th>
+<th>Question</th>
+<th>Final decision</th>
+</tr>
+</thead><tbody><tr>
+<td>1</td>
+<td>Stack for a 24-hour build</td>
+<td>TypeScript everywhere: npm CLI plus one Next.js app (website and API). No Python. <em>(Your call; the blueprint said FastAPI.)</em></td>
+</tr>
+<tr>
+<td>2</td>
+<td>LLM and embeddings</td>
+<td>One LLM provider (Anthropic Claude Sonnet) for every operation, behind a thin interface. Embeddings were first OpenAI <code>text-embedding-3-small</code>, later replaced (round 2).</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Second agent for the cross-LLM demo</td>
+<td>Not a concern for now</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Session identity and re-push</td>
+<td>One Session per native session. Each push with new Events is a new Version. An identical push does nothing (“Already up to date”).</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Events vs interpretations</td>
+<td>Events are observations only and never change. Decisions, discoveries and failures are Memories citing Events.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Is a Guardrail a Memory?</td>
+<td>No. A Guardrail is its own governed entity with its own collection. Memories are retrieved automatically; Guardrails only after approval.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Overloaded “context” words</td>
+<td>Transcript (what happened), Digest (what was learned), Briefing (what the next agent receives). Drop “context package” and “unified context”.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Project vs Workspace</td>
+<td><strong>Both exist</strong> <em>(you changed my recommendation of Project only)</em>. Workspace owns Projects. A Project is the repo, matched by its normalized git remote, never one per clone.</td>
+</tr>
+<tr>
+<td>9</td>
+<td>How push finds the session</td>
+<td>Inside the agent is preferred (environment variable). A separate terminal is also supported, asking the user to choose when there’s more than one candidate. Never silently upload the wrong session.</td>
+</tr>
+<tr>
+<td>10</td>
+<td>How pull delivers</td>
+<td>Markdown to stdout, plus <code>--output STASH.md</code>. MCP later.</td>
+</tr>
+<tr>
+<td>11</td>
+<td>What’s captured, and where redaction happens</td>
+<td>Keep messages, tool calls and results, file changes, errors and metadata. Drop thinking blocks and internal records. Keep useful excerpts of large outputs with a reference to the rest. Redact locally before upload.</td>
+</tr>
+</tbody></table></div>
+<h3 id="round-2-keys-memory-extraction-auth-demo">Round 2: keys, memory, extraction, auth, demo</h3>
+<div class="table"><table><thead><tr>
+<th>#</th>
+<th>Question</th>
+<th>Final decision</th>
+</tr>
+</thead><tbody><tr>
+<td>1</td>
+<td>Where keys live</td>
+<td>Server-side. Developers need only a Stash token. Bring-your-own-key maybe later.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Where it runs for the demo</td>
+<td><strong>Two laptops</strong>, each running Next.js locally, one shared Atlas <em>(you extended it to two laptops)</em>. No Vercel.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>When extraction runs</td>
+<td>During push, with progress shown. <em>(You pushed back on “replace old Memories”; settled in round 3.)</em></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Memory types</td>
+<td>Five: Decision, Discovery, Failed Approach, Constraint, Open Question. No Lesson or Architecture. Memories never instruct.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Confidence</td>
+<td>One status field instead of numeric scores. LLM sets Hypothesis or Evidenced; only a human sets Verified. (“Disputed” moved to Merges in round 3.)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Duplicate Memories across Sessions</td>
+<td>Two Memories with two owners. Duplicates are handled at Merge, in Briefings and in search, never when storing.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Auth</td>
+<td>Seeded Workspace, token-based CLI login, no website login. Okta/Auth0 is the stretch goal.</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>pull --project</code> and search</td>
+<td>Both deferred. Search lives on the website. Approved Guardrails go into every Briefing.</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Who approves Guardrails</td>
+<td>Only a human, on the website. The CLI is read-only.</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Demo repo</td>
+<td>A TypeScript API with a two-cause login bug and a generated client. Real sessions. Build it first.</td>
+</tr>
+<tr>
+<td>none</td>
+<td>Embedding provider (follow-up)</td>
+<td>Atlas Automated Embedding replaces OpenAI. No embedding key.</td>
+</tr>
+</tbody></table></div>
+<h3 id="round-3-conflicts-merge-lineage-guardrails">Round 3: conflicts, merge, lineage, guardrails</h3>
+<div class="table"><table><thead><tr>
+<th>#</th>
+<th>Question</th>
+<th>Final decision</th>
+</tr>
+</thead><tbody><tr>
+<td>1</td>
+<td>Atlas vs OpenAI key</td>
+<td>Atlas Automated Embedding. The backend holds the Anthropic key and the Atlas connection string. Only Memory text is embedded.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Can a Merge mark source Memories Disputed?</td>
+<td>No. A dispute is a Conflicting Finding inside the Merge. Sources never change.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Re-push reconciliation</td>
+<td><strong>Each Version extracts a full new Memory set. The latest Version’s Memories are current, and old ones are kept.</strong> No cross-Version reconciliation and no “Superseded” status. <em>(Your call over my reconcile proposal.)</em></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>merge</code> missing from the CLI list</td>
+<td>Restored. Essential MVP command.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>What a Merge contains</td>
+<td>Two Sessions, latest Versions recorded, Digest plus four Finding types, immutable, pullable, can’t be merged again</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Lineage across laptops</td>
+<td>Yes: Session Lineage records the exact source and Version. Explicit, never inferred. Several parents later.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>When a Guardrail is proposed</td>
+<td>After each push: vector candidates, then LLM checks the evidence, then 2 or more different Sessions, then no existing coverage, then draft. Rejected patterns never return. No expiry or versioning.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>How a Briefing is built</td>
+<td>Fixed template, no LLM at pull, fixed section order, about 6,000 token default, drop by priority rather than cutting the end</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Secret redaction</td>
+<td>Local, by known formats plus <code>.env</code> values, typed placeholders, distinct count, fail safe</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Website pages</td>
+<td>Not answered in round 3, settled in round 4</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Approval hole (open endpoint)</td>
+<td>Separate approver credential from the agent token, checked by the server. <em>(Your first answer kept it in the website’s environment; corrected in round 4.)</em></td>
+</tr>
+</tbody></table></div>
+<h3 id="round-4-final-gaps">Round 4: final gaps</h3>
+<div class="table"><table><thead><tr>
+<th>#</th>
+<th>Question</th>
+<th>Final decision</th>
+</tr>
+</thead><tbody><tr>
+<td>1</td>
+<td>Where the approver secret lives</td>
+<td>Typed by the human into the website and held in tab memory. The server stores a hash. Never in an <code>.env</code> file.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Website pages</td>
+<td>Home, Sessions, Memories, Merges, Guardrails</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Lineage for any agent</td>
+<td>A <code>stash:briefing</code> marker in every Briefing, parsed on push. Several parents from day one.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Atlas tier</td>
+<td>Add a payment method for paid-tier embedding rate limits. Check the exact limits during setup.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Rewound branches</td>
+<td>Capture the branch the session ended on, plus an Event noting each abandoned branch</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Project identity in the demo</td>
+<td>The demo repo is on GitHub, cloned on both laptops. With no remote, <code>stash init</code> asks for a name.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Build and cut order</td>
+<td>As in section 17</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Decision records</td>
+<td>Write ADRs 0002, 0003 and 0004</td>
+</tr>
+</tbody></table></div>
+<h3 id="after-the-grilling">After the grilling</h3>
+<div class="table"><table><thead><tr>
+<th>Topic</th>
+<th>Final</th>
+</tr>
+</thead><tbody><tr>
+<td>Next step</td>
+<td>Landing page first, with five design directions to approve or reject. Atlas setup waits.</td>
+</tr>
+<tr>
+<td>One place for everything</td>
+<td>This doc</td>
+</tr>
+<tr>
+<td>Atlas</td>
+<td>Must be built in the hackathon Sandbox: Cluster0, M10, MongoDB 9.0.7; storage auto-scaling on for Automated Embedding</td>
+</tr>
+<tr>
+<td>Vector Search at pull</td>
+<td>Yes: every Briefing adds the nearest Memories from other Sessions; still no LLM at pull</td>
+</tr>
+</tbody></table></div>
+<h2 id="19-architecture-decision-records">19. Architecture decision records</h2>
+<p>Four decisions are written up in <code>docs/adr/</code> because a future contributor would likely reverse them by mistake.</p>
+<div class="table"><table><thead><tr>
+<th>ADR</th>
+<th>Decision</th>
+<th>Why it’s written down</th>
+</tr>
+</thead><tbody><tr>
+<td>0001</td>
+<td>TypeScript everywhere: npm CLI plus one Next.js app for the website and API, with shared packages</td>
+<td>Departs from the blueprint’s Python FastAPI plus React. One language, schemas defined once, hackathon time spent on product, not glue.</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>Briefings are a fixed template; no LLM at pull time (one Vector Search query is allowed)</td>
+<td>Someone will want an LLM to “improve” Briefings. Pull must stay fast, free and repeatable; improve extraction instead.</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>Merges never change their sources; disputes live in Findings</td>
+<td>Someone will want <code>disputed</code> as a Memory Status. Pulling Session A must give the same result whatever Merges used it.</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>Only a human holding the approver secret approves Guardrails or verifies Memories</td>
+<td>Someone will want a CLI approve command. Agents have a shell and the token, so the CLI must stay read-only and the server must check the secret.</td>
+</tr>
+</tbody></table></div>
+<p>Decisions not given an ADR (easy to reverse or unsurprising) are still recorded in the decision log above.</p>
+<h2 id="20-known-limitations-open-items-and-environment-facts">20. Known limitations, open items and environment facts</h2>
+<p>Three things are still open: the hackathon’s rules on pre-event coding, team size, and the landing page direction.</p>
+<h3 id="known-limitations-say-these-in-the-pitch">Known limitations (say these in the pitch)</h3>
+<ul>
+<li>Each demo laptop has the Atlas credentials, so a determined agent could get around app-level checks. In production the backend is hosted.</li>
+<li>Only Claude Code sessions can be pushed. Any agent with a shell can pull.</li>
+<li>Abandoned branches are recorded only as markers, not captured in full.</li>
+<li>No real login, roles or audit views in the MVP.</li>
+<li>Stash pays for LLM use. Usage quotas per Workspace come later.</li>
+</ul>
+<h3 id="open-items">Open items</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Confirm whether the hackathon allows code written before the event</li>
+<li><input disabled="" type="checkbox"> Confirm team size and who owns which part</li>
+<li><input disabled="" type="checkbox"> Choose a landing page direction from the five examples</li>
+<li><input disabled="" type="checkbox"> In the Sandbox project: turn on storage auto-scaling for Cluster0, add the laptops&#39; IPs, create a database user, and get the connection string</li>
+<li><input disabled="" type="checkbox"> Get the Anthropic API key for the backend</li>
+<li><input disabled="" type="checkbox"> Check that the terminal CLI sets <code>CLAUDE_CODE_SESSION_ID</code> (confirmed only in the desktop app so far)</li>
+</ul>
+<h3 id="environment-facts-checked-on-this-mac-2026-11-11">Environment facts (checked on this Mac, 2026-11-11)</h3>
+<div class="table"><table><thead><tr>
+<th>Fact</th>
+<th>Detail</th>
+</tr>
+</thead><tbody><tr>
+<td>Claude Code session files</td>
+<td><code>~/.claude/projects/&lt;folder&gt;/&lt;uuid&gt;.jsonl</code>: useful records (user, assistant, tool_use, tool_result) mixed with about 15 internal record types, so the adapter must keep an allowed list</td>
+</tr>
+<tr>
+<td>Session ID available</td>
+<td>Claude Code sets <code>CLAUDE_CODE_SESSION_ID</code> and <code>CLAUDECODE=1</code> for commands it runs</td>
+</tr>
+<tr>
+<td>Installed</td>
+<td>Node 26, npm 11, Python 3.14, Claude Code 2.1.318</td>
+</tr>
+<tr>
+<td>Not installed</td>
+<td>Codex CLI and Gemini CLI (3 old Codex session files exist in <code>~/.codex/sessions</code>)</td>
+</tr>
+</tbody></table></div>
+<h3 id="sources">Sources</h3>
+<ul>
+<li><a href="https://www.mongodb.com/products/updates/now-ga-automated-embedding-in-atlas-vector-search/">Now GA: Automated Embedding in Atlas Vector Search</a></li>
+<li><a href="https://mongodb.com/docs/vector-search/crud-embeddings/automated-embedding/">Automated Embedding docs</a></li>
+<li><a href="https://www.mongodb.com/docs/vector-search/crud-embeddings/automated-embedding/models/">Automated Embedding models and rate limits</a></li>
+<li><a href="https://mongodb.com/docs/atlas/cluster-tier">Atlas cluster tiers</a></li>
+</ul>
+<details class="appendices" id="appendices"><summary>Appendices: the original blueprint and the full decision records</summary><h2 id="appendix-a-the-original-blueprint">Appendix A. The original blueprint</h2>
+<p>Your blueprint as written, kept verbatim for reference. Where it differs from the sections above, the MVP decisions win.</p>
+<p><em>Project blueprint</em></p>
+<p>Stash is shared memory infrastructure for AI agents.</p>
+<p>It allows developers to capture, store, retrieve, search, transfer, and merge the working context of AI agents across sessions, machines, developers, projects, and LLM providers.</p>
+<p>Today, AI coding agents operate in isolated sessions. When a session ends, much of the context behind the work becomes difficult to access or reuse. A developer might spend hours investigating a problem, reading files, testing solutions, making decisions, and ruling out approaches. Starting a new session often means reconstructing that context manually.</p>
+<p>Stash solves this by giving agents a persistent, shared context layer.</p>
+<p>Instead of treating every agent session as an isolated interaction, Stash turns sessions into reusable project knowledge.</p>
+<p>Developers interact with Stash primarily through a CLI, with a website for browsing, searching, managing, and visualizing stored context.</p>
+<h4 id="core-capabilities">Core capabilities</h4>
+<ol>
+<li><strong>Context portability:</strong> Move working context between sessions, machines, developers, and different LLMs.</li>
+<li><strong>Persistent memory:</strong> Build a searchable knowledge base from accumulated agent sessions.</li>
+<li><strong>Intelligent merging:</strong> Combine independent agent histories into a unified context while preserving evidence, disagreements, and provenance.</li>
+<li><strong>Adaptive guardrails:</strong> Learn from previous failures and propose project-specific constraints for future agents.</li>
+<li><strong>Reliable context infrastructure:</strong> Preserve history, track versions, manage permissions, and retrieve relevant information without overwhelming agents.</li>
+</ol>
+<p>Stash is not another chatbot memory feature. It is an infrastructure layer that allows multiple agents to build on each other’s work.</p>
+<hr>
+<h4 id="2-the-problem">2. The Problem</h4>
+<p>AI agents are becoming increasingly capable, but their working context is fragmented.</p>
+<p>A developer might use Claude Code to investigate a bug, GPT to review an implementation, and another agent to research an architectural decision.</p>
+<p>Each agent operates within its own environment, session history, memory system, and context window.</p>
+<p>This creates several problems.</p>
+<h5 id="2-1-isolated-sessions">2.1 Isolated sessions</h5>
+<p>An agent accumulates useful context while working:</p>
+<ul>
+<li>Files it has inspected.</li>
+<li>Commands and tools it has executed.</li>
+<li>Findings and discoveries.</li>
+<li>Decisions and the reasoning behind them.</li>
+<li>Failed approaches.</li>
+<li>Relevant outputs and evidence.</li>
+<li>Outstanding tasks.</li>
+</ul>
+<p>When a session ends, that context is not necessarily available to another agent.</p>
+<p>Developers often resort to manually writing summaries or copying conversations into new sessions. Like asking their agent to write them a handoff doc.</p>
+<h5 id="2-2-repeated-investigations">2.2 Repeated investigations</h5>
+<p>Without shared historical context, agents repeat work.</p>
+<p>An agent might investigate a database issue that another agent already ruled out. Another might retry an approach that previously failed.</p>
+<p>This wastes time, tokens, and compute.</p>
+<h5 id="2-3-no-shared-project-memory">2.3 No shared project memory</h5>
+<p>Individual agents may have their own memory systems, but there is no universal place where the collective knowledge of multiple agents can accumulate.</p>
+<p>Important information remains scattered across:</p>
+<ul>
+<li>Local session files.</li>
+<li>Chat histories.</li>
+<li>Markdown handoff documents.</li>
+<li>Project documentation.</li>
+<li>Different AI providers.</li>
+<li>Individual developers&#39; machines.</li>
+</ul>
+<h5 id="2-4-difficult-handoffs">2.4 Difficult handoffs</h5>
+<p>A handoff document can summarize what happened, but it often loses important details.</p>
+<p>It may omit the original tool outputs, sequence of events, failed experiments, supporting evidence, and relationships between decisions.</p>
+<p>A new agent receives a summary rather than access to the underlying history.</p>
+<h5 id="2-5-repeated-mistakes">2.5 Repeated mistakes</h5>
+<p>Agents frequently make the same mistakes across different sessions.</p>
+<p>They might repeatedly modify generated files, violate project conventions, exceed API rate limits, or use approaches that have already caused problems.</p>
+<p>There is no consistent mechanism for turning these experiences into reusable, evidence-backed guardrails.</p>
+<hr>
+<h4 id="3-the-solution-stash">3. The Solution: Stash</h4>
+<p>Stash creates a persistent shared context layer for AI agents.</p>
+<p>It captures accessible agent activity, organizes it into structured context, stores it remotely, and makes it available to other agents.</p>
+<p>The fundamental idea:</p>
+<blockquote>
+<p>Git shares code and code history. Stash shares the context, evidence, decisions, and experiences behind agents&#39; work.</p>
+</blockquote>
+<p>Git allows developers to collaborate on the same codebase. Stash allows their agents to collaborate through shared working context.</p>
+<h5 id="the-three-core-commands">The three core commands</h5>
+<pre><code class="language-bash">stash push
+stash pull &lt;session-id&gt;
+stash merge &lt;session-a&gt; &lt;session-b&gt;
+</code></pre>
+<ul>
+<li><strong>Push:</strong> Publish an agent session and its working context to Stash.</li>
+<li><strong>Pull:</strong> Retrieve another session’s context and reconstruct it for the current agent.</li>
+<li><strong>Merge:</strong> Combine independent agent histories into a unified project context.</li>
+</ul>
+<p>These commands form the foundation of the product.</p>
+<hr>
+<h4 id="4-how-users-interact-with-stash">4. How Users Interact With Stash</h4>
+<p>Stash should have two primary interfaces:</p>
+<ol>
+<li>A CLI for developers working in their terminal.</li>
+<li>A website for browsing and managing shared context.</li>
+</ol>
+<p>The CLI is the primary interface. The website is the visual management layer.</p>
+<h5 id="4-1-installation">4.1 Installation</h5>
+<p>Distribute Stash as an npm package initially.</p>
+<p>Illustrative installation:</p>
+<pre><code class="language-bash">npm install -g @stash/cli
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-bash">stash login
+stash init
+</code></pre>
+<p><code>stash login</code> authenticates the developer.</p>
+<p><code>stash init</code> initializes Stash in the current project and associates it with a shared project workspace.</p>
+<h5 id="4-2-push-save-an-agent-session">4.2 Push: Save an agent session</h5>
+<p>Imagine a developer has spent two hours using Claude Code to investigate a bug.</p>
+<p>Claude has inspected files, executed commands, explored possible solutions, ruled out several causes, and identified a likely issue.</p>
+<p>Rather than losing that context, the developer runs:</p>
+<pre><code class="language-bash">stash push
+</code></pre>
+<p>Stash:</p>
+<ol>
+<li>Identifies the current agent session.</li>
+<li>Captures accessible session events.</li>
+<li>Processes and structures the history.</li>
+<li>Extracts useful memories.</li>
+<li>Generates embeddings.</li>
+<li>Stores the original history and derived knowledge in MongoDB Atlas.</li>
+<li>Returns a session ID.</li>
+</ol>
+<p>Example:</p>
+<pre><code class="language-text">$ stash push
+
+Capturing session...
+Extracting decisions and discoveries...
+Indexing memories...
+Uploading to Stash...
+
+Session successfully saved.
+
+Session ID: session-123
+Events captured: 148
+Memories extracted: 12
+Project: my-project
+</code></pre>
+<p>The session is now available to other authorized agents and developers.</p>
+<h5 id="4-3-pull-continue-work-in-another-session">4.3 Pull: Continue work in another session</h5>
+<p>Now imagine the developer opens a new session, potentially using a different LLM.</p>
+<p>They run:</p>
+<pre><code class="language-bash">stash pull session-123
+</code></pre>
+<p>Stash retrieves the stored context and reconstructs it for the target agent.</p>
+<p>The context package includes:</p>
+<ul>
+<li>Original objective.</li>
+<li>Work completed.</li>
+<li>Important discoveries.</li>
+<li>Decisions and their supporting evidence.</li>
+<li>Relevant tool calls and outputs.</li>
+<li>Failed approaches.</li>
+<li>Files and dependencies involved.</li>
+<li>Outstanding questions.</li>
+<li>Recommended next steps.</li>
+</ul>
+<p>The new agent receives a structured context package and can continue working without starting from zero.</p>
+<p>Stash should also support pulling project-level memory rather than only individual sessions:</p>
+<pre><code class="language-bash">stash pull --project
+</code></pre>
+<p>This retrieves relevant accumulated knowledge from the project.</p>
+<h5 id="4-4-merge-combine-multiple-agent-histories">4.4 Merge: Combine multiple agent histories</h5>
+<p>Imagine two developers are independently investigating a problem.</p>
+<ul>
+<li>Agent A investigates authentication and identifies a race condition.</li>
+<li>Agent B investigates the database and discovers a stale cache.</li>
+</ul>
+<p>Both agents have useful information, but neither has the complete picture.</p>
+<p>The developer runs:</p>
+<pre><code class="language-bash">stash merge session-123 session-456
+</code></pre>
+<p>Stash compares both histories, identifies related findings, retrieves supporting evidence, detects conflicts, and creates a unified context.</p>
+<p>Example output:</p>
+<pre><code class="language-text">$ stash merge session-123 session-456
+
+Analyzing session histories...
+Finding related discoveries...
+Checking conflicting conclusions...
+Reconciling evidence...
+
+Merge completed.
+
+Combined findings: 14
+Duplicate discoveries: 3
+Conflicting conclusions: 2
+Failed approaches preserved: 5
+
+Merged context: merge-789
+</code></pre>
+<p>The original sessions remain unchanged. The merged context becomes a new artifact linked to both source sessions.</p>
+<hr>
+<h4 id="5-the-stash-website">5. The Stash Website</h4>
+<p>The website is the visual interface for the knowledge accumulated by agents.</p>
+<p>It should not be necessary to manually upload conversations or transcripts through the website. The CLI handles capture and synchronization.</p>
+<p>The website provides visibility and control over everything stored in Stash.</p>
+<h5 id="main-sections">Main sections</h5>
+<h6 id="dashboard">Dashboard</h6>
+<ul>
+<li>Projects.</li>
+<li>Recent sessions.</li>
+<li>Number of stored memories.</li>
+<li>Recent merges.</li>
+<li>Agent activity.</li>
+<li>Guardrail activity.</li>
+</ul>
+<h6 id="sessions">Sessions</h6>
+<ul>
+<li>Browse agent sessions.</li>
+<li>View session histories.</li>
+<li>Inspect tool calls and results.</li>
+<li>See decisions and discoveries.</li>
+<li>Trace information back to its source.</li>
+</ul>
+<h6 id="memory-explorer">Memory Explorer</h6>
+<ul>
+<li>Search across all sessions.</li>
+<li>Ask questions about previous project work.</li>
+<li>Browse decisions, discoveries, constraints, and failed approaches.</li>
+<li>Inspect the evidence behind individual memories.</li>
+</ul>
+<h6 id="merge-explorer">Merge Explorer</h6>
+<ul>
+<li>Select multiple sessions.</li>
+<li>View related findings.</li>
+<li>Identify disagreements.</li>
+<li>Review merged context.</li>
+<li>Inspect the original sources.</li>
+</ul>
+<h6 id="guardrails">Guardrails</h6>
+<ul>
+<li>Review proposed guardrails.</li>
+<li>Approve or reject changes.</li>
+<li>See the sessions that motivated a rule.</li>
+<li>Manage active rules and expiration.</li>
+</ul>
+<h6 id="project-and-access-management">Project and Access Management</h6>
+<ul>
+<li>Manage projects.</li>
+<li>Invite collaborators.</li>
+<li>Control permissions.</li>
+<li>Review activity and audit history.</li>
+</ul>
+<p>The website makes Stash’s accumulated knowledge understandable and manageable.</p>
+<hr>
+<h4 id="6-cross-llm-context-portability">6. Cross-LLM Context Portability</h4>
+<p>Cross-LLM portability is one of Stash’s most important differentiators.</p>
+<p>Different AI providers maintain different session formats, memory systems, context windows, tool definitions, and interaction patterns.</p>
+<p>A session created in Claude Code cannot simply be copied into GPT and expected to resume identically.</p>
+<p>Stash solves this by introducing a model-independent representation of agent context.</p>
+<h5 id="6-1-universal-agent-context-format">6.1 Universal Agent Context Format</h5>
+<p>Stash converts accessible agent histories into a standardized format.</p>
+<p>Instead of storing context exclusively in Claude’s native format, Stash represents the underlying information independently of any specific model.</p>
+<p>The universal format should preserve:</p>
+<ul>
+<li>Messages.</li>
+<li>Tool calls and results.</li>
+<li>File interactions.</li>
+<li>Decisions.</li>
+<li>Discoveries.</li>
+<li>Failed approaches.</li>
+<li>Evidence references.</li>
+<li>Outstanding tasks.</li>
+<li>Project metadata.</li>
+<li>Session lineage.</li>
+<li>Timestamps and provenance.</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-json">{
+  &quot;project_id&quot;: &quot;project-001&quot;,
+  &quot;session_id&quot;: &quot;session-123&quot;,
+  &quot;agent&quot;: &quot;claude-code&quot;,
+  &quot;objective&quot;: &quot;Investigate authentication failure&quot;,
+  &quot;completed_work&quot;: [
+    &quot;Inspected authentication middleware&quot;,
+    &quot;Reproduced race condition&quot;
+  ],
+  &quot;decisions&quot;: [
+    {
+      &quot;decision&quot;: &quot;Investigate concurrent token refresh&quot;,
+      &quot;evidence&quot;: [&quot;event-014&quot;, &quot;event-019&quot;]
+    }
+  ],
+  &quot;failed_approaches&quot;: [
+    &quot;Database connection configuration ruled out&quot;
+  ],
+  &quot;open_tasks&quot;: [
+    &quot;Implement synchronization fix&quot;
+  ],
+  &quot;source_events&quot;: [
+    &quot;event-001&quot;,
+    &quot;event-002&quot;,
+    &quot;event-003&quot;
+  ]
+}
+</code></pre>
+<p>This is a simplified conceptual representation, not a finalized schema.</p>
+<h5 id="6-2-agent-specific-adapters">6.2 Agent-specific adapters</h5>
+<p>Stash uses adapters to translate between native agent histories and the universal context format.</p>
+<p>For example:</p>
+<pre><code class="language-text">Claude Code Session
+        |
+        v
+Claude Adapter
+        |
+        v
+Universal Context Format
+        |
+        v
+Stash Storage
+        |
+        v
+Universal Context Format
+        |
+        v
+GPT / Codex Adapter
+        |
+        v
+Target Agent Context
+</code></pre>
+<p>The same underlying context can be reconstructed for different agents.</p>
+<h6 id="example-workflow">Example workflow</h6>
+<ol>
+<li>Claude Code investigates and implements a feature.</li>
+<li>The developer runs <code>stash push</code>.</li>
+<li>Stash stores the session in its universal format.</li>
+<li>The developer opens Codex or GPT.</li>
+<li>They run <code>stash pull session-123</code>.</li>
+<li>Stash reconstructs the relevant context for that model.</li>
+<li>The new agent reviews or continues the work.</li>
+</ol>
+<p>This is not a transfer of hidden model reasoning or internal model state. It is the transfer of accessible working history, evidence, decisions, and structured context.</p>
+<p>Where native session restoration is supported, Stash can use it. Otherwise, it reconstructs a target-compatible context package.</p>
+<hr>
+<h4 id="7-persistent-project-memory">7. Persistent Project Memory</h4>
+<p>Stash should not only preserve individual sessions. It should continuously build a shared memory of the project.</p>
+<p>Every pushed session can contribute useful information to the project’s knowledge base.</p>
+<h5 id="types-of-memory">Types of memory</h5>
+<div class="table"><table><thead><tr>
+<th>Memory type</th>
+<th>Example</th>
+</tr>
+</thead><tbody><tr>
+<td>Decisions</td>
+<td>Why PostgreSQL was selected</td>
+</tr>
+<tr>
+<td>Discoveries</td>
+<td>A specific API endpoint causes failures</td>
+</tr>
+<tr>
+<td>Failed approaches</td>
+<td>A caching strategy introduced race conditions</td>
+</tr>
+<tr>
+<td>Constraints</td>
+<td>The project must support Node 22</td>
+</tr>
+<tr>
+<td>Architecture</td>
+<td>How authentication services interact</td>
+</tr>
+<tr>
+<td>Lessons</td>
+<td>Generated files should not be edited directly</td>
+</tr>
+<tr>
+<td>Open questions</td>
+<td>Whether the API supports batch requests</td>
+</tr>
+<tr>
+<td>Guardrails</td>
+<td>Limit requests to avoid rate limiting</td>
+</tr>
+</tbody></table></div>
+<p>Each memory should contain:</p>
+<ul>
+<li>A unique ID.</li>
+<li>Project and session references.</li>
+<li>Source event references.</li>
+<li>Memory type.</li>
+<li>Content.</li>
+<li>Confidence.</li>
+<li>Verification status.</li>
+<li>Creation and update timestamps.</li>
+<li>Embedding.</li>
+<li>Provenance.</li>
+</ul>
+<h5 id="memory-lifecycle">Memory lifecycle</h5>
+<pre><code class="language-text">Agent Session
+     |
+     v
+Event Extraction
+     |
+     v
+Memory Extraction
+     |
+     v
+Deduplication and Validation
+     |
+     v
+MongoDB Atlas
+     |
+     v
+Semantic Retrieval
+     |
+     v
+Future Agent Context
+</code></pre>
+<p>The system should distinguish between verified findings, hypotheses, and unresolved questions.</p>
+<p>A model-generated summary should never silently become an established project fact.</p>
+<hr>
+<h4 id="8-intelligent-context-merging">8. Intelligent Context Merging</h4>
+<p>Merging agent histories is more than combining two transcripts.</p>
+<p>Stash should understand how the information in different sessions relates to each other.</p>
+<h5 id="8-1-merge-pipeline">8.1 Merge pipeline</h5>
+<p><strong>Step 1: Extract</strong></p>
+<p>Convert both histories into structured events and memories.</p>
+<p><strong>Step 2: Retrieve related information</strong></p>
+<p>Use MongoDB Vector Search to find semantically related findings, decisions, and evidence.</p>
+<p><strong>Step 3: Compare</strong></p>
+<p>Identify:</p>
+<ul>
+<li>Duplicate discoveries.</li>
+<li>Complementary findings.</li>
+<li>Contradictory conclusions.</li>
+<li>Different approaches to the same problem.</li>
+<li>Repeated failed attempts.</li>
+</ul>
+<p><strong>Step 4: Reconcile</strong></p>
+<p>Use an LLM to evaluate the findings alongside their original evidence.</p>
+<p>Consider:</p>
+<ul>
+<li>Evidence quality.</li>
+<li>Original tool outputs.</li>
+<li>Timestamps.</li>
+<li>Verification status.</li>
+<li>Whether the project changed between sessions.</li>
+</ul>
+<p>Do not simply select whichever conclusion appears most often.</p>
+<p><strong>Step 5: Generate unified context</strong></p>
+<p>Produce a structured briefing containing:</p>
+<ul>
+<li>Combined objective.</li>
+<li>Confirmed discoveries.</li>
+<li>Important decisions.</li>
+<li>Conflicting conclusions.</li>
+<li>Failed approaches.</li>
+<li>Supporting evidence.</li>
+<li>Unresolved questions.</li>
+<li>Recommended next steps.</li>
+</ul>
+<p><strong>Step 6: Preserve lineage</strong></p>
+<p>The merged artifact references the original sessions and events.</p>
+<p>Original histories remain immutable.</p>
+<h5 id="8-2-example">8.2 Example</h5>
+<p>Agent A:</p>
+<ul>
+<li>Investigates authentication.</li>
+<li>Finds a race condition.</li>
+<li>Rules out the database as the cause.</li>
+</ul>
+<p>Agent B:</p>
+<ul>
+<li>Investigates database performance.</li>
+<li>Finds a stale cache.</li>
+<li>Rules out authentication as the cause.</li>
+</ul>
+<p>Stash should not simply combine the summaries.</p>
+<p>It should identify the relationship between the findings, inspect the evidence, and produce a unified investigation that preserves both conclusions and any unresolved disagreement.</p>
+<p>The result should give the next agent a more complete understanding of the problem than either original session.</p>
+<hr>
+<h4 id="9-adaptive-guardrails">9. Adaptive Guardrails</h4>
+<p>This is a particularly important part of the product because agents should become more reliable as they accumulate experience.</p>
+<p>Stash should learn from previous mistakes and use that knowledge to guide future agents.</p>
+<p>Instead of treating every session as a fresh start, Stash identifies recurring patterns across sessions.</p>
+<h5 id="9-1-how-it-works">9.1 How it works</h5>
+<ol>
+<li><strong>Observe:</strong> Capture failures, rejected actions, repeated mistakes, and successful approaches.</li>
+<li><strong>Identify patterns:</strong> Compare events across sessions to identify recurring issues.</li>
+<li><strong>Propose a guardrail:</strong> Generate a potential project-specific rule supported by historical evidence.</li>
+<li><strong>Validate:</strong> Check the proposed rule against existing policies, project requirements, and security constraints.</li>
+<li><strong>Approve:</strong> Require human approval for consequential changes.</li>
+<li><strong>Apply:</strong> Inject approved guardrails into future agent context.</li>
+</ol>
+<h5 id="9-2-examples">9.2 Examples</h5>
+<h6 id="generated-files">Generated files</h6>
+<p>An agent repeatedly modifies generated files directly, causing build failures.</p>
+<p>Stash proposes:</p>
+<blockquote>
+<p>“Do not directly modify generated files. Update the source schema and regenerate the files.”</p>
+</blockquote>
+<h6 id="api-rate-limits">API rate limits</h6>
+<p>Multiple sessions encounter API rate limits.</p>
+<p>Stash proposes:</p>
+<blockquote>
+<p>“Use request throttling and exponential backoff for this API.”</p>
+</blockquote>
+<h6 id="project-conventions">Project conventions</h6>
+<p>Agents repeatedly use inconsistent database access patterns.</p>
+<p>Stash proposes:</p>
+<blockquote>
+<p>“Use the existing repository abstraction for database queries.”</p>
+</blockquote>
+<h5 id="9-3-guardrail-management">9.3 Guardrail management</h5>
+<p>Each guardrail should have:</p>
+<ul>
+<li>Rule ID and version.</li>
+<li>Description.</li>
+<li>Supporting evidence.</li>
+<li>Source sessions.</li>
+<li>Scope.</li>
+<li>Approval status.</li>
+<li>Creation date.</li>
+<li>Expiration or review date.</li>
+<li>Audit history.</li>
+</ul>
+<p>Security policies must remain separate from learned project preferences.</p>
+<p>Agents must never be allowed to autonomously weaken mandatory security controls, grant themselves permissions, or override approved restrictions.</p>
+<hr>
+<h4 id="10-reliability-and-security">10. Reliability and Security</h4>
+<p>Stash is intended to become infrastructure for real agent workloads. It cannot simply store summaries and hope everything works.</p>
+<p>Several requirements need to be considered from the beginning.</p>
+<h5 id="versioning-and-lineage">Versioning and lineage</h5>
+<p>Every session should have a stable identity and version.</p>
+<p>Merges should reference their source sessions and events.</p>
+<p>Changes should not silently overwrite historical information.</p>
+<h5 id="concurrency">Concurrency</h5>
+<p>Multiple agents may push context or update project knowledge simultaneously.</p>
+<p>Use atomic updates, version checks, and conflict detection.</p>
+<h5 id="provenance">Provenance</h5>
+<p>Every important memory should be traceable to its original session and supporting events.</p>
+<p>Agents should be able to distinguish a direct observation from a generated interpretation.</p>
+<h5 id="access-control">Access control</h5>
+<p>Project-level permissions should determine which agents and developers can retrieve information.</p>
+<p>Retrieval must respect permissions, not just storage access.</p>
+<h5 id="secret-detection">Secret detection</h5>
+<p>Before uploading session data, detect and redact sensitive information such as:</p>
+<ul>
+<li>API keys.</li>
+<li>Access tokens.</li>
+<li>Passwords.</li>
+<li>Private credentials.</li>
+<li>Other sensitive environment values.</li>
+</ul>
+<p>Provide controls for what can be captured and uploaded.</p>
+<h5 id="context-budgeting">Context budgeting</h5>
+<p>Do not blindly load entire transcripts into a new agent.</p>
+<p>Retrieve the most relevant information, prioritize important memories, and respect the target model’s context window.</p>
+<h5 id="stale-memory-detection">Stale memory detection</h5>
+<p>A decision made several months ago may no longer apply after major code changes.</p>
+<p>Stash should track timestamps and relevant project versions, and flag potentially outdated knowledge.</p>
+<h5 id="idempotency-and-recovery">Idempotency and recovery</h5>
+<p>Repeated uploads should not create duplicate events.</p>
+<p>Failed uploads should be recoverable, and ingestion should support retries.</p>
+<h5 id="auditability">Auditability</h5>
+<p>Track who pushed, pulled, merged, approved guardrails, and accessed shared context.</p>
+<hr>
+<h4 id="11-technical-architecture">11. Technical Architecture</h4>
+<p>Stash should be structured around a lightweight CLI, backend processing service, MongoDB Atlas, and a web application.</p>
+<h5 id="suggested-technology-stack">Suggested technology stack</h5>
+<div class="table"><table><thead><tr>
+<th>Component</th>
+<th>Technology</th>
+</tr>
+</thead><tbody><tr>
+<td>CLI</td>
+<td>Node.js / TypeScript</td>
+</tr>
+<tr>
+<td>Package distribution</td>
+<td>npm</td>
+</tr>
+<tr>
+<td>Backend API</td>
+<td>Python / FastAPI</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>MongoDB Atlas</td>
+</tr>
+<tr>
+<td>Semantic retrieval</td>
+<td>MongoDB Vector Search</td>
+</tr>
+<tr>
+<td>Embeddings</td>
+<td>Embedding model provider</td>
+</tr>
+<tr>
+<td>Context processing</td>
+<td>LLM-based extraction and reconciliation</td>
+</tr>
+<tr>
+<td>Website</td>
+<td>React / TypeScript</td>
+</tr>
+<tr>
+<td>Authentication</td>
+<td>Token-based authentication</td>
+</tr>
+<tr>
+<td>Deployment</td>
+<td>Cloud hosting</td>
+</tr>
+</tbody></table></div>
+<p>The architecture should keep agent integrations separate from the core storage and context-processing logic.</p>
+<p>This allows Stash to support additional agents without rewriting the underlying system.</p>
+<h5 id="11-3-mongodb-collections">11.3 MongoDB collections</h5>
+<ul>
+<li><strong>projects</strong>: Stores project metadata, ownership, and configuration.</li>
+<li><strong>sessions</strong>: Stores session metadata, agent type, objective, timestamps, status, and project references.</li>
+<li><strong>events</strong>: Stores the original accessible session history. Example event types:<ul>
+<li>User message.</li>
+<li>Assistant response.</li>
+<li>Tool call.</li>
+<li>Tool result.</li>
+<li>File read.</li>
+<li>File modification.</li>
+<li>Decision.</li>
+<li>Discovery.</li>
+<li>Failed approach.</li>
+<li>Error.</li>
+<li>Task completion.</li>
+</ul>
+</li>
+<li><strong>memories</strong>: Stores extracted and structured project knowledge, including embeddings and provenance.</li>
+<li><strong>merges</strong>: Stores merged context artifacts and references to their source sessions.</li>
+<li><strong>guardrails</strong>: Stores proposed and approved project-specific rules.</li>
+<li><strong>audit_logs</strong>: Stores access and modification history.</li>
+</ul>
+<p>Additional collections, such as branches or project memberships, can be introduced as needed.</p>
+<h5 id="11-4-why-mongodb-atlas">11.4 Why MongoDB Atlas?</h5>
+<p>MongoDB should be fundamental to Stash, not simply an interchangeable database.</p>
+<p>Agent histories are naturally heterogeneous.</p>
+<p>Different agents produce different event types, tool outputs, metadata, and structures. A flexible document model allows Stash to preserve this information without requiring every agent to use an identical native schema.</p>
+<p>MongoDB Atlas supports several important parts of the architecture:</p>
+<ul>
+<li><strong>Document storage:</strong> Store sessions, events, memories, merges, and guardrails as structured documents.</li>
+<li><strong>Vector Search:</strong> Search memories and historical context by semantic similarity rather than relying exclusively on exact keywords.</li>
+<li><strong>Metadata filtering:</strong> Restrict retrieval by project, user, agent, session, memory type, permissions, and timestamps.</li>
+<li><strong>Scalable storage:</strong> Build a persistent knowledge layer as the number of agents, sessions, and projects increases.</li>
+<li><strong>Flexible schemas:</strong> Support new agent integrations and event types without redesigning the entire database.</li>
+</ul>
+<p>The combination of document storage, semantic retrieval, and metadata filtering makes Atlas a central part of Stash’s architecture.</p>
+<hr>
+<h4 id="12-cli-design">12. CLI Design</h4>
+<p>The CLI should provide a simple interface for the most common workflows.</p>
+<p>Initial commands:</p>
+<pre><code class="language-bash">stash login
+stash logout
+stash init
+
+stash push
+stash pull &lt;session-id&gt;
+stash pull --project
+
+stash merge &lt;session-a&gt; &lt;session-b&gt;
+
+stash sessions
+stash search &quot;&lt;query&gt;&quot;
+stash memory
+stash guardrails
+
+stash status
+stash config
+</code></pre>
+<h5 id="command-descriptions">Command descriptions</h5>
+<div class="table"><table><thead><tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead><tbody><tr>
+<td><code>stash login</code></td>
+<td>Authenticate with a Stash account.</td>
+</tr>
+<tr>
+<td><code>stash init</code></td>
+<td>Initialize Stash in a project and connect it to a workspace.</td>
+</tr>
+<tr>
+<td><code>stash push</code></td>
+<td>Capture and publish the current accessible agent session.</td>
+</tr>
+<tr>
+<td><code>stash pull</code></td>
+<td>Retrieve a session and reconstruct its context for the current agent.</td>
+</tr>
+<tr>
+<td><code>stash pull --project</code></td>
+<td>Retrieve relevant accumulated project knowledge.</td>
+</tr>
+<tr>
+<td><code>stash merge</code></td>
+<td>Combine multiple session histories into a unified context.</td>
+</tr>
+<tr>
+<td><code>stash sessions</code></td>
+<td>List previously uploaded sessions.</td>
+</tr>
+<tr>
+<td><code>stash search</code></td>
+<td>Search historical memories and sessions.</td>
+</tr>
+<tr>
+<td><code>stash memory</code></td>
+<td>Inspect stored project memories.</td>
+</tr>
+<tr>
+<td><code>stash guardrails</code></td>
+<td>View active and proposed project guardrails.</td>
+</tr>
+<tr>
+<td><code>stash status</code></td>
+<td>Check connection, project, and synchronization status.</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h4 id="13-agent-integrations">13. Agent Integrations</h4>
+<p>Stash should use adapters for each supported agent.</p>
+<p>The first integration should be Claude Code.</p>
+<p>Claude Code already provides its own session management, local history, and memory features. Stash should complement those capabilities rather than attempt to replace them.</p>
+<p>The first integration should:</p>
+<ol>
+<li>Discover accessible local session history.</li>
+<li>Parse supported messages and tool events.</li>
+<li>Normalize the information into the universal context format.</li>
+<li>Upload it to Stash.</li>
+<li>Reconstruct a target-compatible context package when pulling.</li>
+</ol>
+<p>Future integrations could support:</p>
+<ul>
+<li>OpenAI Codex.</li>
+<li>Claude Code.</li>
+<li>Other coding agents.</li>
+<li>Custom agent frameworks.</li>
+<li>Agents built with LangChain or other orchestration systems.</li>
+</ul>
+<p>Agent-specific formats can change, so integrations should be modular and version-aware.</p>
+<p>Stash should not depend permanently on one provider’s private session-file implementation.</p>
+<p>It should also be clear about what each integration can capture. Hidden model reasoning and inaccessible internal state are not part of the portable context.</p>
+<hr>
+<h4 id="14-how-stash-differs-from-existing-memory-and-handoff-tools">14. How Stash Differs From Existing Memory and Handoff Tools</h4>
+<p>Stash operates in an area where session continuity, agent memory, and cross-agent handoffs are already being explored.</p>
+<p>Its differentiation should not be based on simply saving a session or generating a summary.</p>
+<p>Existing coding agents already have session resume, compaction, local history, and project memory capabilities.</p>
+<p>A handoff Markdown file can also transfer basic context between agents.</p>
+<p>Stash goes further by providing a shared infrastructure layer.</p>
+<div class="table"><table><thead><tr>
+<th>Capability</th>
+<th>Basic handoff document</th>
+<th>Individual agent memory</th>
+<th>Stash</th>
+</tr>
+</thead><tbody><tr>
+<td>Save session summaries</td>
+<td>Yes</td>
+<td>Sometimes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Preserve accessible event history</td>
+<td>Limited</td>
+<td>Provider-dependent</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Cross-LLM context portability</td>
+<td>Manual</td>
+<td>Limited</td>
+<td>Core feature</td>
+</tr>
+<tr>
+<td>Shared project memory</td>
+<td>Manual</td>
+<td>Usually isolated</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Search across multiple agents</td>
+<td>No</td>
+<td>Limited</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Merge independent histories</td>
+<td>Manual</td>
+<td>No</td>
+<td>Core feature</td>
+</tr>
+<tr>
+<td>Preserve evidence and provenance</td>
+<td>Limited</td>
+<td>Varies</td>
+<td>Core feature</td>
+</tr>
+<tr>
+<td>Learn project-specific guardrails</td>
+<td>Manual</td>
+<td>Varies</td>
+<td>Core feature</td>
+</tr>
+<tr>
+<td>Shared team context</td>
+<td>Manual</td>
+<td>Limited</td>
+<td>Yes</td>
+</tr>
+</tbody></table></div>
+<p>The distinction:</p>
+<blockquote>
+<p>A handoff document tells an agent what happened.</p>
+<p>Stash gives agents access to what happened, why it happened, the original evidence, what failed, and what other agents learned.</p>
+</blockquote>
+<p>The goal is not to replace every agent’s native memory system. It is to connect them through a persistent shared context layer.</p>
+<hr>
+<h4 id="last-thoughts">Last thoughts</h4>
+<p>100’000 of developers use agents every day. When those sessions end, that data is lost and not used</p>
+<h2 id="appendix-b-architecture-decision-records-in-full">Appendix B. Architecture decision records, in full</h2>
+<h3 id="adr-0001-typescript-everywhere-npm-cli-plus-a-single-next-js-app-for-both-website-and-api">ADR 0001: TypeScript everywhere: npm CLI plus a single Next.js app for both website and API</h3>
+<p>The blueprint (BLUEPRINT.md §11) proposes three applications: a TypeScript CLI, a Python FastAPI backend and a React website. For a 24-hour hackathon, we instead build two TypeScript applications in one monorepo: the npm CLI, and one Next.js app that serves both the website and the API. Shared packages hold the Universal Context Format types, the core logic and the Agent adapters. The point is to spend the hackathon on session portability, merging and memory rather than on maintaining three stacks and keeping their schemas in sync across languages. Python stays out unless a Python-only dependency turns out to matter.</p>
+<h4 id="considered-options">Considered Options</h4>
+<ul>
+<li><strong>CLI + FastAPI + React (the blueprint):</strong> rejected for the MVP. It means two languages and the schemas defined twice.</li>
+<li><strong>CLI + separate TypeScript API + Next.js website:</strong> rejected. A third app adds no value at hackathon scale.</li>
+</ul>
+<h3 id="adr-0002-briefings-are-rendered-from-a-fixed-template-with-no-llm-call-at-pull-time">ADR 0002: Briefings are rendered from a fixed template, with no LLM call at pull time</h3>
+<p>All LLM work (Digests, Memories, Merge Findings, Proposed Guardrails) happens during <code>stash push</code> and <code>stash merge</code>, and the results are stored in Atlas. <code>stash pull</code> only reads that structured data, ranks it, fits it to the token budget and renders a fixed-order template. This keeps pulls fast, free and repeatable, which matters both on stage and for agents that pull often. It also means two agents pulling the same Version receive the same Briefing. Don’t add an LLM summarisation step at pull time. If Briefings need to be better, improve what gets extracted at push time.</p>
+<h4 id="vector-search-at-pull-is-allowed">Vector Search at pull is allowed</h4>
+<p>Pull runs one <code>$vectorSearch</code> to add related Memories from other Sessions, using the pulled objective as the query. That is a database query, not a model writing text, so this decision holds: no LLM generates anything at pull time. A Briefing for the same Version is identical as long as the Project’s memory has not changed; when new Sessions are pushed, the related section can include them, which is the point.</p>
+<h3 id="adr-0003-merges-never-change-their-sources-disagreements-live-in-findings">ADR 0003: Merges never change their sources; disagreements live in Findings</h3>
+<p>A Merge records the exact Session Versions it compared and never writes to those Sessions or their Memories. When two sources conflict, the conflict becomes a Conflicting Finding inside the Merge. It is not a <code>disputed</code> status on the source Memories. So pulling Session A on its own always gives the same result, whatever Merges have since used it, and Merge itself has no concurrency or ordering problems. Don’t add <code>disputed</code> to Memory Status. To show a dispute next to a Memory, look up the Merges that cite it.</p>
+<h3 id="adr-0004-only-a-human-holding-the-approver-secret-can-approve-guardrails-or-verify-memories">ADR 0004: Only a human holding the approver secret can approve Guardrails or verify Memories</h3>
+<p>Agents have a shell and the CLI’s Stash token, so anything the CLI can do, an agent can do. The CLI is therefore read-only for Guardrails and Memory Status. Approving or rejecting a Guardrail, and marking a Memory Verified, require an approver secret. The human types it into the website, where it’s held only in that browser tab’s memory. The server stores only a hash of the secret and checks it on every such request, so hiding buttons in the UI is not what enforces this. Don’t add a CLI approve command, and don’t put the secret in any <code>.env</code> file, because agents read those.</p>
+<h4 id="consequences">Consequences</h4>
+<ul>
+<li>The two-laptop demo runs the backend locally, so each laptop has the Atlas credentials, and a determined agent could bypass this check by writing to the database directly. That is accepted for the hackathon. In production the backend is hosted, agents never see its environment, and real login (e.g. Okta/Auth0) replaces the shared secret.</li>
+</ul>
+</details>
+<!-- /content -->
+    </article>
+  </div>
+</main>
+<footer class="container colophon">Built for Agents in Context Toronto, a MongoDB hackathon. Source: docs/project.md.</footer>
+<script>
+(() => {
+  const links = [...document.querySelectorAll('.rail a')], byId = new Map(links.map((a) => [a.getAttribute('href').slice(1), a]));
+  const io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) { links.forEach((a) => a.classList.remove('is-on')); const a = byId.get(en.target.id); if (a) a.classList.add('is-on'); } }), { rootMargin: '-10% 0px -80% 0px' });
+  document.querySelectorAll('.prose h2[id]').forEach((h) => io.observe(h));
+})();
+</script>
+</body>
+</html>

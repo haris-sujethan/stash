@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash build plan</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Private build plan for the Stash hackathon MVP: stack, data model, API, algorithms, milestones and the demo run sheet.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./docs.css">
+</head>
+<body>
+<header class="pill">
+  <a class="wordmark" href="./index.html">stash</a>
+  <nav aria-label="Main"><ul><li><a href="./index.html#how">How it works</a></li><li><a href="./docs.html">Docs</a></li><li><a href="./build.html" aria-current="page">Build plan</a></li><li><a class="btn btn--sm" href="./index.html#install">Install</a></li></ul></nav>
+</header>
+<main>
+  <div class="container doc-head">
+    <h1>Stash, the build plan.</h1>
+    <p>Everything an agent needs to build the MVP from zero. Read it with the docs; where they disagree, MVP.md wins.</p>
+  </div>
+  <div class="container doc">
+    <nav class="rail" aria-label="Contents"><ol>
+<!-- toc -->
+<li><a href="#0-before-you-start">0. Before you start</a></li>
+<li><a href="#1-what-we-are-building">1. What we are building</a></li>
+<li><a href="#2-hard-constraints">2. Hard constraints</a></li>
+<li><a href="#3-human-setup-do-these-first-or-ask-the-user-to">3. Human setup (do these first, or ask the user to)</a></li>
+<li><a href="#4-repository-layout">4. Repository layout</a></li>
+<li><a href="#5-stack">5. Stack</a></li>
+<li><a href="#6-configuration">6. Configuration</a></li>
+<li><a href="#7-data-model-mongodb-database-stash">7. Data model (MongoDB, database stash)</a></li>
+<li><a href="#8-vector-search-every-query">8. Vector Search: every query</a></li>
+<li><a href="#9-web-api-next-js-route-handlers">9. Web API (Next.js route handlers)</a></li>
+<li><a href="#10-the-cli">10. The CLI</a></li>
+<li><a href="#11-push-step-by-step">11. Push, step by step</a></li>
+<li><a href="#12-server-processing">12. Server processing</a></li>
+<li><a href="#13-pull-and-the-briefing-apps-web-lib-briefing-ts">13. Pull and the Briefing (apps/web/lib/briefing.ts)</a></li>
+<li><a href="#14-website">14. Website</a></li>
+<li><a href="#15-seed-script-apps-web-scripts-seed-ts-run-with-npx-tsx">15. Seed script (apps/web/scripts/seed.ts, run with npx tsx)</a></li>
+<li><a href="#16-demo-repo-stash-demo-separate-github-repo">16. Demo repo (stash-demo, separate GitHub repo)</a></li>
+<li><a href="#17-milestones-build-in-this-order">17. Milestones (build in this order)</a></li>
+<li><a href="#18-testing">18. Testing</a></li>
+<li><a href="#19-demo-run-sheet">19. Demo run sheet</a></li>
+<li><a href="#20-risks-and-mitigations">20. Risks and mitigations</a></li>
+<li><a href="#21-open-items-for-the-user">21. Open items for the user</a></li>
+<!-- /toc -->
+    </ol></nav>
+    <article class="prose">
+<!-- content -->
+<p>This is the complete plan for building the Stash hackathon MVP. An agent with no other context should be able to read this file, then the documents it points to, and build the whole thing.</p>
+<h2 id="0-before-you-start">0. Before you start</h2>
+<h3 id="read-these-in-this-order">Read these, in this order</h3>
+<div class="table"><table><thead><tr>
+<th>File</th>
+<th>What it is</th>
+<th>Authority</th>
+</tr>
+</thead><tbody><tr>
+<td><code>BUILD.md</code> (this file)</td>
+<td>How to build it: stack, data model, APIs, algorithms, milestones</td>
+<td>How</td>
+</tr>
+<tr>
+<td><code>MVP.md</code></td>
+<td>What the 24-hour MVP is: every scoped decision</td>
+<td><strong>Wins</strong> on what to build</td>
+</tr>
+<tr>
+<td><code>GLOSSARY.md</code></td>
+<td>The settled words. Use them in code, UI and copy</td>
+<td>Wins on naming</td>
+</tr>
+<tr>
+<td><code>docs/adr/0001</code> to <code>0004</code></td>
+<td>Four decisions that look wrong without context. Do not reverse them</td>
+<td>Binding</td>
+</tr>
+<tr>
+<td><code>design/landing/15-bubbles/docs.html</code> (source: <code>docs/project.md</code> in the same folder)</td>
+<td>The full product doc: problem, vision, every decision and the design history</td>
+<td>Context</td>
+</tr>
+<tr>
+<td><code>BLUEPRINT.md</code></td>
+<td>The long-term vision. Much of it is deliberately out of scope</td>
+<td>Background only</td>
+</tr>
+<tr>
+<td><code>design/landing/15-bubbles/</code></td>
+<td>The approved landing page (static HTML, CSS, <code>bubbles.js</code>) to port into the app</td>
+<td>Design source</td>
+</tr>
+</tbody></table></div>
+<p>When these disagree: <code>MVP.md</code> beats <code>BLUEPRINT.md</code>; the ADRs beat everything; this file fills in the “how”.</p>
+<h3 id="rules-for-the-builder">Rules for the builder</h3>
+<ul>
+<li>The user leads product direction. Build what is specified. If something is unclear or looks wrong, ask; do not redesign.</li>
+<li>Keep enterprise concerns out (billing, quotas, roles, SSO) unless a section below asks for them.</li>
+<li>Never write secrets to the repo. <code>.env*</code> files are git-ignored.</li>
+<li>Use the glossary words exactly: Session, Session Version, Event, Transcript, Memory, Digest, Merge, Finding, Briefing, Guardrail, Proposed Guardrail, Approver, Push, Pull, Project, Workspace.</li>
+</ul>
+<h2 id="1-what-we-are-building">1. What we are building</h2>
+<p>Stash is shared memory for AI coding agents. A developer runs <code>stash push</code> inside Claude Code; Stash captures the session, removes secrets locally, uploads it, and the backend turns it into a Digest and typed Memories in MongoDB Atlas. Another agent, on another laptop or another model, runs <code>stash pull &lt;id&gt;</code> and gets a Briefing: what was learned, what failed, what is still open, and the rules every agent must follow. <code>stash merge &lt;a&gt; &lt;b&gt;</code> reconciles two investigations. When the same failure shows up in two Sessions, Stash proposes a Guardrail that a human approves on the website.</p>
+<p>The demo is two laptops, two agents, one Atlas cluster.</p>
+<h2 id="2-hard-constraints">2. Hard constraints</h2>
+<div class="table"><table><thead><tr>
+<th>Constraint</th>
+<th>Detail</th>
+</tr>
+</thead><tbody><tr>
+<td>Atlas</td>
+<td><strong>Must be built in the hackathon Sandbox</strong>: org “Agents in Context Toronto”, the Sandbox project, <code>Cluster0</code> (M10, MongoDB 9.0.7, AWS, one region)</td>
+</tr>
+<tr>
+<td>Embeddings</td>
+<td>Atlas Automated Embedding, model <code>voyage-4</code>. No embedding API key anywhere. <strong>Storage auto-scaling must be on</strong> for Cluster0 or embedding pauses</td>
+</tr>
+<tr>
+<td>Vector Search</td>
+<td>One index on <code>memories</code>, used for merge, guardrails, pull and website search (section 8)</td>
+</tr>
+<tr>
+<td>Language</td>
+<td>TypeScript everywhere. One npm CLI and one Next.js app (website and API). No Python (ADR 0001)</td>
+</tr>
+<tr>
+<td>LLM</td>
+<td>Anthropic only, called only from the backend. Model from env, default <code>claude-sonnet-5-5</code></td>
+</tr>
+<tr>
+<td>Pull</td>
+<td>No LLM call at pull time. One <code>$vectorSearch</code> is allowed (ADR 0002)</td>
+</tr>
+<tr>
+<td>Merges</td>
+<td>Never modify source Sessions or Memories (ADR 0003)</td>
+</tr>
+<tr>
+<td>Approvals</td>
+<td>Only a human with the approver secret approves Guardrails or verifies Memories. The CLI is read-only for both (ADR 0004)</td>
+</tr>
+<tr>
+<td>Secrets</td>
+<td>Redacted in the CLI before upload. Never logged</td>
+</tr>
+<tr>
+<td>Push support</td>
+<td>Claude Code only. Any agent with a shell can pull</td>
+</tr>
+</tbody></table></div>
+<h2 id="3-human-setup-do-these-first-or-ask-the-user-to">3. Human setup (do these first, or ask the user to)</h2>
+<ol>
+<li><strong>Atlas, in the Sandbox project:</strong><ul>
+<li>Cluster0 → Edit configuration → enable <strong>storage auto-scaling</strong>.</li>
+<li>Database &amp; Network Access → add the IP of each demo laptop (or the venue network).</li>
+<li>Create a database user for the backend (read/write on database <code>stash</code>).</li>
+<li>Copy the <code>mongodb+srv://...</code> connection string.</li>
+</ul>
+</li>
+<li><strong>Anthropic:</strong> an API key for the backend.</li>
+<li><strong>GitHub:</strong> an empty repo for the demo app (<code>stash-demo</code>), cloned on both laptops.</li>
+<li><strong>Each laptop:</strong> Node 26, npm 11, Claude Code 2.1+, git.</li>
+</ol>
+<h2 id="4-repository-layout">4. Repository layout</h2>
+<p>npm workspaces in one repo. Turborepo is optional; plain <code>npm run -ws</code> is enough.</p>
+<pre><code class="language-text">stash/
+├── apps/
+│   ├── cli/                    # @stash/cli: the `stash` binary
+│   │   └── src/
+│   │       ├── index.ts        # commander entry
+│   │       ├── commands/       # login, init, push, pull, merge, sessions, status, guardrails
+│   │       ├── config.ts       # ~/.stash/config.json and ./.stash.json
+│   │       ├── discover.ts     # find the Claude Code session file
+│   │       ├── redact.ts       # secret scanning
+│   │       ├── upload.ts       # batching, retries, NDJSON progress
+│   │       └── api.ts          # typed client for the web API
+│   └── web/                    # Next.js App Router: website + API
+│       ├── app/
+│       │   ├── page.tsx                 # landing (port of 15-bubbles)
+│       │   ├── docs/page.tsx            # private docs (renders docs/project.md)
+│       │   ├── app/                     # the product UI (Home, Sessions, Memories, Merges, Guardrails)
+│       │   └── api/                     # route handlers (section 9)
+│       ├── lib/
+│       │   ├── db.ts            # MongoClient singleton, collections, indexes
+│       │   ├── auth.ts          # bearer token and approver secret checks
+│       │   ├── llm.ts           # Anthropic client, one place for model and effort
+│       │   ├── extract.ts       # Digest + Memories
+│       │   ├── merge.ts         # Findings + merged Digest
+│       │   ├── guardrails.ts    # repeated-failure detection and proposals
+│       │   ├── briefing.ts      # template, ranking, budget
+│       │   ├── lineage.ts       # marker parsing
+│       │   └── vector.ts        # every $vectorSearch lives here
+│       └── scripts/seed.ts      # workspace, token, approver secret, indexes
+├── packages/
+│   ├── context-format/         # Universal Context Format types + zod schemas (shared by CLI and web)
+│   ├── agent-adapters/         # claude-code adapter (JSONL → UCF Events)
+│   └── core/                   # ids, hashing, token estimate, marker regex, glossary enums
+├── design/landing/             # design explorations (keep; 15-bubbles is the approved one)
+├── docs/adr/
+├── BUILD.md  MVP.md  GLOSSARY.md  BLUEPRINT.md
+└── package.json                # workspaces: apps/*, packages/*
+</code></pre>
+<h2 id="5-stack">5. Stack</h2>
+<p>Versions current on npm as of 2026-11-14. Pin majors.</p>
+<div class="table"><table><thead><tr>
+<th>Piece</th>
+<th>Choice</th>
+</tr>
+</thead><tbody><tr>
+<td>Runtime</td>
+<td>Node 26</td>
+</tr>
+<tr>
+<td>Language</td>
+<td>TypeScript 7</td>
+</tr>
+<tr>
+<td>Web</td>
+<td>Next.js 16 (App Router), React 19</td>
+</tr>
+<tr>
+<td>Database driver</td>
+<td><code>mongodb</code> 7 (official Node driver)</td>
+</tr>
+<tr>
+<td>LLM SDK</td>
+<td><code>@anthropic-ai/sdk</code> 1.x</td>
+</tr>
+<tr>
+<td>Validation</td>
+<td><code>zod</code> 4 (shared schemas, LLM structured outputs)</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>commander</code> 15, run with <code>tsx</code> in dev, built with <code>tsc</code></td>
+</tr>
+<tr>
+<td>Tests</td>
+<td><code>vitest</code> 5</td>
+</tr>
+<tr>
+<td>Fonts and look</td>
+<td>Geologica, Vantage tokens from <code>design/landing/15-bubbles/tokens.css</code></td>
+</tr>
+</tbody></table></div>
+<h2 id="6-configuration">6. Configuration</h2>
+<h3 id="backend-apps-web-env-local">Backend: <code>apps/web/.env.local</code></h3>
+<pre><code class="language-bash">MONGODB_URI=&quot;mongodb+srv://&lt;user&gt;:&lt;pass&gt;@cluster0.xxxxx.mongodb.net/?retryWrites=true&amp;w=majority&quot;
+MONGODB_DB=&quot;stash&quot;
+ANTHROPIC_API_KEY=&quot;sk-ant-...&quot;
+LLM_MODEL=&quot;claude-sonnet-5-5&quot;
+LLM_EFFORT_EXTRACT=&quot;medium&quot;
+LLM_EFFORT_MERGE=&quot;high&quot;
+EMBED_MODEL=&quot;voyage-4&quot;
+VECTOR_INDEX=&quot;memories_vector&quot;
+</code></pre>
+<p>Commit an <code>.env.example</code> with the same keys and empty values.</p>
+<h3 id="cli-stash-config-json-per-user-written-by-stash-login">CLI: <code>~/.stash/config.json</code> (per user, written by <code>stash login</code>)</h3>
+<pre><code class="language-json">{ &quot;apiUrl&quot;: &quot;http://localhost:3000&quot;, &quot;token&quot;: &quot;stash_...&quot; }
+</code></pre>
+<h3 id="repo-stash-json-committed-written-by-stash-init">Repo: <code>./.stash.json</code> (committed, written by <code>stash init</code>)</h3>
+<pre><code class="language-json">{ &quot;projectId&quot;: &quot;prj_k3m9x&quot;, &quot;workspaceId&quot;: &quot;wsp_demo1&quot;, &quot;remote&quot;: &quot;github.com/&lt;owner&gt;/stash-demo&quot; }
+</code></pre>
+<h2 id="7-data-model-mongodb-database-stash">7. Data model (MongoDB, database <code>stash</code>)</h2>
+<p>IDs are short prefixed strings: <code>wsp_</code>, <code>prj_</code>, <code>ses_</code>, <code>mem_</code>, <code>m_</code> (merge), <code>g_</code> (guardrail), <code>p_</code> (pull) followed by 8 random base36 chars. Session Versions are integers per Session. Event IDs are content hashes so re-uploads never duplicate.</p>
+<pre><code class="language-ts">// packages/context-format/src/types.ts (abridged; zod schemas mirror these)
+
+type EventType =
+  | &quot;user_message&quot; | &quot;assistant_message&quot; | &quot;tool_call&quot; | &quot;tool_result&quot;
+  | &quot;file_read&quot; | &quot;file_change&quot; | &quot;error&quot; | &quot;branch_abandoned&quot;;
+
+interface Workspace { _id: string; name: string; approverHash: string; createdAt: Date }
+interface ApiToken { _id: string; workspaceId: string; tokenHash: string; label: string; createdAt: Date }
+
+interface Project {
+  _id: string; workspaceId: string; name: string;
+  remote: string | null;          // normalized git remote, e.g. &quot;github.com/owner/repo&quot;
+  createdAt: Date;
+}
+
+interface Session {
+  _id: string; projectId: string; workspaceId: string;
+  agent: &quot;claude-code&quot;;
+  nativeSessionId: string;        // Claude Code session UUID
+  title: string;                  // first user message, trimmed to 80 chars
+  latestVersion: number;          // 0 until first processed version
+  eventCount: number;
+  lineage: { sourceId: string; sourceType: &quot;session&quot; | &quot;merge&quot;; sourceVersion: number; pullId: string }[];
+  machine: string;                // os.hostname(), for the demo&#39;s &quot;laptop 1 / laptop 2&quot;
+  gitBranch: string | null; gitCommit: string | null;
+  createdAt: Date; updatedAt: Date;
+}
+
+interface SessionVersion {
+  _id: string;                    // `${sessionId}@v${n}`
+  sessionId: string; projectId: string; version: number;
+  eventCount: number; contentHash: string;   // sha256 of ordered event ids
+  status: &quot;processing&quot; | &quot;processed&quot; | &quot;failed&quot;;
+  digest: Digest | null;
+  redactedCount: number;
+  createdAt: Date; processedAt: Date | null; error?: string;
+}
+
+interface Event {
+  _id: string;                    // sha256(sessionId + &quot;:&quot; + nativeUuid + &quot;:&quot; + blockIndex), hex, 24 chars
+  sessionId: string; projectId: string;
+  seq: number;                    // order within the Transcript
+  type: EventType;
+  ts: Date;
+  text?: string;                  // messages, errors
+  tool?: { name: string; useId: string; input?: unknown; isError?: boolean };
+  file?: { path: string; op: &quot;read&quot; | &quot;write&quot; | &quot;edit&quot; };
+  output?: { excerpt: string; truncated: boolean; originalLength: number; sha256: string };
+  sidechain: boolean;             // came from a subagent
+}
+
+interface Digest {
+  objective: string;
+  progress: string;               // where things stand, 1 to 3 sentences
+  completed: { text: string; eventIds: string[] }[];
+  openTasks: { text: string; eventIds: string[] }[];
+  files: string[];
+}
+
+type MemoryType = &quot;decision&quot; | &quot;discovery&quot; | &quot;failed_approach&quot; | &quot;constraint&quot; | &quot;open_question&quot;;
+type MemoryStatus = &quot;hypothesis&quot; | &quot;evidenced&quot; | &quot;verified&quot;;
+
+interface Memory {
+  _id: string; projectId: string; sessionId: string; version: number;
+  type: MemoryType;
+  text: string;                   // one sentence, descriptive, never an instruction. The embedded field
+  status: MemoryStatus;
+  eventIds: string[];             // at least one, all must exist in this Session
+  current: boolean;               // true for the latest processed Version of its Session
+  verifiedAt?: Date;
+  createdAt: Date;
+}
+
+interface Merge {
+  _id: string; projectId: string;
+  sources: { sessionId: string; version: number }[];   // exactly two
+  digest: Digest;
+  findings: Finding[];
+  createdAt: Date;
+}
+interface Finding {
+  kind: &quot;duplicate&quot; | &quot;complementary&quot; | &quot;conflicting&quot; | &quot;only_in_one&quot;;
+  summary: string;
+  memoryIds: string[];            // from either source
+  eventIds: string[];
+}
+
+interface Guardrail {
+  _id: string; projectId: string;
+  rule: string;                   // imperative, one sentence: this is the only place instructions live
+  rationale: string;
+  status: &quot;proposed&quot; | &quot;approved&quot; | &quot;rejected&quot;;
+  evidence: { sessionId: string; memoryId: string; eventIds: string[] }[];  // from 2+ distinct Sessions
+  pattern: string;                // short description of the failure pattern, used for &quot;already covered&quot;
+  createdAt: Date; decidedAt?: Date;
+}
+
+interface Pull {
+  _id: string; projectId: string;
+  sourceId: string; sourceType: &quot;session&quot; | &quot;merge&quot;; sourceVersion: number;
+  budget: number; tokensUsed: number;
+  relatedMemoryIds: string[];     // what Vector Search added
+  agentSessionHint: string | null; // CLAUDE_CODE_SESSION_ID if the puller ran inside Claude Code
+  createdAt: Date;
+}
+
+interface AuditLog { _id: string; workspaceId: string; actor: &quot;token&quot; | &quot;approver&quot;; action: string; target: string; at: Date }
+</code></pre>
+<h3 id="indexes-created-by-the-seed-script">Indexes (created by the seed script)</h3>
+<div class="table"><table><thead><tr>
+<th>Collection</th>
+<th>Index</th>
+</tr>
+</thead><tbody><tr>
+<td><code>sessions</code></td>
+<td><code>{ projectId: 1, agent: 1, nativeSessionId: 1 }</code> unique; <code>{ projectId: 1, updatedAt: -1 }</code></td>
+</tr>
+<tr>
+<td><code>session_versions</code></td>
+<td><code>{ sessionId: 1, version: -1 }</code></td>
+</tr>
+<tr>
+<td><code>events</code></td>
+<td><code>{ sessionId: 1, seq: 1 }</code></td>
+</tr>
+<tr>
+<td><code>memories</code></td>
+<td><code>{ sessionId: 1, current: 1 }</code>; <code>{ projectId: 1, current: 1, type: 1 }</code></td>
+</tr>
+<tr>
+<td><code>merges</code></td>
+<td><code>{ projectId: 1, createdAt: -1 }</code></td>
+</tr>
+<tr>
+<td><code>guardrails</code></td>
+<td><code>{ projectId: 1, status: 1 }</code></td>
+</tr>
+<tr>
+<td><code>projects</code></td>
+<td><code>{ workspaceId: 1, remote: 1 }</code> unique (partial: remote exists)</td>
+</tr>
+<tr>
+<td><code>api_tokens</code></td>
+<td><code>{ tokenHash: 1 }</code> unique</td>
+</tr>
+</tbody></table></div>
+<h3 id="the-vector-search-index">The Vector Search index</h3>
+<p>Create with the driver: <code>db.collection(&quot;memories&quot;).createSearchIndex({ name: &quot;memories_vector&quot;, type: &quot;vectorSearch&quot;, definition })</code>.</p>
+<pre><code class="language-json">{
+  &quot;fields&quot;: [
+    { &quot;type&quot;: &quot;autoEmbed&quot;, &quot;modality&quot;: &quot;text&quot;, &quot;path&quot;: &quot;text&quot;, &quot;model&quot;: &quot;voyage-4&quot; },
+    { &quot;type&quot;: &quot;filter&quot;, &quot;path&quot;: &quot;projectId&quot; },
+    { &quot;type&quot;: &quot;filter&quot;, &quot;path&quot;: &quot;sessionId&quot; },
+    { &quot;type&quot;: &quot;filter&quot;, &quot;path&quot;: &quot;type&quot; },
+    { &quot;type&quot;: &quot;filter&quot;, &quot;path&quot;: &quot;status&quot; },
+    { &quot;type&quot;: &quot;filter&quot;, &quot;path&quot;: &quot;current&quot; }
+  ]
+}
+</code></pre>
+<p>Embeddings are generated asynchronously after insert, so a Memory is searchable a few seconds after it is written. Every query passes plain text and Atlas embeds it with the same model. Poll <code>listSearchIndexes()</code> until the index is <code>READY</code> in the seed script.</p>
+<h2 id="8-vector-search-every-query">8. Vector Search: every query</h2>
+<p>All of these live in <code>apps/web/lib/vector.ts</code> and always filter on <code>projectId</code> and <code>current: true</code>.</p>
+<pre><code class="language-ts">// shape of every query
+[
+  { $vectorSearch: {
+      index: &quot;memories_vector&quot;, path: &quot;text&quot;, query: &quot;&lt;text&gt;&quot;,
+      numCandidates: 150, limit: K,
+      filter: { projectId, current: true, /* + per-query filters */ } } },
+  { $project: { text: 1, type: 1, status: 1, sessionId: 1, eventIds: 1, score: { $meta: &quot;vectorSearchScore&quot; } } }
+]
+</code></pre>
+<div class="table"><table><thead><tr>
+<th>Use</th>
+<th>Query text</th>
+<th>Extra filter</th>
+<th>K</th>
+<th>Then</th>
+</tr>
+</thead><tbody><tr>
+<td>Merge candidates</td>
+<td>each Memory of Session A</td>
+<td><code>sessionId: B</code></td>
+<td>3</td>
+<td>pairs with score ≥ 0.75 go to the merge LLM call as candidates</td>
+</tr>
+<tr>
+<td>Guardrail detection</td>
+<td>each new <code>failed_approach</code> Memory</td>
+<td><code>type: &quot;failed_approach&quot;</code>, <code>sessionId: { $ne: new }</code></td>
+<td>5</td>
+<td>matches with score ≥ 0.80 from other Sessions go to the guardrail LLM call</td>
+</tr>
+<tr>
+<td>Pull: related</td>
+<td>the pulled Digest’s <code>objective</code></td>
+<td><code>sessionId: { $nin: [source(s)] }</code></td>
+<td>8</td>
+<td>dedupe by text, failed approaches first (section 12)</td>
+</tr>
+<tr>
+<td>Website search</td>
+<td>the user’s question</td>
+<td>optional <code>type</code>, <code>status</code></td>
+<td>20</td>
+<td>group identical texts, show source Sessions</td>
+</tr>
+</tbody></table></div>
+<p>Thresholds are starting points; log scores during the demo rehearsal and adjust.</p>
+<h2 id="9-web-api-next-js-route-handlers">9. Web API (Next.js route handlers)</h2>
+<p>Every request except the landing and docs pages carries <code>Authorization: Bearer &lt;stash token&gt;</code>. <code>lib/auth.ts</code> hashes it (sha256), finds the token, and scopes every query to that Workspace. Approver actions also need <code>X-Approver-Secret</code>, checked against <code>workspace.approverHash</code> (scrypt). Long operations stream progress as NDJSON lines: <code>{&quot;step&quot;:&quot;digest&quot;,&quot;status&quot;:&quot;done&quot;}</code>.</p>
+<div class="table"><table><thead><tr>
+<th>Method and path</th>
+<th>Body</th>
+<th>Returns</th>
+</tr>
+</thead><tbody><tr>
+<td><code>POST /api/projects/init</code></td>
+<td><code>{ remote?: string, name?: string }</code></td>
+<td><code>{ projectId, workspaceId, created: boolean }</code>. Joins by normalized remote; with no remote, by name</td>
+</tr>
+<tr>
+<td><code>POST /api/sessions/resolve</code></td>
+<td><code>{ projectId, agent, nativeSessionId, title, machine, gitBranch, gitCommit }</code></td>
+<td><code>{ sessionId, latestVersion, knownEventIds: string[] }</code> (the CLI uploads only unknown events)</td>
+</tr>
+<tr>
+<td><code>POST /api/sessions/:id/events</code></td>
+<td><code>{ events: Event[] }</code>, at most 500 events or 2 MB</td>
+<td><code>{ inserted, duplicates }</code>. Uses <code>bulkWrite</code> with <code>updateOne(upsert, $setOnInsert)</code> per event</td>
+</tr>
+<tr>
+<td><code>POST /api/sessions/:id/versions</code></td>
+<td><code>{ contentHash, eventCount, redactedCount }</code></td>
+<td>NDJSON stream: <code>version</code> → <code>digest</code> → <code>memories</code> → <code>lineage</code> → <code>guardrails</code> → <code>done {version, memories, proposed}</code>. If <code>contentHash</code> equals the latest Version’s, returns <code>{ unchanged: true, version }</code> and does nothing</td>
+</tr>
+<tr>
+<td><code>GET /api/sessions?projectId=</code></td>
+<td></td>
+<td>list, newest first</td>
+</tr>
+<tr>
+<td><code>GET /api/sessions/:id?version=</code></td>
+<td></td>
+<td>Session, Version, Digest, Memories, Events (paged), lineage</td>
+</tr>
+<tr>
+<td><code>POST /api/pull</code></td>
+<td><code>{ sourceId, budget?: number, agentSessionHint?: string }</code></td>
+<td><code>{ pullId, markdown, tokensUsed }</code></td>
+</tr>
+<tr>
+<td><code>POST /api/merges</code></td>
+<td><code>{ a: sessionId, b: sessionId }</code></td>
+<td>NDJSON stream: <code>candidates</code> → <code>reconcile</code> → <code>done {mergeId, counts}</code></td>
+</tr>
+<tr>
+<td><code>GET /api/merges/:id</code></td>
+<td></td>
+<td>Merge with Findings, both sources&#39; Memories</td>
+</tr>
+<tr>
+<td><code>GET /api/guardrails?projectId=&amp;status=</code></td>
+<td></td>
+<td>list</td>
+</tr>
+<tr>
+<td><code>POST /api/guardrails/:id/approve</code> and <code>/reject</code></td>
+<td>header <code>X-Approver-Secret</code></td>
+<td>updated Guardrail. 401 without a valid secret</td>
+</tr>
+<tr>
+<td><code>POST /api/memories/:id/verify</code></td>
+<td>header <code>X-Approver-Secret</code></td>
+<td>Memory with <code>status: &quot;verified&quot;</code></td>
+</tr>
+<tr>
+<td><code>GET /api/search?projectId=&amp;q=&amp;type=&amp;status=</code></td>
+<td></td>
+<td>Memories with scores and source Sessions</td>
+</tr>
+<tr>
+<td><code>GET /api/status</code></td>
+<td></td>
+<td><code>{ db: &quot;ok&quot;, index: &quot;READY&quot;, workspace, projects }</code></td>
+</tr>
+</tbody></table></div>
+<p>Every write and every approval writes an <code>audit_logs</code> entry.</p>
+<h2 id="10-the-cli">10. The CLI</h2>
+<p>Binary <code>stash</code>, package <code>@stash/cli</code>, installed locally with <code>npm link</code> for the demo.</p>
+<div class="table"><table><thead><tr>
+<th>Command</th>
+<th>Behaviour</th>
+</tr>
+</thead><tbody><tr>
+<td><code>stash login [--token T] [--api URL]</code></td>
+<td>Prompts for the token if not given, calls <code>/api/status</code>, writes <code>~/.stash/config.json</code></td>
+</tr>
+<tr>
+<td><code>stash init [--name N]</code></td>
+<td>Reads <code>git remote get-url origin</code>, normalizes it (strip protocol, <code>git@</code>, <code>.git</code>; lowercase host), calls <code>/api/projects/init</code>, writes <code>.stash.json</code>. No remote: requires <code>--name</code> or prompts</td>
+</tr>
+<tr>
+<td><code>stash push [--session ID]</code></td>
+<td>Section 11. Prints progress as checkmark lines</td>
+</tr>
+<tr>
+<td><code>stash pull &lt;id&gt; [--budget N] [--output FILE]</code></td>
+<td>Calls <code>/api/pull</code>, prints the Markdown to stdout; with <code>--output</code>, also writes the file. Sends <code>CLAUDE_CODE_SESSION_ID</code> as <code>agentSessionHint</code> when set</td>
+</tr>
+<tr>
+<td><code>stash merge &lt;a&gt; &lt;b&gt;</code></td>
+<td>Streams progress, prints counts and the Merge id</td>
+</tr>
+<tr>
+<td><code>stash sessions</code></td>
+<td>Table: id, agent, version, events, memories, machine, updated</td>
+</tr>
+<tr>
+<td><code>stash status</code></td>
+<td>API reachable, token valid, Project, index status, last push</td>
+</tr>
+<tr>
+<td><code>stash guardrails</code></td>
+<td>Lists Guardrails with status. <strong>No approve or reject subcommands, ever</strong></td>
+</tr>
+</tbody></table></div>
+<p>Exit codes: 0 success, 1 user error (not logged in, no project), 2 server or network error after retries.</p>
+<h2 id="11-push-step-by-step">11. Push, step by step</h2>
+<h3 id="11-1-find-the-session-file">11.1 Find the session file</h3>
+<p>Claude Code writes each session to <code>~/.claude/projects/&lt;slug&gt;/&lt;sessionId&gt;.jsonl</code>, where <code>&lt;slug&gt;</code> is the absolute working directory with every <code>/</code> (and <code>.</code>) replaced by <code>-</code>.</p>
+<ol>
+<li>If <code>--session</code> is given, use <code>~/.claude/projects/*/&lt;id&gt;.jsonl</code>.</li>
+<li>Else if <code>CLAUDE_CODE_SESSION_ID</code> is set (the CLI was run from inside Claude Code), use that id. <code>CLAUDECODE=1</code> confirms the agent.</li>
+<li>Else list <code>*.jsonl</code> in this folder’s slug directory, newest first. One candidate: use it after printing which. Several: show title (first user message) and time, ask the user to choose. None: exit 1 with a clear message.</li>
+</ol>
+<p>Never upload a session you are not sure about.</p>
+<h3 id="11-2-parse-the-jsonl-adapter-packages-agent-adapters-src-claude-code-ts">11.2 Parse the JSONL (adapter: <code>packages/agent-adapters/src/claude-code.ts</code>)</h3>
+<p>Each line is a JSON record. Keep only <code>type: &quot;user&quot; | &quot;assistant&quot;</code> (and <code>system</code> records with <code>level: &quot;error&quot;</code>). Ignore everything else (<code>queue-operation</code>, <code>attachment</code>, <code>api-request*</code>, <code>file-history-*</code>, <code>last-prompt</code>, <code>custom-title</code>, <code>agent-name</code>, <code>summary</code>, and any new type).</p>
+<p>Useful fields on kept records: <code>uuid</code>, <code>parentUuid</code>, <code>isSidechain</code>, <code>timestamp</code>, <code>cwd</code>, <code>gitBranch</code>, <code>sessionId</code>, <code>message.content[]</code>, and on tool results <code>toolUseResult</code>.</p>
+<p><strong>Pick the active branch.</strong> Rewinds leave abandoned branches in the file.</p>
+<ol>
+<li>Index kept records by <code>uuid</code>.</li>
+<li>Take the last non-sidechain record in file order as the leaf.</li>
+<li>Walk <code>parentUuid</code> from the leaf to the root; that chain is the Transcript.</li>
+<li>For every record not on the chain whose <code>parentUuid</code> is on the chain, emit one <code>branch_abandoned</code> Event at that point (“a branch of N messages was abandoned here”). Do not include the abandoned records.</li>
+<li>Sidechain records (subagents) whose ancestry joins the chain are kept, marked <code>sidechain: true</code>.</li>
+</ol>
+<p><strong>Map content blocks to Events.</strong></p>
+<div class="table"><table><thead><tr>
+<th>Block</th>
+<th>Event</th>
+</tr>
+</thead><tbody><tr>
+<td>user <code>text</code> (not <code>isMeta</code>)</td>
+<td><code>user_message</code></td>
+</tr>
+<tr>
+<td>assistant <code>text</code></td>
+<td><code>assistant_message</code></td>
+</tr>
+<tr>
+<td>assistant <code>thinking</code></td>
+<td><strong>dropped</strong> (hidden reasoning is never portable)</td>
+</tr>
+<tr>
+<td>assistant <code>tool_use</code></td>
+<td><code>tool_call</code> with <code>tool.name</code>, <code>tool.useId</code>, <code>tool.input</code> (inputs larger than 4 KB are excerpted like outputs)</td>
+</tr>
+<tr>
+<td>user <code>tool_result</code></td>
+<td><code>tool_result</code> with <code>output</code> excerpt and <code>tool.isError</code>; if <code>is_error</code>, also emit <code>error</code></td>
+</tr>
+<tr>
+<td><code>tool_use</code> named <code>Read</code></td>
+<td>also <code>file_read { path }</code></td>
+</tr>
+<tr>
+<td><code>tool_use</code> named <code>Edit</code>, <code>MultiEdit</code>, <code>Write</code>, <code>NotebookEdit</code></td>
+<td>also <code>file_change { path, op }</code></td>
+</tr>
+</tbody></table></div>
+<p><strong>Excerpt large outputs.</strong> Over 4 KB: keep the first 2 KB and the last 1 KB, set <code>truncated: true</code>, keep <code>originalLength</code> and <code>sha256</code> of the full text. Error text is always kept in full up to 8 KB.</p>
+<p>Event id: <code>sha256(nativeSessionId + &quot;:&quot; + record.uuid + &quot;:&quot; + blockIndex)</code> as hex, first 24 chars. <code>seq</code> is the position in the final Transcript.</p>
+<h3 id="11-3-redact-in-the-cli-before-anything-leaves-the-machine">11.3 Redact (in the CLI, before anything leaves the machine)</h3>
+<p><code>apps/cli/src/redact.ts</code> scans every string field of every Event (text, tool inputs, outputs).</p>
+<div class="table"><table><thead><tr>
+<th>Kind</th>
+<th>Pattern</th>
+</tr>
+</thead><tbody><tr>
+<td>anthropic</td>
+<td><code>sk-ant-[A-Za-z0-9_-]{20,}</code></td>
+</tr>
+<tr>
+<td>openai</td>
+<td><code>sk-(proj-)?[A-Za-z0-9_-]{20,}</code></td>
+</tr>
+<tr>
+<td>aws</td>
+<td><code>AKIA[0-9A-Z]{16}</code> and <code>(?i)aws_secret_access_key\s*[=:]\s*[A-Za-z0-9/+=]{40}</code></td>
+</tr>
+<tr>
+<td>github</td>
+<td><code>gh[pousr]_[A-Za-z0-9]{36,}</code> and <code>github_pat_[A-Za-z0-9_]{50,}</code></td>
+</tr>
+<tr>
+<td>mongodb</td>
+<td><code>mongodb(\+srv)?:\/\/[^\s&quot;&#39;@]+:[^\s&quot;&#39;@]+@</code> (replace credentials only)</td>
+</tr>
+<tr>
+<td>jwt</td>
+<td><code>eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}</code></td>
+</tr>
+<tr>
+<td>private key</td>
+<td><code>-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----</code></td>
+</tr>
+<tr>
+<td>env values</td>
+<td>every value of length 8 or more found in <code>.env</code>, <code>.env.*</code> (not <code>.env.example</code>) under the repo root</td>
+</tr>
+</tbody></table></div>
+<p>Each match becomes <code>[REDACTED:&lt;kind&gt;]</code>. Count <strong>distinct</strong> secret values. If scanning throws, abort the push: upload nothing. Never print a secret, even in debug output.</p>
+<h3 id="11-4-upload">11.4 Upload</h3>
+<ol>
+<li><code>resolve</code> the Session; get <code>knownEventIds</code>.</li>
+<li>Send unknown Events in batches of up to 500 or 2 MB. Retry each batch up to 3 times with backoff (1s, 3s, 9s). Re-sending is safe because Event ids are stable.</li>
+<li><code>POST versions</code> with <code>contentHash</code> = sha256 of the ordered Event ids. If unchanged, print <code>No changes detected. Already up to date (vN).</code> and exit 0.</li>
+<li>Render the NDJSON progress stream as lines:</li>
+</ol>
+<pre><code class="language-text">✓ Capturing session          claude-code 6f2e…  148 events
+✓ Scanning for secrets       1 redacted
+✓ Uploading transcript       148 events
+✓ Generating Digest
+✓ Extracting Memories        12 found
+✓ Recording lineage          continued from ses_8kq2v@v2
+✓ Checking repeated failures 1 Guardrail proposed
+
+Push complete.  Session ses_4m2pq  Version 2
+</code></pre>
+<h2 id="12-server-processing">12. Server processing</h2>
+<h3 id="12-1-llm-client-apps-web-lib-llm-ts">12.1 LLM client (<code>apps/web/lib/llm.ts</code>)</h3>
+<ul>
+<li><code>new Anthropic()</code> reads <code>ANTHROPIC_API_KEY</code>. Model from <code>LLM_MODEL</code> (default <code>claude-sonnet-5-5</code>).</li>
+<li>Use <code>client.messages.parse({ model, max_tokens: 16000, system, messages, output_config: { format: zodOutputFormat(Schema), effort } })</code> with <code>zodOutputFormat</code> from <code>@anthropic-ai/sdk/helpers/zod</code>. Read <code>response.parsed_output</code>; if it is null or <code>stop_reason</code> is <code>&quot;refusal&quot;</code> or <code>&quot;max_tokens&quot;</code>, retry once, then mark the Version <code>failed</code> with the reason.</li>
+<li>Do not send <code>thinking</code>, <code>temperature</code> or a prefill. Adaptive thinking is on by default for this model; depth is set by <code>output_config.effort</code> (<code>LLM_EFFORT_EXTRACT</code>, <code>LLM_EFFORT_MERGE</code>).</li>
+<li>Put the long, stable system prompt first with <code>cache_control: { type: &quot;ephemeral&quot; }</code> on it, so repeated pushes reuse the cache.</li>
+<li>Before extraction, <code>client.messages.countTokens(...)</code>. If the rendered Transcript exceeds 600k tokens, shorten older tool output excerpts to 300 characters and count again. Never silently drop Events: every Event keeps its id line.</li>
+<li>Refusal fallbacks (optional): Sonnet 5.5 supports server-side <code>fallbacks: &quot;default&quot;</code> with beta <code>server-side-fallback-2026-07-01</code>. Add it only if the <code>parse</code> helper is available on the beta namespace in the installed SDK; otherwise the retry above is enough for the demo.</li>
+</ul>
+<h3 id="12-2-rendering-a-transcript-for-the-model">12.2 Rendering a Transcript for the model</h3>
+<p>One line per Event, oldest first: <code>[e:&lt;id&gt;] &lt;type&gt; &lt;tool name if any&gt;: &lt;text or excerpt&gt;</code>. The ids let the model cite evidence.</p>
+<h3 id="12-3-digest-and-memories-one-call-per-session-version">12.3 Digest and Memories (one call per Session Version)</h3>
+<p>Schema (zod):</p>
+<pre><code class="language-ts">const Extract = z.object({
+  digest: z.object({
+    objective: z.string(),
+    progress: z.string(),
+    completed: z.array(z.object({ text: z.string(), eventIds: z.array(z.string()).min(1) })),
+    openTasks: z.array(z.object({ text: z.string(), eventIds: z.array(z.string()) })),
+    files: z.array(z.string()),
+  }),
+  memories: z.array(z.object({
+    type: z.enum([&quot;decision&quot;, &quot;discovery&quot;, &quot;failed_approach&quot;, &quot;constraint&quot;, &quot;open_question&quot;]),
+    text: z.string(),
+    status: z.enum([&quot;hypothesis&quot;, &quot;evidenced&quot;]),
+    eventIds: z.array(z.string()).min(1),
+  })).max(40),
+});
+</code></pre>
+<p>System prompt essentials (write it in full in <code>extract.ts</code>):</p>
+<ul>
+<li>You are given the Transcript of one coding-agent session. Extract what the next agent needs to continue.</li>
+<li>Memories describe; they never instruct. Write “Hand edits to generated.ts were overwritten by the build”, never “Don’t edit generated.ts”.</li>
+<li>One idea per Memory, one sentence, specific: files, functions, commands, error messages.</li>
+<li><code>evidenced</code> only when a cited Event directly shows it (a tool result, an error, a test output). Anything inferred is <code>hypothesis</code>.</li>
+<li>Every Memory and every completed item cites real Event ids from the Transcript.</li>
+<li>Failed approaches say what was tried and why it did not work.</li>
+<li>Do not invent anything not in the Transcript.</li>
+</ul>
+<p><strong>Validate after parsing:</strong> drop any eventId that is not in this Session; drop a Memory left with no eventIds; downgrade <code>evidenced</code> to <code>hypothesis</code> unless at least one cited Event is a <code>tool_result</code>, <code>error</code> or <code>file_change</code>; drop Memories whose text starts with an imperative (<code>Do </code>, <code>Don&#39;t</code>, <code>Never</code>, <code>Always</code>, <code>Use </code>, <code>Avoid </code>) or rewrite them as “The agent found that …”.</p>
+<p><strong>Store:</strong> in one sequence: insert the new Memories with <code>current: false</code>; set the Version’s <code>digest</code> and <code>status: &quot;processed&quot;</code>; then <code>updateMany({sessionId, current: true}, {$set:{current:false}})</code> and <code>updateMany({sessionId, version: n}, {$set:{current:true}})</code>; then <code>sessions.latestVersion = n</code>. A failed run leaves the previous Version current.</p>
+<h3 id="12-4-lineage">12.4 Lineage</h3>
+<p>Regex (in <code>packages/core</code>): <code>/stash:briefing (ses_[a-z0-9]+|m_[a-z0-9]+)@v(\d+) pull=(p_[a-z0-9]+)/g</code>. Scan the <code>tool_result</code> outputs of the pushed Transcript. For each match whose <code>pullId</code> exists in <code>pulls</code> and belongs to this Project, add a lineage entry (deduplicated by <code>pullId</code>). Several matches mean several parents.</p>
+<h3 id="12-5-guardrail-proposals-after-every-processed-push">12.5 Guardrail proposals (after every processed push)</h3>
+<ol>
+<li>For each new <code>failed_approach</code> Memory, run the guardrail Vector Search (section 8).</li>
+<li>Keep matches from <strong>other</strong> Sessions with score ≥ 0.80. If none, stop.</li>
+<li>Load all Guardrails of the Project (any status). Send one LLM call with: the new failure and its Events, the matched failures and their Events, and the existing Guardrails&#39; <code>pattern</code> and <code>rule</code>.</li>
+<li>Schema: <code>{ samePattern: boolean, coveredBy: string | null, proposal: { rule, rationale, pattern } | null }</code>. The model must answer whether these are genuinely the same failure, judged on the evidence, not the wording.</li>
+<li>If <code>samePattern</code> and not <code>coveredBy</code>, insert a Guardrail with <code>status: &quot;proposed&quot;</code> and evidence from 2 or more distinct Sessions. A pattern covered by a rejected Guardrail is never proposed again.</li>
+</ol>
+<h3 id="12-6-merge">12.6 Merge</h3>
+<ol>
+<li>Load the current Memories of both Sessions (their latest processed Versions; record those Versions).</li>
+<li>Candidate pairs: Vector Search each Memory of A against B (section 8).</li>
+<li>One LLM call (effort <code>LLM_EFFORT_MERGE</code>) with both Digests, both Memory lists (ids, type, status, text), the candidate pairs with scores, and the Events cited by candidate pairs (excerpts).</li>
+<li>Schema: <code>{ digest: Digest, findings: [{ kind, summary, memoryIds, eventIds }] }</code>. Rules for the prompt: judge by evidence, not by majority; a conflict stays a conflict when the evidence does not settle it; every Memory of either source appears in at least one Finding.</li>
+<li>Validate ids, store the Merge. <strong>Never write to the source Sessions or Memories.</strong></li>
+</ol>
+<h2 id="13-pull-and-the-briefing-apps-web-lib-briefing-ts">13. Pull and the Briefing (<code>apps/web/lib/briefing.ts</code>)</h2>
+<p>No LLM call. Steps:</p>
+<ol>
+<li>Resolve the source: a Session (its latest processed Version) or a Merge.</li>
+<li>Gather: approved Guardrails of the Project; the Digest; current Memories (or the Merge’s Findings); related Memories from other Sessions (Vector Search on the objective, section 8); up to 6 key Events (those cited most often, <code>error</code> and failing <code>tool_result</code> first).</li>
+<li>Rank and fit the budget (default 6,000 tokens; estimate tokens as <code>ceil(chars / 4)</code>; deterministic). Drop order, first dropped first: key evidence beyond 2 items, related Memories, open questions, constraints, discoveries with status hypothesis, the rest of discoveries, decisions, failed approaches. <strong>Never drop Guardrails, the marker, or the objective.</strong></li>
+<li>Insert a <code>pulls</code> document and render:</li>
+</ol>
+<pre><code class="language-markdown">stash:briefing ses_8kq2v@v2 pull=p_91x7k2ma
+
+# Briefing: Investigate intermittent login failures
+From Claude Code on laptop-1, Version 2, pushed 14 Nov 2026 14:12. Project stash-demo.
+
+## Rules every agent follows (approved)
+- Edit schema/api.yaml and run `npm run generate`; never edit src/client/generated.ts by hand.
+
+## Where things stand
+&lt;objective&gt; · &lt;progress&gt;
+
+## Decisions
+- Investigate token refresh before the cache. [evidenced] (e_3f…, e_91…)
+
+## Discoveries
+- Refresh fires twice under concurrent requests. [evidenced] (e_14…)
+
+## Failed approaches (do not retry)
+- Raising the db timeout to 30s changed nothing; same 3 failures. [evidenced] (e_22…)
+
+## Constraints
+## Open questions and next steps
+
+## Related from other sessions
+- The cache serves a session after it expires. [hypothesis] from ses_3mx7r (cache investigation)
+
+## Key evidence
+- e_14 tool_result npm test: &quot;3 failed … refresh() called twice&quot;
+
+Ask for more: stash pull ses_8kq2v --budget 12000
+</code></pre>
+<p>Status tags are always shown. Empty sections are omitted (the template order never changes). For a Merge, “Discoveries” and friends are replaced by “Findings” grouped by kind, conflicts first.</p>
+<h2 id="14-website">14. Website</h2>
+<h3 id="14-1-landing-page">14.1 Landing page (<code>/</code>)</h3>
+<p>Port <code>design/landing/15-bubbles/</code> into <code>app/page.tsx</code>:</p>
+<ul>
+<li>Copy the tokens (<code>tokens.css</code>, <code>base.css</code>, <code>../vantage-shared/vantage.css</code>, <code>page.css</code>) into a CSS module or global stylesheet; keep the token names.</li>
+<li><code>bubbles.js</code> becomes a client component (<code>&quot;use client&quot;</code>) that mounts the same engine on a canvas; keep its behaviour exactly (the loop, the drift, the fade behind the head, reduced motion, pause off screen). Keep its options object updated on resize as the static page does.</li>
+<li>Copy is final: hero “Your agents forget. Stash remembers.”; the problem statement; how it works (push, pull, merge, learn rows); “Git shares code. Stash shares the context behind it.” with the handoff.md vs Stash table; “Never write a handoff.md again.” with the install command.</li>
+<li>Nav: How it works, Why, Docs, Install.</li>
+</ul>
+<h3 id="14-2-docs-docs">14.2 Docs (<code>/docs</code>)</h3>
+<p>Render <code>docs/project.md</code> (move it into <code>apps/web/content/project.md</code>) with a markdown renderer at build time; keep the contents rail and the collapsed appendices. <code>noindex</code>. Link this <code>BUILD.md</code> from it.</p>
+<h3 id="14-3-the-app-app">14.3 The app (<code>/app</code>)</h3>
+<p>Five pages, Vantage look, server components reading Mongo directly through <code>lib/db.ts</code>:</p>
+<div class="table"><table><thead><tr>
+<th>Page</th>
+<th>Shows</th>
+</tr>
+</thead><tbody><tr>
+<td><code>/app</code> Home</td>
+<td>Counts (Sessions, Memories, Merges, Guardrails proposed) and recent activity from <code>audit_logs</code></td>
+</tr>
+<tr>
+<td><code>/app/sessions</code> and <code>/app/sessions/[id]</code></td>
+<td>List; detail with Digest, Memories by type with status, each evidence id linking to its Event in a Transcript panel, and the lineage chain (parents and children)</td>
+</tr>
+<tr>
+<td><code>/app/memories</code></td>
+<td>Search box (Vector Search), type and status filters, <strong>Verify</strong> button (approver secret)</td>
+</tr>
+<tr>
+<td><code>/app/merges/[id]</code></td>
+<td>Two sources side by side, Findings coloured by kind, conflicts first</td>
+</tr>
+<tr>
+<td><code>/app/guardrails</code></td>
+<td>Proposed and Approved, evidence per Session, <strong>Approve</strong> and <strong>Reject</strong> (approver secret)</td>
+</tr>
+</tbody></table></div>
+<p><strong>Approver secret UX:</strong> the first approver action opens a dialog asking for the secret. Keep it in React state only (not localStorage, not a cookie); send it as <code>X-Approver-Secret</code>. The server checks it on every approver request.</p>
+<p>The website has no login in the MVP; the app pages read the seeded Workspace (the token in the server’s env is not needed for server components; API routes still require a token for CLI calls).</p>
+<h2 id="15-seed-script-apps-web-scripts-seed-ts-run-with-npx-tsx">15. Seed script (<code>apps/web/scripts/seed.ts</code>, run with <code>npx tsx</code>)</h2>
+<ol>
+<li>Connect with <code>MONGODB_URI</code>.</li>
+<li>Create Workspace <code>wsp_demo1</code> with <code>approverHash = scrypt(&lt;prompted secret&gt;)</code>.</li>
+<li>Create an API token <code>stash_&lt;32 random base62&gt;</code>, store its sha256, <strong>print it once</strong>.</li>
+<li>Create all indexes (section 7) and the <code>memories_vector</code> Vector Search index; poll until <code>READY</code>.</li>
+<li>Idempotent: running it twice does not duplicate anything (upserts by id).</li>
+</ol>
+<h2 id="16-demo-repo-stash-demo-separate-github-repo">16. Demo repo (<code>stash-demo</code>, separate GitHub repo)</h2>
+<p>A small TypeScript API (Express or Fastify) that two agents can genuinely investigate.</p>
+<ol>
+<li><strong>Intermittent login failure, two testable causes:</strong><ul>
+<li><code>src/auth/refresh.ts</code>: token refresh has a race; two concurrent requests both refresh, and the second invalidates the first.</li>
+<li><code>src/cache/session.ts</code>: the session cache returns entries after expiry (TTL compared in the wrong unit).</li>
+<li><code>npm test</code> has a flaky login test that fails about 1 in 4 runs; separate tests can confirm each cause.</li>
+</ul>
+</li>
+<li><strong>Generated client:</strong> <code>schema/api.yaml</code> → <code>npm run generate</code> → <code>src/client/generated.ts</code>. <code>npm run build</code> regenerates first, so hand edits are overwritten; a CI check fails when the file differs from the generator output.</li>
+<li><strong>A fake secret:</strong> <code>.env</code> with <code>ANTHROPIC_API_KEY=sk-ant-demo-...</code> (fake) that the app reads at startup, so an agent will likely <code>cat</code> it.</li>
+<li><code>README.md</code> with the bug report: “Users get logged out at random. Find out why.”</li>
+</ol>
+<h2 id="17-milestones-build-in-this-order">17. Milestones (build in this order)</h2>
+<p>Each milestone ends with its check passing. Commit after each.</p>
+<div class="table"><table><thead><tr>
+<th>#</th>
+<th>Milestone</th>
+<th>Done when</th>
+</tr>
+</thead><tbody><tr>
+<td>M0</td>
+<td>Workspace scaffold: npm workspaces, TS config, lint, vitest, <code>.env.example</code></td>
+<td><code>npm run build</code> and <code>npm test</code> pass on an empty project</td>
+</tr>
+<tr>
+<td>M1</td>
+<td>Atlas: seed script, indexes, vector index</td>
+<td><code>seed</code> prints a token; <code>/api/status</code> reports <code>index: READY</code></td>
+</tr>
+<tr>
+<td>M2</td>
+<td>Demo repo created and pushed to GitHub</td>
+<td>Flaky test fails sometimes; each cause has a failing focused test; generator overwrites hand edits</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>Claude Code adapter + redaction (packages, pure functions)</td>
+<td>Unit tests on fixture JSONL: active branch chosen, abandoned branch event emitted, thinking dropped, Read/Edit become file events, a planted key becomes <code>[REDACTED:anthropic]</code> and counts once</td>
+</tr>
+<tr>
+<td>M4</td>
+<td><code>login</code>, <code>init</code>, push upload path, <code>sessions</code>, <code>status</code></td>
+<td>Pushing a real session stores Events; pushing again uploads 0 and prints “Already up to date”</td>
+</tr>
+<tr>
+<td>M5</td>
+<td>Extraction (Digest + Memories), Version switching</td>
+<td>A push produces a Version with Digest and 5 to 40 cited Memories; every eventId exists; no imperative Memories</td>
+</tr>
+<tr>
+<td>M6</td>
+<td><code>pull</code> and the Briefing (incl. related Memories via Vector Search)</td>
+<td>Briefing renders in under 1 s, respects <code>--budget</code>, includes the marker, never drops Guardrails</td>
+</tr>
+<tr>
+<td>M7</td>
+<td><code>merge</code></td>
+<td>Merge of two demo Sessions shows at least one duplicate and one conflict, with evidence; sources unchanged (verify by hash before and after)</td>
+</tr>
+<tr>
+<td>M8</td>
+<td>Guardrail proposals</td>
+<td>Two Sessions that both hand-edit the generated client produce one Proposed Guardrail with evidence from both; a third does not duplicate it</td>
+</tr>
+<tr>
+<td>M9</td>
+<td>Website app pages + approver flow</td>
+<td>Approve without the secret returns 401; with it, the rule appears in the next <code>pull</code></td>
+</tr>
+<tr>
+<td>M10</td>
+<td>Lineage</td>
+<td>Laptop 2 pulls ses_A, works, pushes ses_B; ses_B shows “continued from ses_A@v2” on the website</td>
+</tr>
+<tr>
+<td>M11</td>
+<td>Landing page port + <code>/docs</code></td>
+<td>Landing matches <code>design/landing/15-bubbles</code> visually; docs render with the rail</td>
+</tr>
+<tr>
+<td>M12</td>
+<td>Record real demo sessions, rehearse twice</td>
+<td>The run sheet below works end to end on two laptops</td>
+</tr>
+</tbody></table></div>
+<p>Cut order if behind: Home page → <code>sessions</code>/<code>status</code> polish → lineage chain on the website (keep the data) → Verify button. Never cut push, pull, merge or Guardrails.</p>
+<p>Stretch, only after M12: Okta/Auth0 login; an MCP server exposing <code>stash_pull</code> and <code>stash_search</code>; auto-push from a Claude Code <code>SessionEnd</code> hook; a Codex push adapter.</p>
+<h2 id="18-testing">18. Testing</h2>
+<ul>
+<li><strong>Unit (vitest):</strong> adapter (fixtures copied from real, redacted session files), redaction patterns, event id stability, token estimate, budget fitter (drop order, never drops Guardrails), marker regex, memory validator.</li>
+<li><strong>Integration:</strong> against a separate database <code>stash_test</code> on the same cluster: push → version → memories current flag switch; idempotent re-push; merge leaves sources unchanged; approve requires the secret.</li>
+<li><strong>LLM calls in tests:</strong> behind a flag (<code>RUN_LLM_TESTS=1</code>); default runs use recorded fixtures.</li>
+<li><strong>Manual:</strong> the run sheet.</li>
+</ul>
+<h2 id="19-demo-run-sheet">19. Demo run sheet</h2>
+<ol>
+<li>Laptop 1, <code>stash-demo</code>, Claude Code: “Users get logged out at random. Find out why.” Let it find the refresh race. <code>! stash push</code> → shows 1 secret redacted, Memories extracted.</li>
+<li>Laptop 2, a fresh agent session: <code>stash pull &lt;ses_A&gt;</code> → the agent continues without re-investigating; it does not retry the db timeout.</li>
+<li>Laptop 2’s agent investigates the cache and pushes → the website shows “continued from ses_A”.</li>
+<li><code>stash merge ses_A ses_B</code> → the Merges page: duplicate refresh finding, complementary cache finding, the database conflict.</li>
+<li>Both sessions had hand-edited the generated client → Guardrails page shows a Proposed Guardrail with evidence from both. Approve it with the secret.</li>
+<li><code>stash pull ses_B</code> → the rule now leads the Briefing.</li>
+<li><code>stash push</code> again → “Already up to date”. Click any Memory → its source Event.</li>
+</ol>
+<h2 id="20-risks-and-mitigations">20. Risks and mitigations</h2>
+<div class="table"><table><thead><tr>
+<th>Risk</th>
+<th>Mitigation</th>
+</tr>
+</thead><tbody><tr>
+<td>Automated Embedding lags inserts by seconds</td>
+<td>Vector Search only runs on Memories from earlier pushes, or after polling; push shows “indexing” before the guardrail check if needed</td>
+</tr>
+<tr>
+<td>Storage auto-scaling left off</td>
+<td><code>status</code> checks the index state and prints a clear warning if it is stale</td>
+</tr>
+<tr>
+<td>LLM extraction is slow on stage</td>
+<td>Stream progress; pre-record sessions; effort <code>medium</code> for extraction</td>
+</tr>
+<tr>
+<td>Claude Code JSONL format changes</td>
+<td>The adapter keeps an allow-list and ignores unknown records; fixture tests catch breaks</td>
+</tr>
+<tr>
+<td>Wrong session uploaded</td>
+<td>Discovery rules in 11.1; always print which session before upload</td>
+</tr>
+<tr>
+<td>Secrets leak</td>
+<td>Redaction before batching; tests with planted keys; abort on scanner error</td>
+</tr>
+<tr>
+<td>Agent approves its own rule</td>
+<td>CLI has no approve command; server requires the approver secret; the secret is never on disk</td>
+</tr>
+<tr>
+<td>Local backend holds Atlas credentials</td>
+<td>Accepted for the hackathon and said plainly in the pitch; production would host the backend</td>
+</tr>
+</tbody></table></div>
+<h2 id="21-open-items-for-the-user">21. Open items for the user</h2>
+<ul>
+<li>Confirm Cluster0 has storage auto-scaling on, the laptops&#39; IPs are allowed, and a database user exists.</li>
+<li>Provide the Anthropic API key and the Atlas connection string for <code>apps/web/.env.local</code>.</li>
+<li>Create the <code>stash-demo</code> GitHub repo.</li>
+<li>Confirm whether code written before the event is allowed.</li>
+</ul>
+
+<!-- /content -->
+    </article>
+  </div>
+</main>
+<footer class="container colophon">Built for Agents in Context Toronto, a MongoDB hackathon. Source: BUILD.md.</footer>
+<script>
+(() => {
+  const links = [...document.querySelectorAll('.rail a')], byId = new Map(links.map((a) => [a.getAttribute('href').slice(1), a]));
+  const io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) { links.forEach((a) => a.classList.remove('is-on')); const a = byId.get(en.target.id); if (a) a.classList.add('is-on'); } }), { rootMargin: '-10% 0px -80% 0px' });
+  document.querySelectorAll('.prose h2[id]').forEach((h) => io.observe(h));
+})();
+</script>
+</body>
+</html>
