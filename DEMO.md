@@ -144,6 +144,8 @@ stash init
 
 Commit `.stash.json` from one laptop and `git pull` on the other, or just run `stash init` on both. They join the same Project either way, because it is matched by the GitHub remote.
 
+Optional, on both laptops: `stash hooks install`. Then Claude Code uploads each turn as it happens and does a full push when a session ends, so the website updates live. On stage, still type `! stash push` at the steps below: the push output is part of the show.
+
 ### The run (about 6 minutes on stage)
 
 | # | Where | Do | Show |

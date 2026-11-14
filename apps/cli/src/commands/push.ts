@@ -1,5 +1,6 @@
 // stash push (BUILD.md section 11): find the session, capture it, redact locally, upload, record a Version.
 import { hostname } from "node:os";
+import { basename } from "node:path";
 import { MAX_BATCH_BYTES, MAX_BATCH_EVENTS, type UploadEvent } from "@stash/context-format";
 import { contentHash } from "@stash/core";
 import { claudeCode } from "@stash/agent-adapters";
@@ -11,14 +12,25 @@ import { ask, canPrompt } from "../prompt.js";
 import { ago, ok, shortId, warn } from "../ui.js";
 import { checkRepeatedFailures, chooseAdapter, extractLocally } from "../reason.js";
 
-export async function push(opts: { session?: string; llm?: string }) {
+export interface PushOptions {
+  session?: string;
+  llm?: string;
+  /** Upload new Events only: no Version, no AI call. Used after every agent turn. */
+  eventsOnly?: boolean;
+  /** Path of the session file, as Claude Code hooks provide it. */
+  transcript?: string;
+}
+
+export async function push(opts: PushOptions) {
   const user = await requireUserConfig();
   const root = repoRoot();
   const repo = await requireRepoConfig(root);
   const api = StashApi.from(user);
 
   // 1. Find the session.
-  const found = await discoverSession({ flag: opts.session, env: process.env.CLAUDE_CODE_SESSION_ID, dirs: [process.cwd(), root] });
+  const found = opts.transcript
+    ? { kind: "found" as const, candidate: { nativeSessionId: basename(opts.transcript, ".jsonl"), path: opts.transcript, title: "", modifiedAt: new Date() } }
+    : await discoverSession({ flag: opts.session, env: process.env.CLAUDE_CODE_SESSION_ID, dirs: [process.cwd(), root] });
   let candidate;
   if (found.kind === "found") {
     candidate = found.candidate;
@@ -70,6 +82,10 @@ export async function push(opts: { session?: string; llm?: string }) {
     inserted += (await api.uploadEvents(session.sessionId, batch)).inserted;
   }
   ok("Uploading transcript", `${events.length} events (${inserted} new)`);
+  if (opts.eventsOnly) {
+    console.log(`\nSynced.  Session ${session.sessionId}  (Digest and Memories come with the next full push)`);
+    return;
+  }
 
   // 6. Record a Version, or stop when nothing changed.
   const version = await api.createVersion(session.sessionId, {

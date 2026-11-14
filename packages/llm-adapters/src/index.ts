@@ -41,7 +41,8 @@ export interface RunOutput { code: number | null; stdout: string; stderr: string
 
 export function runProcess(cmd: string, args: string[], input: string, timeoutMs: number, cwd = tmpdir()): Promise<RunOutput> {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, { cwd, stdio: ["pipe", "pipe", "pipe"], env: process.env });
+    // STASH_INTERNAL tells Stash's own hooks to ignore this process (e.g. `claude -p` fires Stop and SessionEnd too).
+    const child = spawn(cmd, args, { cwd, stdio: ["pipe", "pipe", "pipe"], env: { ...process.env, STASH_INTERNAL: "1" } });
     let stdout = "";
     let stderr = "";
     const timer = setTimeout(() => {
@@ -119,6 +120,7 @@ export function claudeAdapter(opts: { model?: string | null; command?: string } 
         "--model", model,
         "--tools", "",
         "--strict-mcp-config",
+        "--settings", JSON.stringify({ disableAllHooks: true }),
         "--system-prompt", req.system,
       ];
       const out = await runProcess(cmd, args, req.prompt, req.timeoutMs);

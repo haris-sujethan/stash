@@ -76,6 +76,9 @@ stash login
 cd ~/Desktop/stash-demo
 stash init
 git add .stash.json && git commit -m "Add Stash project config"
+
+# 8. Optional: push automatically from Claude Code (see "Automatic pushes")
+stash hooks install
 ```
 
 In Atlas, also add the laptop's IP under **Database & Network Access**, or the web app cannot reach the cluster.
@@ -130,7 +133,8 @@ All twelve milestones from the build plan, except the demo recording itself, are
 | --- | --- |
 | `stash login [--token T] [--api URL]` | Saves your token in `~/.stash/config.json` (readable only by you). Asks for it if not given. |
 | `stash init [--name N]` | Joins (or creates) the Project for this repo, matched by its git remote, and writes `.stash.json`. Commit that file. |
-| `stash push [--session ID] [--llm claude\|codex\|cmd]` | Captures the agent session, redacts secrets, uploads it, extracts a Digest and Memories with your AI tool, records lineage, and checks for repeated failures. |
+| `stash push [--session ID] [--llm claude\|codex\|cmd] [--events-only]` | Captures the agent session, redacts secrets, uploads it, extracts a Digest and Memories with your AI tool, records lineage, and checks for repeated failures. `--events-only` just uploads new Events (no AI call). |
+| `stash hooks install [--shared]` · `uninstall` · `status` | Makes Claude Code push automatically in this repo: new Events after every agent turn, a full push when the session ends. `--shared` writes `.claude/settings.json` for the whole team; otherwise `.claude/settings.local.json` (just you). |
 | `stash pull <id> [--budget N] [--output FILE]` | Prints a Briefing for a Session (`ses_…`) or Merge (`m_…`). Default budget 6,000 tokens. |
 | `stash merge <a> <b> [--llm …]` | Reconciles two Sessions into a Merge. |
 | `stash sessions` | Lists the Project's Sessions. |
@@ -164,6 +168,25 @@ From a plain terminal, Stash lists this folder's sessions and asks which one, or
 Push again after more work and you get Version 2. Push with nothing new and it says `No changes detected. Already up to date (v1).`
 
 **Which AI tool does the reasoning?** The first match wins: `--llm`; the agent Stash is running inside (Claude Code sets `CLAUDECODE=1`); the tool saved in `~/.stash/config.json`; otherwise Stash detects what is installed, asks once, and saves the answer. `--llm cmd` asks for any command that reads a prompt on stdin and prints an answer (for example `ollama run qwen3`).
+
+### Automatic pushes (hooks)
+
+Stash doesn't run in the background on its own: nothing happens until something calls `stash`. Hooks make Claude Code call it for you, so Stash follows the session as you work:
+
+```bash
+stash hooks install
+```
+
+| When | What runs | Cost |
+| --- | --- | --- |
+| After every agent turn (Claude Code's `Stop` hook) | `stash push --hook --events-only`: uploads the turn's new Events | No AI call; about a second, in the background |
+| When the session ends (`SessionEnd` hook) | `stash push --hook`: the full push (Version, Digest, Memories, lineage, Guardrail check) | One AI call through your own tool, in the background |
+
+Both run detached, so the agent never waits and a failure never breaks the session; output goes to `~/.stash/logs/<date>.log`. In a repo without `stash init`, or when you're not logged in, the hooks do nothing. Stash's own `claude -p` reasoning calls run with hooks disabled, so they never push themselves.
+
+During the session the website already shows the Session and its Transcript growing turn by turn; the Digest and Memories appear when the session ends (or whenever you run `stash push`). Extraction runs once at the end rather than every turn because each run is an AI call that costs time and usage.
+
+`stash hooks status` shows what's installed; `stash hooks uninstall` removes only Stash's hooks.
 
 ### Pulling a Briefing
 
