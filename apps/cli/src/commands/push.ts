@@ -5,7 +5,7 @@ import { MAX_BATCH_BYTES, MAX_BATCH_EVENTS, type UploadEvent } from "@stash/cont
 import { contentHash } from "@stash/core";
 import { claudeCode } from "@stash/agent-adapters";
 import { git, repoRoot, requireRepoConfig, requireUserConfig, UserError } from "../config.js";
-import { batches, StashApi } from "../api.js";
+import { ApiError, batches, StashApi } from "../api.js";
 import { discoverSession } from "../discover.js";
 import { loadEnvValues, Redactor } from "../redact.js";
 import { ask, canPrompt } from "../prompt.js";
@@ -81,7 +81,7 @@ export async function push(opts: PushOptions) {
   for (const batch of batches(fresh, MAX_BATCH_EVENTS, MAX_BATCH_BYTES)) {
     inserted += (await api.uploadEvents(session.sessionId, batch)).inserted;
   }
-  ok("Uploading transcript", `${events.length} events (${inserted} new)`);
+  ok("Uploading transcript", `${events.length} events (${inserted} new)  → ${session.sessionId}`);
   if (opts.eventsOnly) {
     console.log(`\nSynced.  Session ${session.sessionId}  (Digest and Memories come with the next full push)`);
     return;
@@ -111,11 +111,22 @@ export async function push(opts: PushOptions) {
   ok("Reasoning locally", `${result.extractedBy.tool}${result.extractedBy.model ? ` (${result.extractedBy.model})` : ""}  ${Math.round((Date.now() - started) / 1000)}s`);
   if (result.partial) warn("Transcript cut to fit", `${result.omitted} older events left out; a larger model would see them all`);
   ok("Generating Digest", result.valid.digest.objective.slice(0, 70));
-  const stored = await api.submitExtraction(session.sessionId, version.version, {
-    ...result.valid,
-    extractedBy: result.extractedBy,
-    partial: result.partial,
-  });
+  let stored;
+  try {
+    stored = await api.submitExtraction(session.sessionId, version.version, {
+      ...result.valid,
+      extractedBy: result.extractedBy,
+      partial: result.partial,
+    });
+  } catch (err) {
+    // Another push of the same session (another terminal, or the end-of-session hook) finished first. Its result stands.
+    if (err instanceof ApiError && err.status === 409 && /already processed/.test(err.message)) {
+      ok("Extracting Memories", "already done by another push of this session");
+      console.log(`\nPush complete.  Session ${session.sessionId}  Version ${version.version}`);
+      return;
+    }
+    throw err;
+  }
   const notes = [stored.dropped && `${stored.dropped} without evidence dropped`, stored.downgraded && `${stored.downgraded} marked hypothesis`].filter(Boolean).join(", ");
   ok("Extracting Memories", `${stored.memories} found${notes ? ` (${notes})` : ""}`);
 
