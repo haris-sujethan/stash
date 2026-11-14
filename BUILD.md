@@ -316,7 +316,7 @@ All of these live in `apps/web/lib/vector.ts` and always filter on `projectId` a
 | Pull: related | the pulled Digest's `objective` | `sessionId: { $nin: [source(s)] }` | 8 | dedupe by text, failed approaches first (section 12) |
 | Website search | the user's question | optional `type`, `status` | 20 | group identical texts, show source Sessions |
 
-Thresholds are starting points; log scores during the demo rehearsal and adjust.
+Thresholds are starting points; log scores during the demo rehearsal and adjust. Measured on Cluster0 (2026-11-14, `apps/web/scripts/probe-vector.ts`): a related Memory scored 0.72 and an unrelated one 0.51 for a short question, and a new Memory was searchable about 4 seconds after insert. Scores run lower than the 0.75 and 0.80 above suggest, so calibrate those with real Memory-to-Memory pairs in M7 and M8.
 
 ## 9. Web API (Next.js route handlers)
 

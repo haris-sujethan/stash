@@ -16,7 +16,7 @@
     "test": "vitest run",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "dev": "npm run dev -w apps/web",
-    "seed": "npm run seed -w apps/web"
+    "seed": "npm run seed -w apps/web --"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
