@@ -36,7 +36,7 @@
 <li><a href="#9-web-api-next-js-route-handlers">9. Web API (Next.js route handlers)</a></li>
 <li><a href="#10-the-cli">10. The CLI</a></li>
 <li><a href="#11-push-step-by-step">11. Push, step by step</a></li>
-<li><a href="#12-server-processing">12. Server processing</a></li>
+<li><a href="#12-reasoning-on-the-developers-machine">12. Reasoning on the developer&#39;s machine</a></li>
 <li><a href="#13-pull-and-the-briefing-apps-web-lib-briefing-ts">13. Pull and the Briefing (apps/web/lib/briefing.ts)</a></li>
 <li><a href="#14-website">14. Website</a></li>
 <li><a href="#15-seed-script-apps-web-scripts-seed-ts-run-with-npx-tsx">15. Seed script (apps/web/scripts/seed.ts, run with npx tsx)</a></li>
@@ -74,8 +74,8 @@
 <td>Wins on naming</td>
 </tr>
 <tr>
-<td><code>docs/adr/0001</code> to <code>0004</code></td>
-<td>Four decisions that look wrong without context. Do not reverse them</td>
+<td><code>docs/adr/0001</code> to <code>0005</code></td>
+<td>Five decisions that look wrong without context. Do not reverse them</td>
 <td>Binding</td>
 </tr>
 <tr>
@@ -103,7 +103,7 @@
 <li>Use the glossary words exactly: Session, Session Version, Event, Transcript, Memory, Digest, Merge, Finding, Briefing, Guardrail, Proposed Guardrail, Approver, Push, Pull, Project, Workspace.</li>
 </ul>
 <h2 id="1-what-we-are-building">1. What we are building</h2>
-<p>Stash is shared memory for AI coding agents. A developer runs <code>stash push</code> inside Claude Code; Stash captures the session, removes secrets locally, uploads it, and the backend turns it into a Digest and typed Memories in MongoDB Atlas. Another agent, on another laptop or another model, runs <code>stash pull &lt;id&gt;</code> and gets a Briefing: what was learned, what failed, what is still open, and the rules every agent must follow. <code>stash merge &lt;a&gt; &lt;b&gt;</code> reconciles two investigations. When the same failure shows up in two Sessions, Stash proposes a Guardrail that a human approves on the website.</p>
+<p>Stash is shared memory for AI coding agents. A developer runs <code>stash push</code> inside Claude Code; Stash captures the session, removes secrets locally, uploads it, and the developer’s own AI tool (Claude Code, Codex or any command) turns it into a Digest and typed Memories, stored in MongoDB Atlas. Another agent, on another laptop or another model, runs <code>stash pull &lt;id&gt;</code> and gets a Briefing: what was learned, what failed, what is still open, and the rules every agent must follow. <code>stash merge &lt;a&gt; &lt;b&gt;</code> reconciles two investigations. When the same failure shows up in two Sessions, Stash proposes a Guardrail that a human approves on the website.</p>
 <p>The demo is two laptops, two agents, one Atlas cluster.</p>
 <h2 id="2-hard-constraints">2. Hard constraints</h2>
 <div class="table"><table><thead><tr>
@@ -128,7 +128,7 @@
 </tr>
 <tr>
 <td>LLM</td>
-<td>Anthropic only, called only from the backend. Model from env, default <code>claude-sonnet-5-5</code></td>
+<td>No key anywhere. Every reasoning step runs on the developer’s machine through their own AI tool: Claude Code, Codex, or any command (ADR 0005). The backend only validates, stores and searches</td>
 </tr>
 <tr>
 <td>Pull</td>
@@ -160,7 +160,7 @@
 <li>Copy the <code>mongodb+srv://...</code> connection string.</li>
 </ul>
 </li>
-<li><strong>Anthropic:</strong> an API key for the backend.</li>
+<li><strong>AI tool:</strong> Claude Code installed and logged in on laptop 1; Codex (or Claude Code) on laptop 2. No API key.</li>
 <li><strong>GitHub:</strong> an empty repo for the demo app (<code>stash-demo</code>), cloned on both laptops.</li>
 <li><strong>Each laptop:</strong> Node 26, npm 11, Claude Code 2.1+, git.</li>
 </ol>
@@ -175,7 +175,8 @@
 │   │       ├── config.ts       # ~/.stash/config.json and ./.stash.json
 │   │       ├── discover.ts     # find the Claude Code session file
 │   │       ├── redact.ts       # secret scanning
-│   │       ├── upload.ts       # batching, retries, NDJSON progress
+│   │       ├── reason.ts       # extraction, merge and guardrail calls through the LLM adapter
+│   │       ├── upload.ts       # batching, retries, progress lines
 │   │       └── api.ts          # typed client for the web API
 │   └── web/                    # Next.js App Router: website + API
 │       ├── app/
@@ -186,18 +187,17 @@
 │       ├── lib/
 │       │   ├── db.ts            # MongoClient singleton, collections, indexes
 │       │   ├── auth.ts          # bearer token and approver secret checks
-│       │   ├── llm.ts           # Anthropic client, one place for model and effort
-│       │   ├── extract.ts       # Digest + Memories
-│       │   ├── merge.ts         # Findings + merged Digest
-│       │   ├── guardrails.ts    # repeated-failure detection and proposals
+│       │   ├── ingest.ts        # validate and store extractions, merges, proposals
+│       │   ├── guardrails.ts    # candidate search for repeated failures
 │       │   ├── briefing.ts      # template, ranking, budget
 │       │   ├── lineage.ts       # marker parsing
 │       │   └── vector.ts        # every $vectorSearch lives here
 │       └── scripts/seed.ts      # workspace, token, approver secret, indexes
 ├── packages/
 │   ├── context-format/         # Universal Context Format types + zod schemas (shared by CLI and web)
-│   ├── agent-adapters/         # claude-code adapter (JSONL → UCF Events)
-│   └── core/                   # ids, hashing, token estimate, marker regex, glossary enums
+│   ├── agent-adapters/         # reading sessions: claude-code (JSONL → UCF Events)
+│   ├── llm-adapters/           # running the developer&#39;s AI tool: claude, codex, cmd
+│   └── core/                   # ids, hashing, token estimate, marker regex, enums, prompts, zod schemas, validators
 ├── design/landing/             # design explorations (keep; 15-bubbles is the approved one)
 ├── docs/adr/
 ├── BUILD.md  MVP.md  GLOSSARY.md  BLUEPRINT.md
@@ -226,12 +226,12 @@
 <td><code>mongodb</code> 7 (official Node driver)</td>
 </tr>
 <tr>
-<td>LLM SDK</td>
-<td><code>@anthropic-ai/sdk</code> 1.x</td>
+<td>LLM</td>
+<td>None on the server. The CLI spawns the developer’s AI tool with <code>node:child_process</code></td>
 </tr>
 <tr>
 <td>Validation</td>
-<td><code>zod</code> 4 (shared schemas, LLM structured outputs)</td>
+<td><code>zod</code> 4 (shared schemas; <code>z.toJSONSchema</code> gives each AI tool its output schema)</td>
 </tr>
 <tr>
 <td>CLI</td>
@@ -250,16 +250,16 @@
 <h3 id="backend-apps-web-env-local">Backend: <code>apps/web/.env.local</code></h3>
 <pre><code class="language-bash">MONGODB_URI=&quot;mongodb+srv://&lt;user&gt;:&lt;pass&gt;@cluster0.xxxxx.mongodb.net/?retryWrites=true&amp;w=majority&quot;
 MONGODB_DB=&quot;stash&quot;
-ANTHROPIC_API_KEY=&quot;sk-ant-...&quot;
-LLM_MODEL=&quot;claude-sonnet-5-5&quot;
-LLM_EFFORT_EXTRACT=&quot;medium&quot;
-LLM_EFFORT_MERGE=&quot;high&quot;
 EMBED_MODEL=&quot;voyage-4&quot;
 VECTOR_INDEX=&quot;memories_vector&quot;
 </code></pre>
 <p>Commit an <code>.env.example</code> with the same keys and empty values.</p>
 <h3 id="cli-stash-config-json-per-user-written-by-stash-login">CLI: <code>~/.stash/config.json</code> (per user, written by <code>stash login</code>)</h3>
-<pre><code class="language-json">{ &quot;apiUrl&quot;: &quot;http://localhost:3000&quot;, &quot;token&quot;: &quot;stash_...&quot; }
+<pre><code class="language-json">{
+  &quot;apiUrl&quot;: &quot;http://localhost:3000&quot;,
+  &quot;token&quot;: &quot;stash_...&quot;,
+  &quot;llm&quot;: { &quot;tool&quot;: &quot;claude&quot;, &quot;model&quot;: &quot;sonnet&quot;, &quot;command&quot;: null, &quot;maxInputTokens&quot;: null }
+}
 </code></pre>
 <h3 id="repo-stash-json-committed-written-by-stash-init">Repo: <code>./.stash.json</code> (committed, written by <code>stash init</code>)</h3>
 <pre><code class="language-json">{ &quot;projectId&quot;: &quot;prj_k3m9x&quot;, &quot;workspaceId&quot;: &quot;wsp_demo1&quot;, &quot;remote&quot;: &quot;github.com/&lt;owner&gt;/stash-demo&quot; }
@@ -300,6 +300,8 @@ interface SessionVersion {
   eventCount: number; contentHash: string;   // sha256 of ordered event ids
   status: &quot;processing&quot; | &quot;processed&quot; | &quot;failed&quot;;
   digest: Digest | null;
+  extractedBy: { tool: &quot;claude&quot; | &quot;codex&quot; | &quot;cmd&quot;; model: string | null } | null;
+  partial: boolean;               // Transcript was cut to fit the model
   redactedCount: number;
   createdAt: Date; processedAt: Date | null; error?: string;
 }
@@ -344,6 +346,7 @@ interface Merge {
   sources: { sessionId: string; version: number }[];   // exactly two
   digest: Digest;
   findings: Finding[];
+  extractedBy: { tool: string; model: string | null };
   createdAt: Date;
 }
 interface Finding {
@@ -449,14 +452,14 @@ interface AuditLog { _id: string; workspaceId: string; actor: &quot;token&quot; 
 <td>each Memory of Session A</td>
 <td><code>sessionId: B</code></td>
 <td>3</td>
-<td>pairs with score ≥ 0.75 go to the merge LLM call as candidates</td>
+<td>pairs with score ≥ 0.75 are sent to the CLI as merge candidates</td>
 </tr>
 <tr>
 <td>Guardrail detection</td>
 <td>each new <code>failed_approach</code> Memory</td>
 <td><code>type: &quot;failed_approach&quot;</code>, <code>sessionId: { $ne: new }</code></td>
 <td>5</td>
-<td>matches with score ≥ 0.80 from other Sessions go to the guardrail LLM call</td>
+<td>matches with score ≥ 0.80 from other Sessions are sent to the CLI for the evidence check</td>
 </tr>
 <tr>
 <td>Pull: related</td>
@@ -475,7 +478,7 @@ interface AuditLog { _id: string; workspaceId: string; actor: &quot;token&quot; 
 </tbody></table></div>
 <p>Thresholds are starting points; log scores during the demo rehearsal and adjust.</p>
 <h2 id="9-web-api-next-js-route-handlers">9. Web API (Next.js route handlers)</h2>
-<p>Every request except the landing and docs pages carries <code>Authorization: Bearer &lt;stash token&gt;</code>. <code>lib/auth.ts</code> hashes it (sha256), finds the token, and scopes every query to that Workspace. Approver actions also need <code>X-Approver-Secret</code>, checked against <code>workspace.approverHash</code> (scrypt). Long operations stream progress as NDJSON lines: <code>{&quot;step&quot;:&quot;digest&quot;,&quot;status&quot;:&quot;done&quot;}</code>.</p>
+<p>Every request except the landing and docs pages carries <code>Authorization: Bearer &lt;stash token&gt;</code>. <code>lib/auth.ts</code> hashes it (sha256), finds the token, and scopes every query to that Workspace. Approver actions also need <code>X-Approver-Secret</code>, checked against <code>workspace.approverHash</code> (scrypt). The server never calls an LLM; the CLI shows progress while the developer’s AI tool works.</p>
 <div class="table"><table><thead><tr>
 <th>Method and path</th>
 <th>Body</th>
@@ -499,7 +502,27 @@ interface AuditLog { _id: string; workspaceId: string; actor: &quot;token&quot; 
 <tr>
 <td><code>POST /api/sessions/:id/versions</code></td>
 <td><code>{ contentHash, eventCount, redactedCount }</code></td>
-<td>NDJSON stream: <code>version</code> → <code>digest</code> → <code>memories</code> → <code>lineage</code> → <code>guardrails</code> → <code>done {version, memories, proposed}</code>. If <code>contentHash</code> equals the latest Version’s, returns <code>{ unchanged: true, version }</code> and does nothing</td>
+<td><code>{ version, lineage }</code> with <code>status: &quot;processing&quot;</code>; records lineage (12.5). If <code>contentHash</code> equals the latest processed Version’s, returns <code>{ unchanged: true, version }</code> and does nothing</td>
+</tr>
+<tr>
+<td><code>GET /api/sessions/:id/transcript?version=</code></td>
+<td></td>
+<td>Events in order (the CLI uses its local copy; this is for retries from another machine)</td>
+</tr>
+<tr>
+<td><code>POST /api/sessions/:id/versions/:n/extraction</code></td>
+<td><code>{ digest, memories, extractedBy, partial }</code></td>
+<td><code>{ memories: count, dropped: count }</code>. Validates (12.4), stores, switches current Memories</td>
+</tr>
+<tr>
+<td><code>GET /api/guardrails/candidates?sessionId=&amp;version=</code></td>
+<td></td>
+<td>Matches for each new Failed Approach, their Events, and existing Guardrails (12.6)</td>
+</tr>
+<tr>
+<td><code>POST /api/guardrails</code></td>
+<td><code>{ rule, rationale, pattern, evidence, extractedBy }</code></td>
+<td>the Proposed Guardrail; 422 if evidence spans fewer than 2 Sessions</td>
 </tr>
 <tr>
 <td><code>GET /api/sessions?projectId=</code></td>
@@ -517,9 +540,14 @@ interface AuditLog { _id: string; workspaceId: string; actor: &quot;token&quot; 
 <td><code>{ pullId, markdown, tokensUsed }</code></td>
 </tr>
 <tr>
-<td><code>POST /api/merges</code></td>
+<td><code>POST /api/merges/prepare</code></td>
 <td><code>{ a: sessionId, b: sessionId }</code></td>
-<td>NDJSON stream: <code>candidates</code> → <code>reconcile</code> → <code>done {mergeId, counts}</code></td>
+<td>Versions, Digests, Memories, candidate pairs, cited Events (12.7)</td>
+</tr>
+<tr>
+<td><code>POST /api/merges</code></td>
+<td><code>{ sources, digest, findings, extractedBy }</code></td>
+<td><code>{ mergeId, counts }</code>; 409 if a source has a newer Version than prepared</td>
 </tr>
 <tr>
 <td><code>GET /api/merges/:id</code></td>
@@ -568,7 +596,7 @@ interface AuditLog { _id: string; workspaceId: string; actor: &quot;token&quot; 
 <td>Reads <code>git remote get-url origin</code>, normalizes it (strip protocol, <code>git@</code>, <code>.git</code>; lowercase host), calls <code>/api/projects/init</code>, writes <code>.stash.json</code>. No remote: requires <code>--name</code> or prompts</td>
 </tr>
 <tr>
-<td><code>stash push [--session ID]</code></td>
+<td><code>stash push [--session ID] [--llm claude|codex|cmd]</code></td>
 <td>Section 11. Prints progress as checkmark lines</td>
 </tr>
 <tr>
@@ -576,8 +604,8 @@ interface AuditLog { _id: string; workspaceId: string; actor: &quot;token&quot; 
 <td>Calls <code>/api/pull</code>, prints the Markdown to stdout; with <code>--output</code>, also writes the file. Sends <code>CLAUDE_CODE_SESSION_ID</code> as <code>agentSessionHint</code> when set</td>
 </tr>
 <tr>
-<td><code>stash merge &lt;a&gt; &lt;b&gt;</code></td>
-<td>Streams progress, prints counts and the Merge id</td>
+<td><code>stash merge &lt;a&gt; &lt;b&gt; [--llm claude|codex|cmd]</code></td>
+<td>Section 12.7. Shows progress, prints counts and the Merge id</td>
 </tr>
 <tr>
 <td><code>stash sessions</code></td>
@@ -601,7 +629,7 @@ interface AuditLog { _id: string; workspaceId: string; actor: &quot;token&quot; 
 <li>Else if <code>CLAUDE_CODE_SESSION_ID</code> is set (the CLI was run from inside Claude Code), use that id. <code>CLAUDECODE=1</code> confirms the agent.</li>
 <li>Else list <code>*.jsonl</code> in this folder’s slug directory, newest first. One candidate: use it after printing which. Several: show title (first user message) and time, ask the user to choose. None: exit 1 with a clear message.</li>
 </ol>
-<p>Never upload a session you are not sure about.</p>
+<p>Skip any session whose first user message starts with <code>stash:extract</code> (Stash’s own reasoning calls). Never upload a session you are not sure about.</p>
 <h3 id="11-2-parse-the-jsonl-adapter-packages-agent-adapters-src-claude-code-ts">11.2 Parse the JSONL (adapter: <code>packages/agent-adapters/src/claude-code.ts</code>)</h3>
 <p>Each line is a JSON record. Keep only <code>type: &quot;user&quot; | &quot;assistant&quot;</code> (and <code>system</code> records with <code>level: &quot;error&quot;</code>). Ignore everything else (<code>queue-operation</code>, <code>attachment</code>, <code>api-request*</code>, <code>file-history-*</code>, <code>last-prompt</code>, <code>custom-title</code>, <code>agent-name</code>, <code>summary</code>, and any new type).</p>
 <p>Useful fields on kept records: <code>uuid</code>, <code>parentUuid</code>, <code>isSidechain</code>, <code>timestamp</code>, <code>cwd</code>, <code>gitBranch</code>, <code>sessionId</code>, <code>message.content[]</code>, and on tool results <code>toolUseResult</code>.</p>
@@ -649,7 +677,7 @@ interface AuditLog { _id: string; workspaceId: string; actor: &quot;token&quot; 
 </tbody></table></div>
 <p><strong>Excerpt large outputs.</strong> Over 4 KB: keep the first 2 KB and the last 1 KB, set <code>truncated: true</code>, keep <code>originalLength</code> and <code>sha256</code> of the full text. Error text is always kept in full up to 8 KB.</p>
 <p>Event id: <code>sha256(nativeSessionId + &quot;:&quot; + record.uuid + &quot;:&quot; + blockIndex)</code> as hex, first 24 chars. <code>seq</code> is the position in the final Transcript.</p>
-<h3 id="11-3-redact-in-the-cli-before-anything-leaves-the-machine">11.3 Redact (in the CLI, before anything leaves the machine)</h3>
+<h3 id="11-3-redact-in-the-cli-before-anything-leaves-the-machine-including-the-prompt-sent-to-the-ai-tool">11.3 Redact (in the CLI, before anything leaves the machine, including the prompt sent to the AI tool)</h3>
 <p><code>apps/cli/src/redact.ts</code> scans every string field of every Event (text, tool inputs, outputs).</p>
 <div class="table"><table><thead><tr>
 <th>Kind</th>
@@ -694,11 +722,12 @@ interface AuditLog { _id: string; workspaceId: string; actor: &quot;token&quot; 
 <li><code>resolve</code> the Session; get <code>knownEventIds</code>.</li>
 <li>Send unknown Events in batches of up to 500 or 2 MB. Retry each batch up to 3 times with backoff (1s, 3s, 9s). Re-sending is safe because Event ids are stable.</li>
 <li><code>POST versions</code> with <code>contentHash</code> = sha256 of the ordered Event ids. If unchanged, print <code>No changes detected. Already up to date (vN).</code> and exit 0.</li>
-<li>Render the NDJSON progress stream as lines:</li>
+<li>Run extraction locally (12.4), upload it, then run the guardrail check (12.6). Print progress as lines:</li>
 </ol>
 <pre><code class="language-text">✓ Capturing session          claude-code 6f2e…  148 events
 ✓ Scanning for secrets       1 redacted
 ✓ Uploading transcript       148 events
+✓ Reasoning locally          claude (sonnet)
 ✓ Generating Digest
 ✓ Extracting Memories        12 found
 ✓ Recording lineage          continued from ses_8kq2v@v2
@@ -706,20 +735,55 @@ interface AuditLog { _id: string; workspaceId: string; actor: &quot;token&quot; 
 
 Push complete.  Session ses_4m2pq  Version 2
 </code></pre>
-<h2 id="12-server-processing">12. Server processing</h2>
-<h3 id="12-1-llm-client-apps-web-lib-llm-ts">12.1 LLM client (<code>apps/web/lib/llm.ts</code>)</h3>
-<ul>
-<li><code>new Anthropic()</code> reads <code>ANTHROPIC_API_KEY</code>. Model from <code>LLM_MODEL</code> (default <code>claude-sonnet-5-5</code>).</li>
-<li>Use <code>client.messages.parse({ model, max_tokens: 16000, system, messages, output_config: { format: zodOutputFormat(Schema), effort } })</code> with <code>zodOutputFormat</code> from <code>@anthropic-ai/sdk/helpers/zod</code>. Read <code>response.parsed_output</code>; if it is null or <code>stop_reason</code> is <code>&quot;refusal&quot;</code> or <code>&quot;max_tokens&quot;</code>, retry once, then mark the Version <code>failed</code> with the reason.</li>
-<li>Do not send <code>thinking</code>, <code>temperature</code> or a prefill. Adaptive thinking is on by default for this model; depth is set by <code>output_config.effort</code> (<code>LLM_EFFORT_EXTRACT</code>, <code>LLM_EFFORT_MERGE</code>).</li>
-<li>Put the long, stable system prompt first with <code>cache_control: { type: &quot;ephemeral&quot; }</code> on it, so repeated pushes reuse the cache.</li>
-<li>Before extraction, <code>client.messages.countTokens(...)</code>. If the rendered Transcript exceeds 600k tokens, shorten older tool output excerpts to 300 characters and count again. Never silently drop Events: every Event keeps its id line.</li>
-<li>Refusal fallbacks (optional): Sonnet 5.5 supports server-side <code>fallbacks: &quot;default&quot;</code> with beta <code>server-side-fallback-2026-07-01</code>. Add it only if the <code>parse</code> helper is available on the beta namespace in the installed SDK; otherwise the retry above is enough for the demo.</li>
-</ul>
-<h3 id="12-2-rendering-a-transcript-for-the-model">12.2 Rendering a Transcript for the model</h3>
-<p>One line per Event, oldest first: <code>[e:&lt;id&gt;] &lt;type&gt; &lt;tool name if any&gt;: &lt;text or excerpt&gt;</code>. The ids let the model cite evidence.</p>
-<h3 id="12-3-digest-and-memories-one-call-per-session-version">12.3 Digest and Memories (one call per Session Version)</h3>
-<p>Schema (zod):</p>
+<h2 id="12-reasoning-on-the-developers-machine">12. Reasoning on the developer’s machine</h2>
+<p>Stash has no LLM key (ADR 0005). The CLI runs the developer’s own AI tool for every reasoning step and uploads the structured result. The server validates and stores it. Prompts, zod schemas and validators live in <code>packages/core</code> so the CLI and the server use the same rules.</p>
+<h3 id="12-1-llm-adapters-packages-llm-adapters">12.1 LLM adapters (<code>packages/llm-adapters</code>)</h3>
+<pre><code class="language-ts">export type LlmTool = &quot;claude&quot; | &quot;codex&quot; | &quot;cmd&quot;;
+
+export interface LlmRequest {
+  system: string;            // stable instructions
+  prompt: string;            // the rendered Transcript or merge material
+  schema: object;            // JSON Schema from z.toJSONSchema(ZodSchema)
+  timeoutMs: number;         // default 300_000
+}
+
+export interface LlmAdapter {
+  tool: LlmTool;
+  detect(): Promise&lt;boolean&gt;;                                  // installed and runnable
+  maxInputTokens: number;                                      // used to fit the Transcript
+  run(req: LlmRequest): Promise&lt;{ text: string; model: string | null }&gt;;
+}
+</code></pre>
+<div class="table"><table><thead><tr>
+<th>Adapter</th>
+<th>How it runs (prompt always on stdin, spawned with <code>node:child_process</code>, never through a shell)</th>
+</tr>
+</thead><tbody><tr>
+<td><code>claude</code></td>
+<td><code>claude -p --output-format json --json-schema &#39;&lt;schema&gt;&#39; --no-session-persistence --model &lt;model, default sonnet&gt; --system-prompt &#39;&lt;system&gt;&#39;</code>, with tools turned off (<code>--restricted</code>, or <code>--tools &quot;&quot;</code>; confirm with <code>claude --help</code>, verified on 2.1.318). Read the JSON envelope: the structured object when present, else parse <code>result</code>. Take the model name from the envelope. <code>maxInputTokens</code> 150k</td>
+</tr>
+<tr>
+<td><code>codex</code></td>
+<td><code>codex exec --skip-git-repo-check --sandbox read-only --output-schema &lt;tmp schema file&gt; -o &lt;tmp out file&gt; -</code>; read the out file. Not installed on laptop 1, so confirm the flags with <code>codex exec --help</code> before writing it. <code>maxInputTokens</code> 150k</td>
+</tr>
+<tr>
+<td><code>cmd</code></td>
+<td>Any command saved in config (for example <code>ollama run qwen3</code>). Send system + schema + prompt + “Reply with one JSON object and nothing else.” Take the first complete JSON object from stdout. <code>maxInputTokens</code> from config, default 24k</td>
+</tr>
+</tbody></table></div>
+<p><strong><code>--no-session-persistence</code> is required for <code>claude</code>.</strong> Without it, Stash’s own extraction calls are saved as Claude Code sessions in the same folder, and the next <code>stash push</code> could pick one up. As a backstop, session discovery (11.1) skips any session whose first user message starts with <code>stash:extract</code>, and every Stash prompt starts with that marker.</p>
+<p><strong>Choosing the adapter, first match wins:</strong> <code>--llm &lt;tool&gt;</code> flag; the agent Stash is running inside (<code>CLAUDECODE=1</code> means <code>claude</code>; Codex’s environment marker, if it sets one, means <code>codex</code>); <code>llm.tool</code> in <code>~/.stash/config.json</code>; otherwise detect the installed tools, ask once, and save the answer. <code>--llm cmd</code> asks for the command once and saves it. If nothing is available, exit 1 with how to install Claude Code or Codex, or how to set a command.</p>
+<p>On timeout, kill the process and report it. Never print the tool’s stderr unless <code>--debug</code>.</p>
+<h3 id="12-2-structured-calls-runstructured">12.2 Structured calls (<code>runStructured</code>)</h3>
+<ol>
+<li>Build the JSON Schema from the zod schema with <code>z.toJSONSchema</code>.</li>
+<li>Run the adapter; <code>JSON.parse</code> the text; <code>Schema.safeParse</code> it.</li>
+<li>If parsing fails, retry once with the validation error appended (“Your last reply failed validation: …”). If it fails again, stop with a clear error. Events are already uploaded, so running <code>stash push</code> again retries only the processing.</li>
+</ol>
+<h3 id="12-3-rendering-a-transcript-for-the-model">12.3 Rendering a Transcript for the model</h3>
+<p>One line per Event, oldest first: <code>[e:&lt;id&gt;] &lt;type&gt; &lt;tool name if any&gt;: &lt;text or excerpt&gt;</code>. The ids let the model cite evidence. Estimate tokens as <code>ceil(chars / 4)</code>. If it exceeds the adapter’s <code>maxInputTokens</code>: shorten older tool output excerpts to 300 characters; if still too big, keep every <code>error</code> and <code>user_message</code> Event plus the most recent Events that fit, mark the Version <code>partial: true</code>, and print a warning naming a bigger model. Never drop an Event silently: dropped ranges become one line, <code>[… 212 events omitted …]</code>.</p>
+<h3 id="12-4-digest-and-memories-one-call-per-session-version">12.4 Digest and Memories (one call per Session Version)</h3>
+<p>Schema (zod, in <code>packages/core</code>):</p>
 <pre><code class="language-ts">const Extract = z.object({
   digest: z.object({
     objective: z.string(),
@@ -736,8 +800,9 @@ Push complete.  Session ses_4m2pq  Version 2
   })).max(40),
 });
 </code></pre>
-<p>System prompt essentials (write it in full in <code>extract.ts</code>):</p>
+<p>System prompt essentials (write it in full in <code>packages/core/src/prompts/extract.ts</code>):</p>
 <ul>
+<li>Start with the marker <code>stash:extract</code>.</li>
 <li>You are given the Transcript of one coding-agent session. Extract what the next agent needs to continue.</li>
 <li>Memories describe; they never instruct. Write “Hand edits to generated.ts were overwritten by the build”, never “Don’t edit generated.ts”.</li>
 <li>One idea per Memory, one sentence, specific: files, functions, commands, error messages.</li>
@@ -746,25 +811,21 @@ Push complete.  Session ses_4m2pq  Version 2
 <li>Failed approaches say what was tried and why it did not work.</li>
 <li>Do not invent anything not in the Transcript.</li>
 </ul>
-<p><strong>Validate after parsing:</strong> drop any eventId that is not in this Session; drop a Memory left with no eventIds; downgrade <code>evidenced</code> to <code>hypothesis</code> unless at least one cited Event is a <code>tool_result</code>, <code>error</code> or <code>file_change</code>; drop Memories whose text starts with an imperative (<code>Do </code>, <code>Don&#39;t</code>, <code>Never</code>, <code>Always</code>, <code>Use </code>, <code>Avoid </code>) or rewrite them as “The agent found that …”.</p>
-<p><strong>Store:</strong> in one sequence: insert the new Memories with <code>current: false</code>; set the Version’s <code>digest</code> and <code>status: &quot;processed&quot;</code>; then <code>updateMany({sessionId, current: true}, {$set:{current:false}})</code> and <code>updateMany({sessionId, version: n}, {$set:{current:true}})</code>; then <code>sessions.latestVersion = n</code>. A failed run leaves the previous Version current.</p>
-<h3 id="12-4-lineage">12.4 Lineage</h3>
-<p>Regex (in <code>packages/core</code>): <code>/stash:briefing (ses_[a-z0-9]+|m_[a-z0-9]+)@v(\d+) pull=(p_[a-z0-9]+)/g</code>. Scan the <code>tool_result</code> outputs of the pushed Transcript. For each match whose <code>pullId</code> exists in <code>pulls</code> and belongs to this Project, add a lineage entry (deduplicated by <code>pullId</code>). Several matches mean several parents.</p>
-<h3 id="12-5-guardrail-proposals-after-every-processed-push">12.5 Guardrail proposals (after every processed push)</h3>
+<p><strong>Validate (<code>validateExtraction</code>, run by the CLI before upload and again by the server):</strong> drop any eventId that is not in this Session; drop a Memory left with no eventIds; downgrade <code>evidenced</code> to <code>hypothesis</code> unless at least one cited Event is a <code>tool_result</code>, <code>error</code> or <code>file_change</code>; rewrite Memories that start with an imperative (<code>Do </code>, <code>Don&#39;t</code>, <code>Never</code>, <code>Always</code>, <code>Use </code>, <code>Avoid </code>) as “The agent found that …”.</p>
+<p><strong>Upload:</strong> <code>POST /api/sessions/:id/versions/:n/extraction</code> with <code>{ digest, memories, extractedBy: { tool, model }, partial }</code>. The server validates again, then in one sequence: inserts the Memories with <code>current: false</code>; sets the Version’s <code>digest</code>, <code>extractedBy</code> and <code>status: &quot;processed&quot;</code>; runs <code>updateMany({sessionId, current: true}, {$set:{current:false}})</code> and <code>updateMany({sessionId, version: n}, {$set:{current:true}})</code>; sets <code>sessions.latestVersion = n</code>. A failed run leaves the previous Version current.</p>
+<h3 id="12-5-lineage-server">12.5 Lineage (server)</h3>
+<p>Regex (in <code>packages/core</code>): <code>/stash:briefing (ses_[a-z0-9]+|m_[a-z0-9]+)@v(\d+) pull=(p_[a-z0-9]+)/g</code>. When a Version is created, the server scans the Session’s <code>tool_result</code> outputs. For each match whose <code>pullId</code> exists in <code>pulls</code> and belongs to this Project, it adds a lineage entry (deduplicated by <code>pullId</code>). Several matches mean several parents.</p>
+<h3 id="12-6-guardrail-proposals-after-every-processed-push">12.6 Guardrail proposals (after every processed push)</h3>
 <ol>
-<li>For each new <code>failed_approach</code> Memory, run the guardrail Vector Search (section 8).</li>
-<li>Keep matches from <strong>other</strong> Sessions with score ≥ 0.80. If none, stop.</li>
-<li>Load all Guardrails of the Project (any status). Send one LLM call with: the new failure and its Events, the matched failures and their Events, and the existing Guardrails&#39; <code>pattern</code> and <code>rule</code>.</li>
-<li>Schema: <code>{ samePattern: boolean, coveredBy: string | null, proposal: { rule, rationale, pattern } | null }</code>. The model must answer whether these are genuinely the same failure, judged on the evidence, not the wording.</li>
-<li>If <code>samePattern</code> and not <code>coveredBy</code>, insert a Guardrail with <code>status: &quot;proposed&quot;</code> and evidence from 2 or more distinct Sessions. A pattern covered by a rejected Guardrail is never proposed again.</li>
+<li>CLI: <code>GET /api/guardrails/candidates?sessionId=&amp;version=</code>. For each new <code>failed_approach</code> Memory, the server runs the guardrail Vector Search (section 8; the query is the Memory’s text, so the new Memory need not be embedded yet). It returns matches from <strong>other</strong> Sessions with score ≥ 0.80, their cited Events (excerpts), and every Guardrail of the Project (any status) with its <code>pattern</code> and <code>rule</code>. No matches: stop.</li>
+<li>CLI: one structured call per new failure that has matches. Schema: <code>{ samePattern: boolean, coveredBy: string | null, proposal: { rule, rationale, pattern } | null }</code>. The prompt asks whether these are genuinely the same failure, judged on the evidence, not the wording. The rule is the one place an instruction is allowed.</li>
+<li>If <code>samePattern</code> and not <code>coveredBy</code>: <code>POST /api/guardrails</code> with <code>{ rule, rationale, pattern, evidence, extractedBy }</code>. The server checks that the evidence spans 2 or more distinct Sessions and that every cited Memory and Event exists, then inserts it as <code>proposed</code>. A pattern covered by a rejected Guardrail is never proposed again.</li>
 </ol>
-<h3 id="12-6-merge">12.6 Merge</h3>
+<h3 id="12-7-merge">12.7 Merge</h3>
 <ol>
-<li>Load the current Memories of both Sessions (their latest processed Versions; record those Versions).</li>
-<li>Candidate pairs: Vector Search each Memory of A against B (section 8).</li>
-<li>One LLM call (effort <code>LLM_EFFORT_MERGE</code>) with both Digests, both Memory lists (ids, type, status, text), the candidate pairs with scores, and the Events cited by candidate pairs (excerpts).</li>
-<li>Schema: <code>{ digest: Digest, findings: [{ kind, summary, memoryIds, eventIds }] }</code>. Rules for the prompt: judge by evidence, not by majority; a conflict stays a conflict when the evidence does not settle it; every Memory of either source appears in at least one Finding.</li>
-<li>Validate ids, store the Merge. <strong>Never write to the source Sessions or Memories.</strong></li>
+<li>CLI: <code>POST /api/merges/prepare { a, b }</code>. The server picks each Session’s latest processed Version and returns both Digests, both current Memory lists (ids, type, status, text), the candidate pairs from Vector Search (section 8) with scores, and the Events cited by candidate pairs (excerpts).</li>
+<li>CLI: one structured call. Schema: <code>{ digest: Digest, findings: [{ kind, summary, memoryIds, eventIds }] }</code>. Prompt rules: judge by evidence, not by majority; a conflict stays a conflict when the evidence does not settle it; every Memory of either source appears in at least one Finding.</li>
+<li>CLI: <code>POST /api/merges { sources: [{sessionId, version}, {sessionId, version}], digest, findings, extractedBy }</code>. The server checks that the Versions are still the latest processed ones and every id exists, then stores the Merge. <strong>Nothing writes to the source Sessions or Memories.</strong></li>
 </ol>
 <h2 id="13-pull-and-the-briefing-apps-web-lib-briefing-ts">13. Pull and the Briefing (<code>apps/web/lib/briefing.ts</code>)</h2>
 <p>No LLM call. Steps:</p>
@@ -901,8 +962,8 @@ Ask for more: stash pull ses_8kq2v --budget 12000
 </tr>
 <tr>
 <td>M5</td>
-<td>Extraction (Digest + Memories), Version switching</td>
-<td>A push produces a Version with Digest and 5 to 40 cited Memories; every eventId exists; no imperative Memories</td>
+<td>LLM adapters (<code>claude</code>, <code>codex</code>, <code>cmd</code>) + extraction, Version switching</td>
+<td>A push produces a Version with Digest and 5 to 40 cited Memories, <code>extractedBy</code> set; every eventId exists; no imperative Memories; the <code>cmd</code> adapter passes with a fake command; Stash’s own <code>claude -p</code> calls never show up as sessions</td>
 </tr>
 <tr>
 <td>M6</td>
@@ -941,19 +1002,19 @@ Ask for more: stash pull ses_8kq2v --budget 12000
 </tr>
 </tbody></table></div>
 <p>Cut order if behind: Home page → <code>sessions</code>/<code>status</code> polish → lineage chain on the website (keep the data) → Verify button. Never cut push, pull, merge or Guardrails.</p>
-<p>Stretch, only after M12: Okta/Auth0 login; an MCP server exposing <code>stash_pull</code> and <code>stash_search</code>; auto-push from a Claude Code <code>SessionEnd</code> hook; a Codex push adapter.</p>
+<p>Stretch, only after M12: Okta/Auth0 login; an MCP server exposing <code>stash_pull</code> and <code>stash_search</code>; auto-push from a Claude Code <code>SessionEnd</code> hook; a Codex push adapter; a Gemini CLI LLM adapter; chunking long Sessions for small models.</p>
 <h2 id="18-testing">18. Testing</h2>
 <ul>
 <li><strong>Unit (vitest):</strong> adapter (fixtures copied from real, redacted session files), redaction patterns, event id stability, token estimate, budget fitter (drop order, never drops Guardrails), marker regex, memory validator.</li>
 <li><strong>Integration:</strong> against a separate database <code>stash_test</code> on the same cluster: push → version → memories current flag switch; idempotent re-push; merge leaves sources unchanged; approve requires the secret.</li>
-<li><strong>LLM calls in tests:</strong> behind a flag (<code>RUN_LLM_TESTS=1</code>); default runs use recorded fixtures.</li>
+<li><strong>LLM adapters in tests:</strong> default runs use a fake command (a node script that prints fixture JSON) through the <code>cmd</code> adapter, plus envelope fixtures for <code>claude</code> and <code>codex</code>. Real tools run only with <code>RUN_LLM_TESTS=1</code>.</li>
 <li><strong>Manual:</strong> the run sheet.</li>
 </ul>
 <h2 id="19-demo-run-sheet">19. Demo run sheet</h2>
 <ol>
-<li>Laptop 1, <code>stash-demo</code>, Claude Code: “Users get logged out at random. Find out why.” Let it find the refresh race. <code>! stash push</code> → shows 1 secret redacted, Memories extracted.</li>
-<li>Laptop 2, a fresh agent session: <code>stash pull &lt;ses_A&gt;</code> → the agent continues without re-investigating; it does not retry the db timeout.</li>
-<li>Laptop 2’s agent investigates the cache and pushes → the website shows “continued from ses_A”.</li>
+<li>Laptop 1, <code>stash-demo</code>, Claude Code: “Users get logged out at random. Find out why.” Let it find the refresh race. <code>! stash push</code> → shows 1 secret redacted, Memories extracted by Claude.</li>
+<li>Laptop 2, a fresh agent session (Codex if installed, to show cross-LLM): <code>stash pull &lt;ses_A&gt;</code> → the agent continues without re-investigating; it does not retry the db timeout.</li>
+<li>Laptop 2’s agent investigates the cache and pushes (push captures Claude Code sessions, so this one runs in Claude Code; <code>--llm codex</code> does the reasoning with Codex) → the website shows “continued from ses_A” and “extracted by codex”.</li>
 <li><code>stash merge ses_A ses_B</code> → the Merges page: duplicate refresh finding, complementary cache finding, the database conflict.</li>
 <li>Both sessions had hand-edited the generated client → Guardrails page shows a Proposed Guardrail with evidence from both. Approve it with the secret.</li>
 <li><code>stash pull ses_B</code> → the rule now leads the Briefing.</li>
@@ -973,8 +1034,20 @@ Ask for more: stash pull ses_8kq2v --budget 12000
 <td><code>status</code> checks the index state and prints a clear warning if it is stale</td>
 </tr>
 <tr>
-<td>LLM extraction is slow on stage</td>
-<td>Stream progress; pre-record sessions; effort <code>medium</code> for extraction</td>
+<td>Local extraction is slow on stage</td>
+<td>Progress lines; pre-record sessions; <code>--model sonnet</code>, not the largest model</td>
+</tr>
+<tr>
+<td>An AI tool changes its CLI flags</td>
+<td>Each tool is one small adapter; confirm flags with <code>--help</code>; <code>cmd</code> works as a fallback with any tool</td>
+</tr>
+<tr>
+<td>Stash’s own <code>claude -p</code> calls become sessions</td>
+<td><code>--no-session-persistence</code>, plus discovery skips sessions starting with <code>stash:extract</code></td>
+</tr>
+<tr>
+<td>A modified CLI uploads invented Memories</td>
+<td>Server re-validates every citation; Guardrails still need a human; stated as a known limitation</td>
 </tr>
 <tr>
 <td>Claude Code JSONL format changes</td>
@@ -1000,7 +1073,8 @@ Ask for more: stash pull ses_8kq2v --budget 12000
 <h2 id="21-open-items-for-the-user">21. Open items for the user</h2>
 <ul>
 <li>Confirm Cluster0 has storage auto-scaling on, the laptops&#39; IPs are allowed, and a database user exists.</li>
-<li>Provide the Anthropic API key and the Atlas connection string for <code>apps/web/.env.local</code>.</li>
+<li>Put the Atlas connection string in <code>apps/web/.env.local</code> (no other secret is needed).</li>
+<li>Have Claude Code logged in on laptop 1, and Codex or Claude Code on laptop 2.</li>
 <li>Create the <code>stash-demo</code> GitHub repo.</li>
 <li>Confirm whether code written before the event is allowed.</li>
 </ul>

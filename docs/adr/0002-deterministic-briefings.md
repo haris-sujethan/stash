@@ -1,6 +1,6 @@
 # Briefings are rendered from a fixed template, with no LLM call at pull time
 
-All LLM work (Digests, Memories, Merge Findings, Proposed Guardrails) happens during `stash push` and `stash merge`, and the results are stored in Atlas. `stash pull` only reads that structured data, ranks it, fits it to the token budget and renders a fixed-order template. This keeps pulls fast, free and repeatable, which matters both on stage and for agents that pull often. It also means two agents pulling the same Version receive the same Briefing. Don't add an LLM summarisation step at pull time. If Briefings need to be better, improve what gets extracted at push time.
+All LLM work (Digests, Memories, Merge Findings, Proposed Guardrails) happens during `stash push` and `stash merge`, on the developer's machine through their own AI tool (ADR 0005), and the results are stored in Atlas. `stash pull` only reads that structured data, ranks it, fits it to the token budget and renders a fixed-order template. This keeps pulls fast, free and repeatable, which matters both on stage and for agents that pull often. It also means two agents pulling the same Version receive the same Briefing. Don't add an LLM summarisation step at pull time. If Briefings need to be better, improve what gets extracted at push time.
 
 ## Vector Search at pull is allowed
 

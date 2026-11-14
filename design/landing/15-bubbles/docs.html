@@ -49,7 +49,7 @@
     </ol></nav>
     <article class="prose">
 <!-- content -->
-<p>Last updated 2026-11-13. A private copy of everything about Stash, kept on the site while it is unpublished.</p>
+<p>Last updated 2026-11-14. A private copy of everything about Stash, kept on the site while it is unpublished.</p>
 <h2 id="1-overview">1. Overview</h2>
 <p>Stash is shared memory infrastructure for AI agents: it captures an agent’s working session, stores it in MongoDB Atlas, and lets another agent, developer or LLM pick it up and continue.</p>
 <p><strong>The one-liner:</strong> Git shares code and code history. Stash shares the context, evidence, decisions and experiences behind agents&#39; work.</p>
@@ -287,7 +287,7 @@ stash merge &lt;session-a&gt; &lt;session-b&gt; # reconcile two investigations
 <td>Workspace and access management, audit views</td>
 </tr>
 </tbody></table></div>
-<p><strong>Rule for scope questions:</strong> if a problem only matters for a serious enterprise integration, it’s out of scope for now. A regular user should need at most one LLM key, and with the server-side design they need none.</p>
+<p><strong>Rule for scope questions:</strong> if a problem only matters for a serious enterprise integration, it’s out of scope for now. A regular user should never have to hand Stash an LLM key: reasoning runs through the AI tool they already use (ADR 0005).</p>
 <h2 id="5-glossary">5. Glossary</h2>
 <p>These are the settled words. Use the term in the first column, and avoid the words in the last column.</p>
 <div class="table"><table><thead><tr>
@@ -403,31 +403,29 @@ stash merge &lt;session-a&gt; &lt;session-b&gt; # reconcile two investigations
 </tbody></table></div>
 <p><strong>How the three “context” words relate:</strong> a Transcript is <em>what happened</em>. A Digest is <em>what was learned</em>. A Briefing is <em>what the next agent receives</em>.</p>
 <h2 id="6-architecture-and-stack">6. Architecture and stack</h2>
-<p>The stack is TypeScript everywhere: an npm CLI plus one Next.js app that serves both the website and the API, sharing types through a monorepo (ADR 0001). Anthropic does all the reasoning, and Atlas handles storage, embeddings and vector search.</p>
+<p>The stack is TypeScript everywhere: an npm CLI plus one Next.js app that serves both the website and the API, sharing types through a monorepo (ADR 0001). The developer’s own AI tool does all the reasoning on their machine (Claude Code, Codex or any command; ADR 0005), and Atlas handles storage, embeddings and vector search. Stash holds no LLM key.</p>
 <pre><code class="language-text"> Laptop 1                         MongoDB Atlas                      Laptop 2
  +------------------+            +------------------+            +------------------+
  | Claude Code      |            | Collections      |            | Any agent        |
  |   | stash push   |            |  Sessions, Events|            |   ^ stash pull   |
  | stash CLI        |            |  Memories, Merges|            | stash CLI        |
  |  capture, redact |            |  Guardrails      |            |  prints Briefing |
- |   v              |   store    | Auto Embedding   |    read    |   ^              |
- | Next.js (local)  | ---------&gt; | Vector Search    | ---------&gt; | Next.js (local)  |
- |  Digest, Memories|            +------------------+            |  fixed template  |
- +--------+---------+                                            +--------+---------+
-          |                    +------------------+                       |
-          +------------------&gt; | Anthropic Claude | &lt;---------------------+
-                               | push and merge   |
-                               +------------------+
+ |  your AI tool:   |            | Auto Embedding   |            |   ^              |
+ |  Digest, Memories|   store    | Vector Search    |    read    |                  |
+ | Next.js (local)  | ---------&gt; |                  | ---------&gt; | Next.js (local)  |
+ |  validate, store |            +------------------+            |  fixed template  |
+ +------------------+                                            +------------------+
 </code></pre>
-<p>The CLI redacts on the laptop. All LLM work happens in each laptop’s local Next.js, at push or merge time. Pull only reads from Atlas, so the second agent receives the first agent’s context through the shared database.</p>
+<p>The CLI redacts on the laptop, then runs the developer’s own AI tool on the redacted Transcript at push or merge time. The local Next.js only validates, stores and searches. Pull only reads from Atlas, so the second agent receives the first agent’s context through the shared database.</p>
 <pre><code class="language-text">stash/
 ├── apps/
-│   ├── cli/              # npm CLI: capture, redact, push, pull, merge
-│   └── web/              # Next.js: website + API (all processing)
+│   ├── cli/              # npm CLI: capture, redact, run the local AI tool, push, pull, merge
+│   └── web/              # Next.js: website + API (storage, validation, Vector Search)
 ├── packages/
 │   ├── core/             # shared business logic
 │   ├── context-format/   # Universal Context Format types
-│   └── agent-adapters/   # Claude Code adapter first
+│   ├── agent-adapters/   # reading sessions: Claude Code first
+│   └── llm-adapters/     # running the developer&#39;s AI tool: Claude Code, Codex, any command
 └── package.json
 </code></pre>
 <div class="table"><table><thead><tr>
@@ -443,12 +441,12 @@ stash merge &lt;session-a&gt; &lt;session-b&gt; # reconcile two investigations
 <tr>
 <td>Website + API</td>
 <td>Next.js (TypeScript)</td>
-<td>One app. All LLM processing runs here.</td>
+<td>One app. Validates, stores and searches; never calls an LLM.</td>
 </tr>
 <tr>
 <td>Reasoning</td>
-<td>Anthropic Claude (Sonnet-class), model set in an environment variable</td>
-<td>One provider for the Digest, Memories, Merge and Guardrails</td>
+<td>The developer’s own AI tool, run by the CLI: Claude Code (<code>claude -p</code>), Codex (<code>codex exec</code>) or any command</td>
+<td>Model-agnostic. Each Version and Merge records which tool and model did the work (<code>extractedBy</code>)</td>
 </tr>
 <tr>
 <td>Database</td>
@@ -466,10 +464,11 @@ stash merge &lt;session-a&gt; &lt;session-b&gt; # reconcile two investigations
 <td>Used for merge candidates, Guardrail detection and website search</td>
 </tr>
 </tbody></table></div>
-<p><strong>Provider swaps:</strong> keep a thin interface around the LLM so the provider could change later, but spend no hackathon time on multi-provider support.</p>
+<p><strong>Choosing the tool:</strong> <code>--llm claude|codex|cmd</code> for one run; otherwise the agent Stash runs inside; otherwise the saved choice, asked once from the tools installed. Every reply is checked against the same zod schema, with one retry.</p>
 <p><strong>What changed from the blueprint and why:</strong></p>
 <ul>
 <li>Python FastAPI and a separate React app became one Next.js app, so we maintain one language and define schemas once.</li>
+<li>Server-side Anthropic was planned, then replaced by local reasoning through the developer’s own AI tool (round 5): no key to hand over, and any LLM works.</li>
 <li>OpenAI <code>text-embedding-3-small</code> was proposed and then replaced by Atlas Automated Embedding (generally available since August 2026). That removes an API key and the embedding-migration planning, and it’s the most MongoDB-native option.</li>
 </ul>
 <h3 id="credentials">Credentials</h3>
@@ -482,8 +481,8 @@ stash merge &lt;session-a&gt; &lt;session-b&gt; # reconcile two investigations
 <td>Developer’s machine (CLI config)</td>
 </tr>
 <tr>
-<td>Anthropic API key</td>
-<td>Backend environment</td>
+<td>AI tool login</td>
+<td>The developer’s own (Claude Code, Codex, …). Stash never sees it</td>
 </tr>
 <tr>
 <td>Atlas connection string</td>
@@ -494,9 +493,9 @@ stash merge &lt;session-a&gt; &lt;session-b&gt; # reconcile two investigations
 <td>Typed by the human into the website and held only in that browser tab. The server stores only a hash.</td>
 </tr>
 </tbody></table></div>
-<p>Developers need only a Stash token, never their own LLM key. Stash pays for LLM use, so usage quotas per Workspace become a later concern. Bring-your-own-key is a possible later option.</p>
+<p>Developers need a Stash token and the AI tool they already use. Stash never holds an LLM key and never pays for LLM use; reasoning counts against the developer’s own plan.</p>
 <h3 id="two-laptop-demo-topology">Two-laptop demo topology</h3>
-<p>Each laptop runs the CLI and its own local Next.js (website and API, with the Anthropic key). Both connect to the same Atlas cluster, so they share Projects, Sessions and Memories. Vercel isn’t used for the demo, which avoids its request-size and run-time limits. In short: two local apps, one shared cloud database.</p>
+<p>Each laptop runs the CLI and its own local Next.js (website and API, with only the Atlas connection string). Both connect to the same Atlas cluster, so they share Projects, Sessions and Memories. Vercel isn’t used for the demo, which avoids its request-size and run-time limits. In short: two local apps, one shared cloud database.</p>
 <h3 id="atlas-setup-the-hackathon-sandbox">Atlas setup (the hackathon Sandbox)</h3>
 <p>Stash must be built in the hackathon’s Atlas Sandbox: the <strong>Agents in Context Toronto</strong> organisation, in your Sandbox project. That is a hard rule of the event.</p>
 <div class="table"><table><thead><tr>
@@ -631,7 +630,7 @@ Events: 230
 No changes detected. Already up to date (v2).
 </code></pre>
 <h2 id="8-push-pipeline">8. Push pipeline</h2>
-<p>A push goes through eight steps. Everything sensitive happens on the laptop. Everything that needs the LLM happens in the backend, and the CLI shows progress throughout.</p>
+<p>A push goes through eight steps. Everything sensitive happens on the laptop. Everything that needs an LLM runs through the developer’s own AI tool, and the CLI shows progress throughout.</p>
 <ol>
 <li><strong>Find the session.</strong><ul>
 <li>Inside Claude Code, read <code>CLAUDE_CODE_SESSION_ID</code> (with <code>CLAUDECODE=1</code> identifying the agent). This is the preferred path and the most reliable.</li>
@@ -653,9 +652,10 @@ No changes detected. Already up to date (v2).
 </li>
 <li><strong>Redact locally, before batching.</strong> See section 14. Nothing secret ever reaches Atlas.</li>
 <li><strong>Upload in batches.</strong> Event IDs are stable, so a retried batch never duplicates. If nothing changed, stop with “Already up to date (vN)” and create no new Version.</li>
-<li><strong>Process in the backend.</strong><ul>
+<li><strong>Process locally with the developer’s AI tool.</strong><ul>
 <li>Build a new Digest from the <em>whole</em> Transcript.</li>
-<li>Extract a complete new Memory set for this Version.</li>
+<li>Extract a complete new Memory set for this Version, checked against the schema (one retry), then uploaded.</li>
+<li>The server re-checks every citation and rejects Memories citing Events that aren’t in the Session.</li>
 <li>Mark the Version processed. Its Memories become the Session’s current set, and earlier Versions stay stored and unchanged.</li>
 </ul>
 </li>
@@ -791,7 +791,7 @@ No changes detected. Already up to date (v2).
 <ul>
 <li><strong>Inputs:</strong> exactly two Sessions in the MVP. It uses each one’s latest processed Version and records both Session IDs and Version IDs. A Merge can’t be used as a source for another Merge.</li>
 <li><strong>Where it runs:</strong> <code>stash merge &lt;a&gt; &lt;b&gt;</code> from the CLI, while you wait, with progress shown. The website only displays Merges.</li>
-<li><strong>Process:</strong> compare the two Digests, Memories and supporting Events. Use Vector Search to find related items, then the LLM judges them against the original evidence (quality, tool outputs, timestamps, status, whether the code changed in between). The conclusion that appears most often doesn’t win by default.</li>
+<li><strong>Process:</strong> compare the two Digests, Memories and supporting Events. The server uses Vector Search to find related items, then the developer’s AI tool judges them against the original evidence (quality, tool outputs, timestamps, status, whether the code changed in between). The conclusion that appears most often doesn’t win by default.</li>
 <li><strong>Immutable:</strong> if a source gets a newer Version, the old Merge stays tied to the old Versions. A new Merge must be created.</li>
 <li><strong>Pullable:</strong> <code>stash pull m_789</code> builds a Briefing from the Merge’s Digest, Findings, evidence and approved Guardrails.</li>
 </ul>
@@ -866,10 +866,10 @@ Merge: m_789
 <ol>
 <li>Take the new Session’s Failed Approach Memories.</li>
 <li>Use Vector Search to find similar Failed Approaches in the Project’s other Sessions.</li>
-<li>The LLM compares the underlying evidence to decide whether it’s really the same failure. Similar wording alone never triggers one.</li>
+<li>The developer’s AI tool, run by the CLI, compares the underlying evidence to decide whether it’s really the same failure. Similar wording alone never triggers one.</li>
 <li>The failure must appear in at least 2 different Sessions. Two failures within one Session don’t count.</li>
 <li>Skip it if an existing Guardrail (proposed, approved or rejected) already covers the pattern.</li>
-<li>Otherwise the LLM drafts a Proposed Guardrail citing the supporting Memories and Events.</li>
+<li>Otherwise the AI tool drafts a Proposed Guardrail citing the supporting Memories and Events.</li>
 </ol>
 <h3 id="lifecycle">Lifecycle</h3>
 <p>Repeated failure → <strong>Proposed</strong> → <strong>Approved</strong> (included in every Briefing for the Project) or <strong>Rejected</strong> (never proposed again for that pattern).</p>
@@ -880,7 +880,7 @@ Merge: m_789
 </tr>
 </thead><tbody><tr>
 <td>Propose</td>
-<td>Backend, from extracted knowledge</td>
+<td>The CLI after a push (AI tool checks the evidence); the server verifies it spans 2+ Sessions</td>
 </tr>
 <tr>
 <td>View</td>
@@ -1164,7 +1164,7 @@ Merge: m_789
 <tr>
 <td>2</td>
 <td>LLM and embeddings</td>
-<td>One LLM provider (Anthropic Claude Sonnet) for every operation, behind a thin interface. Embeddings were first OpenAI <code>text-embedding-3-small</code>, later replaced (round 2).</td>
+<td>One LLM provider (Anthropic Claude Sonnet) for every operation, behind a thin interface <em>(superseded in round 5: the developer’s own AI tool)</em>. Embeddings were first OpenAI <code>text-embedding-3-small</code>, later replaced (round 2).</td>
 </tr>
 <tr>
 <td>3</td>
@@ -1221,7 +1221,7 @@ Merge: m_789
 </thead><tbody><tr>
 <td>1</td>
 <td>Where keys live</td>
-<td>Server-side. Developers need only a Stash token. Bring-your-own-key maybe later.</td>
+<td>Server-side. Developers need only a Stash token. <em>(Superseded in round 5: no LLM key at all.)</em></td>
 </tr>
 <tr>
 <td>2</td>
@@ -1283,7 +1283,7 @@ Merge: m_789
 </thead><tbody><tr>
 <td>1</td>
 <td>Atlas vs OpenAI key</td>
-<td>Atlas Automated Embedding. The backend holds the Anthropic key and the Atlas connection string. Only Memory text is embedded.</td>
+<td>Atlas Automated Embedding. The backend holds the Atlas connection string (the Anthropic key was dropped in round 5). Only Memory text is embedded.</td>
 </tr>
 <tr>
 <td>2</td>
@@ -1405,8 +1405,22 @@ Merge: m_789
 <td>Yes: every Briefing adds the nearest Memories from other Sessions; still no LLM at pull</td>
 </tr>
 </tbody></table></div>
+<h3 id="round-5-no-llm-key">Round 5: no LLM key</h3>
+<div class="table"><table><thead><tr>
+<th>Topic</th>
+<th>Final</th>
+</tr>
+</thead><tbody><tr>
+<td>Anthropic key</td>
+<td>Not given. Reasoning runs locally, on the user’s machine</td>
+</tr>
+<tr>
+<td>Which LLM</td>
+<td>Whatever the developer uses: Claude Code, Codex, or any command. Hackathon ships those three adapters; Gemini CLI later (ADR 0005)</td>
+</tr>
+</tbody></table></div>
 <h2 id="19-architecture-decision-records">19. Architecture decision records</h2>
-<p>Four decisions are written up in <code>docs/adr/</code> because a future contributor would likely reverse them by mistake.</p>
+<p>Five decisions are written up in <code>docs/adr/</code> because a future contributor would likely reverse them by mistake.</p>
 <div class="table"><table><thead><tr>
 <th>ADR</th>
 <th>Decision</th>
@@ -1432,6 +1446,11 @@ Merge: m_789
 <td>Only a human holding the approver secret approves Guardrails or verifies Memories</td>
 <td>Someone will want a CLI approve command. Agents have a shell and the token, so the CLI must stay read-only and the server must check the secret.</td>
 </tr>
+<tr>
+<td>0005</td>
+<td>LLM work runs locally through the developer’s own AI tool; Stash holds no LLM key</td>
+<td>Someone will want to add a server-side API key “for quality”. Stash must work with whatever LLM the developer uses.</td>
+</tr>
 </tbody></table></div>
 <p>Decisions not given an ADR (easy to reverse or unsurprising) are still recorded in the decision log above.</p>
 <h2 id="20-known-limitations-open-items-and-environment-facts">20. Known limitations, open items and environment facts</h2>
@@ -1439,10 +1458,11 @@ Merge: m_789
 <h3 id="known-limitations-say-these-in-the-pitch">Known limitations (say these in the pitch)</h3>
 <ul>
 <li>Each demo laptop has the Atlas credentials, so a determined agent could get around app-level checks. In production the backend is hosted.</li>
-<li>Only Claude Code sessions can be pushed. Any agent with a shell can pull.</li>
+<li>Only Claude Code sessions can be pushed. Any agent with a shell can pull, and any AI tool can do the reasoning.</li>
+<li>The server trusts extraction results from the CLI, checking only that every cited Event exists. Quality depends on the developer’s model, shown on every Version.</li>
 <li>Abandoned branches are recorded only as markers, not captured in full.</li>
 <li>No real login, roles or audit views in the MVP.</li>
-<li>Stash pays for LLM use. Usage quotas per Workspace come later.</li>
+<li>Reasoning counts against the developer’s own AI plan and adds a few seconds per call.</li>
 </ul>
 <h3 id="open-items">Open items</h3>
 <ul>
@@ -1450,7 +1470,7 @@ Merge: m_789
 <li><input disabled="" type="checkbox"> Confirm team size and who owns which part</li>
 <li><input disabled="" type="checkbox"> Choose a landing page direction from the five examples</li>
 <li><input disabled="" type="checkbox"> In the Sandbox project: turn on storage auto-scaling for Cluster0, add the laptops&#39; IPs, create a database user, and get the connection string</li>
-<li><input disabled="" type="checkbox"> Get the Anthropic API key for the backend</li>
+<li><input disabled="" type="checkbox"> Claude Code logged in on laptop 1; Codex or Claude Code on laptop 2 (no API key needed)</li>
 <li><input disabled="" type="checkbox"> Check that the terminal CLI sets <code>CLAUDE_CODE_SESSION_ID</code> (confirmed only in the desktop app so far)</li>
 </ul>
 <h3 id="environment-facts-checked-on-this-mac-2026-11-11">Environment facts (checked on this Mac, 2026-11-11)</h3>
@@ -2301,7 +2321,7 @@ stash config
 <li><strong>CLI + separate TypeScript API + Next.js website:</strong> rejected. A third app adds no value at hackathon scale.</li>
 </ul>
 <h3 id="adr-0002-briefings-are-rendered-from-a-fixed-template-with-no-llm-call-at-pull-time">ADR 0002: Briefings are rendered from a fixed template, with no LLM call at pull time</h3>
-<p>All LLM work (Digests, Memories, Merge Findings, Proposed Guardrails) happens during <code>stash push</code> and <code>stash merge</code>, and the results are stored in Atlas. <code>stash pull</code> only reads that structured data, ranks it, fits it to the token budget and renders a fixed-order template. This keeps pulls fast, free and repeatable, which matters both on stage and for agents that pull often. It also means two agents pulling the same Version receive the same Briefing. Don’t add an LLM summarisation step at pull time. If Briefings need to be better, improve what gets extracted at push time.</p>
+<p>All LLM work (Digests, Memories, Merge Findings, Proposed Guardrails) happens during <code>stash push</code> and <code>stash merge</code>, on the developer’s machine through their own AI tool (ADR 0005), and the results are stored in Atlas. <code>stash pull</code> only reads that structured data, ranks it, fits it to the token budget and renders a fixed-order template. This keeps pulls fast, free and repeatable, which matters both on stage and for agents that pull often. It also means two agents pulling the same Version receive the same Briefing. Don’t add an LLM summarisation step at pull time. If Briefings need to be better, improve what gets extracted at push time.</p>
 <h4 id="vector-search-at-pull-is-allowed">Vector Search at pull is allowed</h4>
 <p>Pull runs one <code>$vectorSearch</code> to add related Memories from other Sessions, using the pulled objective as the query. That is a database query, not a model writing text, so this decision holds: no LLM generates anything at pull time. A Briefing for the same Version is identical as long as the Project’s memory has not changed; when new Sessions are pushed, the related section can include them, which is the point.</p>
 <h3 id="adr-0003-merges-never-change-their-sources-disagreements-live-in-findings">ADR 0003: Merges never change their sources; disagreements live in Findings</h3>
@@ -2311,6 +2331,23 @@ stash config
 <h4 id="consequences">Consequences</h4>
 <ul>
 <li>The two-laptop demo runs the backend locally, so each laptop has the Atlas credentials, and a determined agent could bypass this check by writing to the database directly. That is accepted for the hackathon. In production the backend is hosted, agents never see its environment, and real login (e.g. Okta/Auth0) replaces the shared secret.</li>
+</ul>
+<h3 id="adr-0005-llm-work-runs-locally-through-the-developers-own-ai-tool">ADR 0005: LLM work runs locally, through the developer’s own AI tool</h3>
+<p>Stash holds no LLM API key. Every reasoning step (Digest and Memory extraction, Merge Findings, the evidence check behind a Proposed Guardrail) runs on the developer’s machine. The CLI calls whichever AI command-line tool the developer already uses, such as Claude Code (<code>claude -p</code>), Codex (<code>codex exec</code>) or any command that reads a prompt on stdin and prints an answer. The CLI then uploads the structured result. The backend only stores, validates and searches. It needs one secret, the Atlas connection string, and embeddings stay with Atlas Automated Embedding, which needs no key either.</p>
+<p>This keeps Stash model-agnostic, which is the product’s point: a team using Claude, Codex or a local model gets the same memory. It also removes a credential and a bill from the backend.</p>
+<h4 id="considered-options">Considered Options</h4>
+<ul>
+<li><strong>Server-side Anthropic API (the earlier plan):</strong> rejected. It needs a key the user doesn’t want to give, and it ties Stash to one provider.</li>
+<li><strong>Claude Code only (<code>claude -p</code>):</strong> rejected. Stash must work with whatever LLM the developer uses.</li>
+</ul>
+<h4 id="consequences">Consequences</h4>
+<ul>
+<li>The server trusts extraction results sent by the client. It still rejects any Memory or Finding that cites an Event that doesn’t exist in that Session, and Guardrails still need a human (ADR 0004). A modified CLI could upload invented but well-cited Memories; that is accepted for the MVP.</li>
+<li>Quality depends on the developer’s model. Each Session Version and Merge records <code>extractedBy</code> (tool and model), and the website shows it.</li>
+<li>Pushes and merges count against the developer’s own AI plan, and each call adds a few seconds while the tool starts.</li>
+<li>Small models may not fit long Transcripts. The MVP shortens older tool output and warns when a Transcript still doesn’t fit; splitting long Sessions into chunks comes later.</li>
+<li>Capturing Sessions is a separate concern: push still reads Claude Code session files only. Any tool can do the reasoning, and any agent can pull.</li>
+<li>Pull stays free of LLM calls (ADR 0002).</li>
 </ul>
 </details>
 <!-- /content -->

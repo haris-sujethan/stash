@@ -16,6 +16,10 @@ _Avoid_: Repo, workspace
 An AI coding tool that does work in a Project and produces Sessions, such as Claude Code or Codex.
 _Avoid_: Model, bot, assistant
 
+**AI tool**:
+The command-line AI the developer already uses (such as Claude Code or Codex), which Stash runs locally to extract Memories, reconcile Merges and check Guardrail evidence. Stash never holds its key.
+_Avoid_: LLM provider, model backend
+
 ## History
 
 **Session**:
