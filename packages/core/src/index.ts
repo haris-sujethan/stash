@@ -74,3 +74,19 @@ export function findBriefingMarkers(text: string): MarkerMatch[] {
 
 /** Every prompt Stash sends to an AI tool starts with this, so push never captures Stash's own calls. */
 export const EXTRACT_MARKER = "stash:extract";
+
+/**
+ * Normalizes a git remote so every clone of a repository maps to one Project:
+ * strips the protocol, credentials, `git@` and `.git`, and lowercases it.
+ * `git@github.com:Owner/Repo.git` and `https://github.com/owner/repo` both become `github.com/owner/repo`.
+ */
+export function normalizeRemote(remote: string): string | null {
+  let r = remote.trim();
+  if (!r) return null;
+  r = r.replace(/^[a-z+]+:\/\//i, ""); // https://, ssh://, git+ssh://
+  r = r.replace(/^[^@/]+@/, ""); // user@ or user:token@
+  r = r.replace(/^([^/:]+):(?!\d+\/)/, "$1/"); // scp-like host:path → host/path
+  r = r.replace(/^([^/:]+):\d+\//, "$1/"); // drop ports
+  r = r.replace(/\.git$/i, "").replace(/\/+$/, "");
+  return r.toLowerCase() || null;
+}

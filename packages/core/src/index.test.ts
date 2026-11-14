@@ -36,3 +36,21 @@ describe("briefing markers", () => {
     ]);
   });
 });
+
+import { normalizeRemote } from "./index.js";
+
+describe("normalizeRemote", () => {
+  it("maps every form of the same GitHub repo to one Project", () => {
+    for (const r of [
+      "https://github.com/Haris/Stash-Demo.git",
+      "git@github.com:haris/stash-demo.git",
+      "ssh://git@github.com/haris/stash-demo",
+      "https://user:token@github.com/haris/stash-demo/",
+      "ssh://git@github.com:22/haris/stash-demo.git",
+    ]) expect(normalizeRemote(r)).toBe("github.com/haris/stash-demo");
+  });
+
+  it("returns null for an empty remote", () => {
+    expect(normalizeRemote("  ")).toBeNull();
+  });
+});
