@@ -1,7 +1,7 @@
 import type { RenderedDoc } from "@/lib/docs";
 import { ScrollSpy } from "./scroll-spy";
 
-export function DocPage({ doc, title, intro, current, source }: { doc: RenderedDoc; title: string; intro: string; current: "docs" | "build"; source: string }) {
+export function DocPage({ doc, title, intro, current, source }: { doc: RenderedDoc; title: string; intro: string; current: "docs" | "build" | "guide"; source: string }) {
   return (
     <>
       <header className="pill">
@@ -10,6 +10,7 @@ export function DocPage({ doc, title, intro, current, source }: { doc: RenderedD
           <ul>
             <li><a href="/#how">How it works</a></li>
             <li><a href="/docs" aria-current={current === "docs" ? "page" : undefined}>Docs</a></li>
+            <li><a href="/docs/guide" aria-current={current === "guide" ? "page" : undefined}>Guide</a></li>
             <li><a href="/docs/build" aria-current={current === "build" ? "page" : undefined}>Build plan</a></li>
             <li><a className="btn btn--sm" href="/app">Open the app</a></li>
           </ul>

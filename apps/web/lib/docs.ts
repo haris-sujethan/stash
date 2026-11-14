@@ -9,6 +9,7 @@ const ROOT = resolve(process.cwd(), "../..");
 export const DOC_SOURCES = {
   project: resolve(ROOT, "design/landing/15-bubbles/docs/project.md"),
   build: resolve(ROOT, "BUILD.md"),
+  guide: resolve(ROOT, "README.md"),
 } as const;
 
 const slug = (t: string) =>
@@ -21,7 +22,7 @@ export interface RenderedDoc {
 }
 
 export async function renderDoc(which: keyof typeof DOC_SOURCES): Promise<RenderedDoc> {
-  const md = (await readFile(DOC_SOURCES[which], "utf8")).replace(/^# .*\n/, ""); // the page supplies its own h1
+  const md = (await readFile(/*turbopackIgnore: true*/ DOC_SOURCES[which], "utf8")).replace(/^# .*\n/, ""); // the page supplies its own h1
   const toc: { id: string; text: string }[] = [];
   const marked = new Marked({
     gfm: true,
