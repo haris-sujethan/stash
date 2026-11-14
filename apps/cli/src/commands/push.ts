@@ -82,6 +82,9 @@ export async function push(opts: { session?: string; llm?: string }) {
     return;
   }
   ok(version.unchanged ? "Retrying processing" : "Recorded version", `v${version.version}`);
+  if (!version.unchanged && version.lineage.length) {
+    ok("Recording lineage", `continued from ${version.lineage.map((l) => `${l.sourceId}@v${l.sourceVersion}`).join(", ")}`);
+  }
 
   // 7. Reason locally with the developer's own AI tool, then upload the result (ADR 0005).
   const adapter = await chooseAdapter(user, opts.llm);

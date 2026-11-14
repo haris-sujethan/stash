@@ -3,6 +3,7 @@
 import { CreateVersionRequest, type CreateVersionResponse } from "@stash/context-format";
 import { collections } from "@/lib/db";
 import { audit, authenticate, body, HttpError, route, sessionFor, type Params } from "@/lib/http";
+import { recordLineage } from "@/lib/lineage";
 
 export const POST = route(async (req, ctx: Params<"id">) => {
   const caller = await authenticate(req);
@@ -40,6 +41,7 @@ export const POST = route(async (req, ctx: Params<"id">) => {
   });
   await c.sessions.updateOne({ _id: session._id }, { $set: { eventCount: input.eventCount, updatedAt: now } });
   await audit(caller, "version.create", `${session._id}@v${version}`);
-  const res: CreateVersionResponse = { unchanged: false, version, status: "processing" };
+  const lineage = await recordLineage(session._id, session.projectId);
+  const res: CreateVersionResponse = { unchanged: false, version, status: "processing", lineage };
   return Response.json(res, { status: 201 });
 });

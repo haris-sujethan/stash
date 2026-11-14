@@ -148,3 +148,21 @@ describe("helpers", () => {
     expect(isStashOwnSession(parseJsonl(records[1] ?? ""))).toBe(false);
   });
 });
+
+import { findBriefingMarkers } from "@stash/core";
+
+describe("lineage markers survive capture", () => {
+  it("keeps the marker of a long Briefing printed by stash pull", () => {
+    const briefing = "stash:briefing ses_8kq2v@v2 pull=p_91x7k2ma\n\n# Briefing: …\n" + "- a memory line\n".repeat(600);
+    const lines = [
+      user("u1", null, "Pull the context first."),
+      assistant("a1", "u1", { type: "tool_use", id: "t1", name: "Bash", input: { command: "stash pull ses_8kq2v" } }),
+      user("r1", "a1", [{ type: "tool_result", tool_use_id: "t1", content: briefing }]),
+    ].map((r) => JSON.stringify(r)).join("\n");
+    const result = captureFromText(SID, lines).events.find((e) => e.type === "tool_result");
+    expect(result?.output?.truncated).toBe(true);
+    expect(findBriefingMarkers(result?.output?.excerpt ?? "")).toEqual([
+      { sourceId: "ses_8kq2v", sourceType: "session", sourceVersion: 2, pullId: "p_91x7k2ma" },
+    ]);
+  });
+});

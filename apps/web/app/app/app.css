@@ -141,3 +141,4 @@ dialog.approver p { font-size: var(--text-sm); color: var(--color-muted); }
   .bar { flex-wrap: wrap; }
   .bar .project { margin-left: 0; }
 }
+.panel > .body.lineage { display: flex; flex-wrap: wrap; align-items: center; }

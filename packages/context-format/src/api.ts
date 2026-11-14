@@ -32,7 +32,7 @@ export const CreateVersionRequest = z.object({
 });
 export type CreateVersionResponse =
   | { unchanged: true; version: number; status: string }
-  | { unchanged: false; version: number; status: string };
+  | { unchanged: false; version: number; status: string; lineage: { sourceId: string; sourceType: "session" | "merge"; sourceVersion: number; pullId: string }[] };
 
 export interface SessionSummary {
   _id: string;
