@@ -18,6 +18,7 @@ export default function Landing() {
             <li><a href="#how">How it works</a></li>
             <li><a href="#why">Why</a></li>
             <li><a href="/docs">Docs</a></li>
+            <li><a href="/app">App</a></li>
             <li><a className="btn btn--sm" href="#install">Install</a></li>
           </ul>
         </nav>
@@ -30,8 +31,8 @@ export default function Landing() {
             <h1 id="hero-title">Your agents forget. Stash remembers.</h1>
             <p className="lead">Shared memory for AI coding agents, across sessions, models and teammates.</p>
             <div className="hero__actions">
-              <a className="btn" href="#install">Install the CLI</a>
-              <a className="btn btn--line" href="#how">How it works</a>
+              <a className="btn" href="/app">Open the app</a>
+              <a className="btn btn--line" href="#install">Install the CLI</a>
             </div>
           </div>
         </section>
