@@ -8,7 +8,8 @@ import { batches, StashApi } from "../api.js";
 import { discoverSession } from "../discover.js";
 import { loadEnvValues, Redactor } from "../redact.js";
 import { ask, canPrompt } from "../prompt.js";
-import { ago, ok, shortId } from "../ui.js";
+import { ago, ok, shortId, warn } from "../ui.js";
+import { chooseAdapter, extractLocally } from "../reason.js";
 
 export async function push(opts: { session?: string; llm?: string }) {
   const user = await requireUserConfig();
@@ -76,12 +77,27 @@ export async function push(opts: { session?: string; llm?: string }) {
     eventCount: events.length,
     redactedCount,
   });
-  if (version.unchanged) {
+  if (version.unchanged && version.status === "processed") {
     console.log(`\nNo changes detected. Already up to date (v${version.version}).`);
     return;
   }
-  ok("Recorded version", `v${version.version}`);
+  ok(version.unchanged ? "Retrying processing" : "Recorded version", `v${version.version}`);
+
+  // 7. Reason locally with the developer's own AI tool, then upload the result (ADR 0005).
+  const adapter = await chooseAdapter(user, opts.llm);
+  const started = Date.now();
+  if (process.stdout.isTTY) process.stdout.write(`… Reasoning locally          ${adapter.label}`);
+  const result = await extractLocally(adapter, { title: captured.title, gitBranch: captured.gitBranch, events });
+  if (process.stdout.isTTY) process.stdout.write("\r\x1b[2K");
+  ok("Reasoning locally", `${result.extractedBy.tool}${result.extractedBy.model ? ` (${result.extractedBy.model})` : ""}  ${Math.round((Date.now() - started) / 1000)}s`);
+  if (result.partial) warn("Transcript cut to fit", `${result.omitted} older events left out; a larger model would see them all`);
+  ok("Generating Digest", result.valid.digest.objective.slice(0, 70));
+  const stored = await api.submitExtraction(session.sessionId, version.version, {
+    ...result.valid,
+    extractedBy: result.extractedBy,
+    partial: result.partial,
+  });
+  const notes = [stored.dropped && `${stored.dropped} without evidence dropped`, stored.downgraded && `${stored.downgraded} marked hypothesis`].filter(Boolean).join(", ");
+  ok("Extracting Memories", `${stored.memories} found${notes ? ` (${notes})` : ""}`);
   console.log(`\nPush complete.  Session ${session.sessionId}  Version ${version.version}`);
-  console.log("(Digest and Memories come in M5, through your own AI tool.)");
-  void opts.llm;
 }

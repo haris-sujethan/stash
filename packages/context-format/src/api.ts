@@ -55,3 +55,5 @@ export interface StatusResponse {
   workspaceId?: string;
   error?: string;
 }
+
+export interface SubmitExtractionResponse { version: number; memories: number; dropped: number; downgraded: number }
