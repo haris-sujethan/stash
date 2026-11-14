@@ -152,6 +152,12 @@ body { font-weight: 300; font-variation-settings: "SHRP" 0; color: var(--color-i
   .compare td:nth-child(2), .compare thead th:nth-child(2) { display: none; }
 }
 
+/* How it works: the same two columns as the section head, so every description starts under the head's lead */
+.steps li { grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); align-items: center; }
+.steps .step { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); }
+.steps h3 { line-height: 1; }
+@media (max-width: 60rem) { .steps li { grid-template-columns: minmax(0, 1fr); } .steps .step { flex-direction: column; align-items: flex-start; } }
+
 /* the install line shrinks on a phone instead of pushing past the screen */
 .install { max-width: 100%; }
 .install code { min-width: 0; }
@@ -202,3 +208,7 @@ body { font-weight: 300; font-variation-settings: "SHRP" 0; color: var(--color-i
 .appendices summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--color-ink); font: 400 var(--text-title)/1.2 var(--font-display); list-style-position: inside; }
 .appendices summary:hover { color: var(--color-accent); }
 .appendices summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+/* Buttons and links respond smoothly: a soft press, eased colour changes */
+.btn, .chip, .pill a, .foot a { transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out); }
+.btn:active, .chip:active { transform: scale(0.96); transition-duration: var(--dur-micro); }

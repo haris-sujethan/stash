@@ -142,3 +142,9 @@ dialog.approver p { font-size: var(--text-sm); color: var(--color-muted); }
   .bar .project { margin-left: 0; }
 }
 .panel > .body.lineage { display: flex; flex-wrap: wrap; align-items: center; }
+
+/* Buttons and links respond smoothly: a soft press, eased colour changes */
+.app .btn, .bar nav a, .bar .project a, .stat, .app a.row-link, .lineage .node { transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out); }
+.app .btn:active, .bar nav a:active, .bar .project a:active, .stat:active { transform: scale(0.97); transition-duration: var(--dur-micro); }
+.bar .help { font-size: var(--text-sm); color: var(--color-muted); text-decoration: none; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-pill); }
+.bar .help:hover { color: var(--color-ink); background: var(--color-paper-2); }

@@ -1,16 +1,16 @@
 import type { RenderedDoc } from "@/lib/docs";
 import { ScrollSpy } from "./scroll-spy";
 
-export function DocPage({ doc, title, intro, current, source }: { doc: RenderedDoc; title: string; intro: string; current: "docs" | "build" | "guide"; source: string }) {
+export function DocPage({ doc, title, intro, current, source }: { doc: RenderedDoc; title: string; intro: string; current: "docs" | "dev" | "project" | "build"; source: string }) {
   return (
     <>
       <header className="pill">
         <a className="wordmark" href="/">stash</a>
         <nav aria-label="Main">
           <ul>
-            <li><a href="/#how">How it works</a></li>
             <li><a href="/docs" aria-current={current === "docs" ? "page" : undefined}>Docs</a></li>
-            <li><a href="/docs/guide" aria-current={current === "guide" ? "page" : undefined}>Guide</a></li>
+            <li><a href="/docs/dev" aria-current={current === "dev" ? "page" : undefined}>Developers</a></li>
+            <li><a href="/docs/project" aria-current={current === "project" ? "page" : undefined}>Project notes</a></li>
             <li><a href="/docs/build" aria-current={current === "build" ? "page" : undefined}>Build plan</a></li>
             <li><a className="btn btn--sm" href="/app">Open the app</a></li>
           </ul>

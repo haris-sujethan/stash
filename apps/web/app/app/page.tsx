@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { collections } from "@/lib/db";
-import { ago, currentProject, one, type SP } from "@/lib/queries";
+import { ago, currentProject, one, projectActivity, type SP } from "@/lib/queries";
 
 const ACTION: Record<string, string> = {
   "project.create": "Project created",
@@ -26,7 +26,7 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
     c.merges.countDocuments({ projectId: p }),
     c.guardrails.countDocuments({ projectId: p, status: "proposed" }),
     c.guardrails.countDocuments({ projectId: p, status: "approved" }),
-    c.auditLogs.find({ workspaceId: project.workspaceId }).sort({ at: -1 }).limit(14).toArray(),
+    projectActivity(p),
   ]);
   const q = `?project=${p}`;
   return (
@@ -43,7 +43,8 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
         <Link className="stat" href={`/app/guardrails${q}`}><b>{approved}</b><span>approved rules</span></Link>
       </div>
       <section className="panel">
-        <header><h2>Recent activity</h2><span>across the Workspace</span></header>
+        <header><h2>Recent activity</h2><span>in {project.name}</span></header>
+        {log.length === 0 && <p className="empty">Nothing yet. Push a session from this repository with stash push.</p>}
         <ul className="rows">
           {log.map((l) => (
             <li key={l._id}>

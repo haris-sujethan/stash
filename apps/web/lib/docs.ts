@@ -7,9 +7,10 @@ import { Marked } from "marked";
 
 const ROOT = resolve(process.cwd(), "../..");
 export const DOC_SOURCES = {
+  docs: resolve(ROOT, "README.md"),
+  dev: resolve(ROOT, "docs/DEVELOPMENT.md"),
   project: resolve(ROOT, "design/landing/15-bubbles/docs/project.md"),
   build: resolve(ROOT, "BUILD.md"),
-  guide: resolve(ROOT, "README.md"),
 } as const;
 
 const slug = (t: string) =>

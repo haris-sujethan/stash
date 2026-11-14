@@ -158,7 +158,7 @@ Optional, on both laptops: `stash hooks install`. Then Claude Code uploads each 
 | 6 | Either laptop | `stash pull ses_B` | The Briefing now opens with **Rules every agent follows (approved)**. |
 | 7 | Laptop 1 | `stash push` again | **Already up to date.** |
 
-Say the known limitations at the end (they are in the README, section 9).
+Say the known limitations at the end (they are in `docs/DEVELOPMENT.md`, section 9).
 
 **If step 3 proposes no Guardrail:** session A's push must have recorded the generated-client edit as a Failed Approach. Check session A's Memories on the website. If it isn't there, rerun step 1's second prompt in session A and push again.
 
@@ -188,4 +188,4 @@ Say the known limitations at the end (they are in the README, section 9).
 | A build error mentions `… 2.ts` | Desktop sync made a duplicate file: `find ~/Desktop/stash/apps/web/.next -name "* 2*" -delete` |
 | `stash: command not found` | `cd ~/Desktop/stash/apps/cli && npm link` |
 
-More detail: README.md (also at `localhost:3000/docs/guide`).
+More detail: `docs/DEVELOPMENT.md` (also at `localhost:3000/docs/dev`). The short version, with every key word defined, is `README.md` (`localhost:3000/docs`).

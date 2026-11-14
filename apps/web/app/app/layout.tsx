@@ -20,6 +20,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <header className="bar">
           <Link className="wordmark" href={`/app${query}`}>stash</Link>
           <Nav query={query} />
+          <a className="help" href="/docs#key-words">Help</a>
           <div className="project">
             <span>Project</span>
             {projects.map((p) => (
