@@ -4,15 +4,12 @@ import { init } from "./commands/init.js";
 import { push } from "./commands/push.js";
 import { pull } from "./commands/pull.js";
 import { merge } from "./commands/merge.js";
+import { guardrails } from "./commands/guardrails.js";
 import { sessions } from "./commands/sessions.js";
 import { status } from "./commands/status.js";
 
 export const VERSION = "0.1.0";
 
-const notYet = (milestone: string) => () => {
-  console.error(`Not built yet (lands in ${milestone}).`);
-  process.exitCode = 1;
-};
 
 /** The whole command surface from MVP.md. Commands are filled in milestone by milestone. */
 export function buildProgram(): Command {
@@ -39,6 +36,6 @@ export function buildProgram(): Command {
     .action(merge);
   program.command("sessions").description("List this Project's Sessions").action(sessions);
   program.command("status").description("Check the API, your token and the Project").action(status);
-  program.command("guardrails").description("List Guardrails (read-only; approve on the website)").action(notYet("M8"));
+  program.command("guardrails").description("List Guardrails (read-only; approve on the website)").action(guardrails);
   return program;
 }

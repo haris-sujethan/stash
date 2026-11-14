@@ -9,7 +9,7 @@ import { discoverSession } from "../discover.js";
 import { loadEnvValues, Redactor } from "../redact.js";
 import { ask, canPrompt } from "../prompt.js";
 import { ago, ok, shortId, warn } from "../ui.js";
-import { chooseAdapter, extractLocally } from "../reason.js";
+import { checkRepeatedFailures, chooseAdapter, extractLocally } from "../reason.js";
 
 export async function push(opts: { session?: string; llm?: string }) {
   const user = await requireUserConfig();
@@ -99,5 +99,19 @@ export async function push(opts: { session?: string; llm?: string }) {
   });
   const notes = [stored.dropped && `${stored.dropped} without evidence dropped`, stored.downgraded && `${stored.downgraded} marked hypothesis`].filter(Boolean).join(", ");
   ok("Extracting Memories", `${stored.memories} found${notes ? ` (${notes})` : ""}`);
+
+  // 8. Guardrail check: repeated failures across Sessions become Proposed Guardrails (human approval required).
+  if (process.stdout.isTTY) process.stdout.write("… Checking repeated failures");
+  const g = await checkRepeatedFailures(api, adapter, session.sessionId, version.version);
+  if (process.stdout.isTTY) process.stdout.write("\r\x1b[2K");
+  ok(
+    "Checking repeated failures",
+    g.proposed.length
+      ? `${g.proposed.length} Guardrail${g.proposed.length > 1 ? "s" : ""} proposed (approve on the website)`
+      : g.checked
+        ? `no new pattern${g.covered ? ` (${g.covered} already covered)` : ""}`
+        : "none found",
+  );
+  for (const rule of g.proposed) console.log(`    proposed: ${rule}`);
   console.log(`\nPush complete.  Session ${session.sessionId}  Version ${version.version}`);
 }

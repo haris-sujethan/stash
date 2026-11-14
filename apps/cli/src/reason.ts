@@ -64,3 +64,36 @@ export async function extractLocally(adapter: LlmAdapter, input: ExtractInput) {
   const extractedBy: ExtractedBy = { tool: adapter.tool, model };
   return { valid, extractedBy, partial: transcript.partial, omitted: transcript.omitted, tokens: transcript.tokens };
 }
+
+import { decideGuardrail, GUARDRAIL_SYSTEM, GuardrailCheckSchema, guardrailPrompt, type ExistingGuardrail, type GuardrailCandidates } from "@stash/core";
+import type { StashApi } from "./api.js";
+
+/**
+ * After a push: for each new Failed Approach with similar failures in other Sessions, the AI tool checks the
+ * evidence; a confirmed repeat that no Guardrail covers is proposed. Returns how many were proposed.
+ */
+export async function checkRepeatedFailures(api: StashApi, adapter: LlmAdapter, sessionId: string, version: number) {
+  const { candidates, existing } = await api.guardrailCandidates(sessionId, version);
+  const known: ExistingGuardrail[] = [...existing];
+  const proposed: string[] = [];
+  let covered = 0;
+  for (const c of candidates as GuardrailCandidates[]) {
+    const { value, model } = await runStructured(
+      adapter,
+      { system: GUARDRAIL_SYSTEM, prompt: guardrailPrompt(c, known), timeoutMs: DEFAULT_TIMEOUT_MS },
+      GuardrailCheckSchema,
+    );
+    const d = decideGuardrail(value, c, known);
+    if (d.coveredBy) covered++;
+    if (!d.propose || !d.proposal) continue;
+    const res = await api.proposeGuardrail({
+      ...d.proposal,
+      evidence: [c.failure, ...d.matched].map((f) => ({ sessionId: f.sessionId, memoryId: f.memoryId, eventIds: [] as string[] })),
+      extractedBy: { tool: adapter.tool, model },
+    });
+    // Later failures in this same push see the new proposal as existing coverage.
+    known.push({ _id: res.guardrail._id, rule: res.guardrail.rule, pattern: res.guardrail.pattern, status: "proposed" });
+    proposed.push(res.guardrail.rule);
+  }
+  return { checked: candidates.length, proposed, covered };
+}

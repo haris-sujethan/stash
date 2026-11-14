@@ -60,6 +60,11 @@ export class StashApi {
   pull = (body: { sourceId: string; budget?: number; agentSessionHint: string | null }) => this.request<PullResponse>("POST", "/api/pull", body);
   prepareMerge = (a: string, b: string) => this.request<import("@stash/core").PreparedMerge & { scores: number[] }>("POST", "/api/merges/prepare", { a, b });
   storeMerge = (body: unknown) => this.request<StoreMergeResponse>("POST", "/api/merges", body);
+  guardrailCandidates = (sessionId: string, version: number) =>
+    this.request<{ candidates: import("@stash/core").GuardrailCandidates[]; existing: import("@stash/core").ExistingGuardrail[]; failures: number; scores: number[] }>(
+      "GET", `/api/guardrails/candidates?sessionId=${encodeURIComponent(sessionId)}&version=${version}`);
+  proposeGuardrail = (body: unknown) => this.request<{ guardrail: import("@stash/context-format").Guardrail }>("POST", "/api/guardrails", body);
+  guardrails = (projectId: string) => this.request<{ guardrails: import("@stash/context-format").Guardrail[] }>("GET", `/api/guardrails?projectId=${encodeURIComponent(projectId)}`);
   sessions = (projectId: string) => this.request<{ sessions: SessionSummary[] }>("GET", `/api/sessions?projectId=${encodeURIComponent(projectId)}`);
 }
 
