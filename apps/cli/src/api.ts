@@ -1,6 +1,6 @@
 // Typed client for the Stash web API, with retries for network errors and 5xx (1s, 3s, 9s).
 import type {
-  CreateVersionResponse, InitProjectResponse, SubmitExtractionResponse, ResolveSessionResponse, SessionSummary, StatusResponse, UploadEvent, UploadEventsResponse,
+  CreateVersionResponse, InitProjectResponse, PullResponse, SubmitExtractionResponse, ResolveSessionResponse, SessionSummary, StatusResponse, UploadEvent, UploadEventsResponse,
 } from "@stash/context-format";
 import { UserError, type UserConfig } from "./config.js";
 
@@ -57,6 +57,7 @@ export class StashApi {
     this.request<CreateVersionResponse>("POST", `/api/sessions/${sessionId}/versions`, body);
   submitExtraction = (sessionId: string, version: number, body: unknown) =>
     this.request<SubmitExtractionResponse>("POST", `/api/sessions/${sessionId}/versions/${version}/extraction`, body);
+  pull = (body: { sourceId: string; budget?: number; agentSessionHint: string | null }) => this.request<PullResponse>("POST", "/api/pull", body);
   sessions = (projectId: string) => this.request<{ sessions: SessionSummary[] }>("GET", `/api/sessions?projectId=${encodeURIComponent(projectId)}`);
 }
 

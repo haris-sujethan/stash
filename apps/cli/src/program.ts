@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { login } from "./commands/login.js";
 import { init } from "./commands/init.js";
 import { push } from "./commands/push.js";
+import { pull } from "./commands/pull.js";
 import { sessions } from "./commands/sessions.js";
 import { status } from "./commands/status.js";
 
@@ -27,9 +28,9 @@ export function buildProgram(): Command {
   program
     .command("pull <id>")
     .description("Print a Briefing for a Session or Merge")
-    .option("--budget <tokens>", "token budget", "6000")
+    .option("--budget <tokens>", "token budget (default 6000)")
     .option("--output <file>", "also write the Briefing to a file")
-    .action(notYet("M6"));
+    .action(pull);
   program
     .command("merge <a> <b>")
     .description("Reconcile two Sessions into a Merge")

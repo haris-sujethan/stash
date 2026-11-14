@@ -57,3 +57,5 @@ export interface StatusResponse {
 }
 
 export interface SubmitExtractionResponse { version: number; memories: number; dropped: number; downgraded: number }
+
+export interface PullResponse { pullId: string; markdown: string; tokensUsed: number; related: number; dropped: number }
