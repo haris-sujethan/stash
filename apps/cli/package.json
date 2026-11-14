@@ -1,0 +1,21 @@
+{
+  "name": "@stash/cli",
+  "version": "0.0.0",
+  "description": "Shared memory for AI coding agents: push, pull and merge agent context",
+  "type": "module",
+  "bin": { "stash": "./dist/index.js" },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@stash/agent-adapters": "0.0.0",
+    "@stash/context-format": "0.0.0",
+    "@stash/core": "0.0.0",
+    "@stash/llm-adapters": "0.0.0",
+    "commander": "^15.1.0",
+    "zod": "^4.6.7"
+  }
+}
