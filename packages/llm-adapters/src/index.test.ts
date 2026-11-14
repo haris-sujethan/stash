@@ -61,3 +61,19 @@ describe("helpers", () => {
     expect(firstJsonObject("none")).toBeNull();
   });
 });
+
+import { findExecutable } from "./index.js";
+
+describe("findExecutable", () => {
+  it("finds a tool in an install folder that isn't on PATH", async () => {
+    const tool = await fakeTool("my-ai", "console.log('{}')");
+    const prev = process.env.PATH;
+    process.env.PATH = "/usr/bin:/bin";
+    try {
+      expect(findExecutable("my-ai")).toBeNull();
+      expect(findExecutable("my-ai", [dir])).toBe(tool);
+    } finally {
+      process.env.PATH = prev;
+    }
+  });
+});

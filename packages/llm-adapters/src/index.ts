@@ -2,8 +2,9 @@
 // Each adapter spawns a command-line tool directly (never through a shell), sends the prompt on stdin,
 // and returns the tool's answer. runStructured() checks the answer against a zod schema, with one retry.
 import { spawn } from "node:child_process";
+import { accessSync, constants } from "node:fs";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
 
@@ -64,6 +65,26 @@ export function runProcess(cmd: string, args: string[], input: string, timeoutMs
   });
 }
 
+/**
+ * Finds a tool's executable: on PATH first, then the folders its installers use, because a terminal's PATH
+ * often lacks them (Claude Code installs to ~/.local/bin, which many shells don't include).
+ */
+export function findExecutable(name: string, extraDirs: string[] = []): string | null {
+  const dirs = [...(process.env.PATH ?? "").split(":"), ...extraDirs].filter(Boolean);
+  for (const dir of dirs) {
+    const path = join(dir, name);
+    try {
+      accessSync(path, constants.X_OK);
+      return path;
+    } catch {
+      /* not here */
+    }
+  }
+  return null;
+}
+
+const INSTALL_DIRS = () => [join(homedir(), ".local/bin"), join(homedir(), ".claude/local"), "/opt/homebrew/bin", "/usr/local/bin", join(homedir(), ".npm-global/bin")];
+
 const onPath = async (cmd: string) => {
   try {
     const out = await runProcess(cmd, ["--version"], "", 15_000);
@@ -105,7 +126,7 @@ export function firstJsonObject(text: string): string | null {
  * and tools are off so the call can only answer. Verified against Claude Code 2.1.318.
  */
 export function claudeAdapter(opts: { model?: string | null; command?: string } = {}): LlmAdapter {
-  const cmd = opts.command ?? "claude";
+  const cmd = opts.command ?? findExecutable("claude", INSTALL_DIRS()) ?? "claude";
   const model = opts.model ?? "sonnet";
   return {
     tool: "claude",
@@ -139,7 +160,7 @@ export function claudeAdapter(opts: { model?: string | null; command?: string } 
 
 /** OpenAI Codex CLI. Flags follow `codex exec --help`; confirm them on a machine with Codex installed. */
 export function codexAdapter(opts: { model?: string | null; command?: string } = {}): LlmAdapter {
-  const cmd = opts.command ?? "codex";
+  const cmd = opts.command ?? findExecutable("codex", INSTALL_DIRS()) ?? "codex";
   return {
     tool: "codex",
     label: `codex${opts.model ? ` (${opts.model})` : ""}`,
