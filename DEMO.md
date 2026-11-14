@@ -166,17 +166,25 @@ Say the known limitations at the end (they are in `docs/DEVELOPMENT.md`, section
 
 ## Part 5. Reset between rehearsals
 
-1. **Put the demo repo back** on each laptop, since the agents may have fixed bugs or edited files:
+Do this before every new run. It takes about a minute.
+
+1. **Put the code back, on each laptop.** This throws away anything the agents changed in `stash-demo` and matches GitHub exactly. Your `.env` (the fake key) and `.stash.json` are kept.
 
    ```bash
-   cd ~/Desktop/stash-demo && git restore . && git clean -fd -e .env -e .stash.json
+   cd ~/Desktop/stash-demo && git fetch && git reset --hard origin/main && git clean -fd
    ```
 
-2. **Clear Stash's data** (keeps your Workspace, approver secret, token and indexes): ask Claude Code in the `stash` repo to clear the test data, as it did on 2026-11-14.
+2. **Empty the demo Project in Stash, on one laptop.** It shows what it will delete and asks you to type `stash-demo` to confirm. It keeps the Project, your Workspace, approver secret, tokens and every other Project (like the one with the chat that built Stash).
 
-3. **Old Claude Code sessions** stay on each laptop. `stash push` from inside a session always picks that session, so they don't get in the way.
+   ```bash
+   cd ~/Desktop/stash && npm run reset -- stash-demo
+   ```
 
----
+   To only see the counts: `npm run reset -- stash-demo --dry-run`.
+
+3. **Start new Claude Code chats.** Old chats stay in Claude Code's history, which is fine: `! stash push` inside a chat always pushes that chat, and old ones only show up if you run `stash push` from a plain terminal and it asks which session.
+
+That's it. `stash status` should still show all ✓, and the app shows the Project empty.
 
 ## If something goes wrong
 
