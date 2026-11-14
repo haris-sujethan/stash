@@ -124,17 +124,17 @@ dialog.approver h2 { font-size: var(--text-xl); max-width: none; }
 dialog.approver p { font-size: var(--text-sm); color: var(--color-muted); }
 
 /* buttons inherited from Vantage */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: 40px; padding: 0 var(--space-md); border: 0; border-radius: var(--radius-pill); background: var(--color-accent); color: var(--color-accent-ink); font: 400 var(--text-sm)/1 var(--font-body); text-decoration: none; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out); }
-.btn:hover { background: var(--color-accent-hi); }
-.btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
-.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
-.btn--line { background: transparent; color: var(--color-ink); box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule-2); }
-.btn--line:hover { background: var(--color-paper-3); }
-.field { display: flex; align-items: center; gap: var(--space-xs); padding: var(--space-2xs); border-radius: var(--radius-pill); background: var(--color-paper); box-shadow: inset 0 0 0 var(--rule-hair) var(--color-muted); }
-.field input { flex: 1; min-width: 0; min-height: 40px; padding: 0 var(--space-md); border: 0; background: transparent; color: var(--color-ink); font: 300 var(--text-md)/1 var(--font-body); caret-color: var(--color-accent); }
-.field input::placeholder { color: var(--color-muted); }
-.field input:focus-visible { outline: none; }
-.field:focus-within { box-shadow: inset 0 0 0 var(--rule-hair) var(--color-accent); }
+.app .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: 40px; padding: 0 var(--space-md); border: 0; border-radius: var(--radius-pill); background: var(--color-accent); color: var(--color-accent-ink); font: 400 var(--text-sm)/1 var(--font-body); text-decoration: none; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out); }
+.app .btn:hover { background: var(--color-accent-hi); }
+.app .btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.app .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.app .btn--line { background: transparent; color: var(--color-ink); box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule-2); }
+.app .btn--line:hover { background: var(--color-paper-3); }
+.app .field { display: flex; align-items: center; gap: var(--space-xs); padding: var(--space-2xs); border-radius: var(--radius-pill); background: var(--color-paper); box-shadow: inset 0 0 0 var(--rule-hair) var(--color-muted); }
+.app .field input { flex: 1; min-width: 0; min-height: 40px; padding: 0 var(--space-md); border: 0; background: transparent; color: var(--color-ink); font: 300 var(--text-md)/1 var(--font-body); caret-color: var(--color-accent); }
+.app .field input::placeholder { color: var(--color-muted); }
+.app .field input:focus-visible { outline: none; }
+.app .field:focus-within { box-shadow: inset 0 0 0 var(--rule-hair) var(--color-accent); }
 
 @media (max-width: 60rem) {
   .split, .two { grid-template-columns: minmax(0, 1fr); }

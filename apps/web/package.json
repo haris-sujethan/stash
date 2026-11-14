@@ -13,6 +13,7 @@
   "dependencies": {
     "@stash/context-format": "0.0.0",
     "@stash/core": "0.0.0",
+    "marked": "^18.2.0",
     "mongodb": "^7.9.0",
     "next": "^16.4.6",
     "react": "^19.3.1",
