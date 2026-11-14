@@ -24,3 +24,5 @@ export interface AgentAdapter {
   listSessions(cwd: string): Promise<SessionCandidate[]>;
   capture(path: string): Promise<CapturedSession>;
 }
+
+export * from "./claude-code.js";
