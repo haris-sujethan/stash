@@ -212,3 +212,22 @@ body { font-weight: 300; font-variation-settings: "SHRP" 0; color: var(--color-i
 /* Buttons and links respond smoothly: a soft press, eased colour changes */
 .btn, .chip, .pill a, .foot a { transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out); }
 .btn:active, .chip:active { transform: scale(0.96); transition-duration: var(--dur-micro); }
+
+/* Under the hood: a session's path through Stash, then four short explanations on the head's two columns */
+.flow { list-style: none; margin: 0 0 var(--space-2xl); padding: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: var(--space-md); }
+.flow li:not(.flow__arrow) { display: grid; gap: var(--space-2xs); padding: var(--space-lg); border-radius: var(--radius-card); background: var(--color-paper-2); box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule-2); }
+.flow .flow__db { box-shadow: inset 0 0 0 var(--rule-hair) var(--color-accent); }
+.flow__k { font: 300 var(--text-title)/1.1 var(--font-display); font-variation-settings: "SHRP" 100; color: var(--color-ink); letter-spacing: -0.01em; }
+.flow__v { font-size: var(--text-sm); color: var(--color-muted); }
+.flow__arrow { display: grid; justify-items: center; gap: var(--space-2xs); color: var(--color-muted); }
+.flow__arrow::after { content: "→"; font-size: var(--text-xl); line-height: 1; color: var(--color-accent); }
+.flow__arrow code { font-size: var(--text-xs); color: var(--color-ink-2); white-space: nowrap; }
+.hood { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl) var(--gap-columns); border-top: var(--rule-hair) solid var(--color-rule); padding-top: var(--space-xl); }
+.hood h3 { font-size: var(--text-title); font-weight: 300; margin-bottom: var(--space-xs); }
+.hood p { max-width: 46ch; }
+@media (max-width: 60rem) {
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .flow__arrow { justify-items: start; padding-left: var(--space-lg); }
+  .flow__arrow::after { content: "↓"; }
+  .hood { grid-template-columns: minmax(0, 1fr); }
+}

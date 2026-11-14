@@ -9,7 +9,8 @@
     "start": "next start",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
-    "reset": "tsx --env-file=.env.local scripts/reset.ts"
+    "reset": "tsx --env-file=.env.local scripts/reset.ts",
+    "demo-guardrail": "tsx --env-file=.env.local scripts/demo-guardrail.ts"
   },
   "dependencies": {
     "@stash/context-format": "0.0.0",

@@ -182,7 +182,9 @@ Do this before every new run. It takes about a minute.
 
    To only see the counts: `npm run reset -- stash-demo --dry-run`.
 
-3. **Start new Claude Code chats.** Old chats stay in Claude Code's history, which is fine: `! stash push` inside a chat always pushes that chat, and old ones only show up if you run `stash push` from a plain terminal and it asks which session.
+3. **Optional: a Guardrail to approve on camera.** After the first session is pushed, `cd ~/Desktop/stash && npm run demo-guardrail` adds a Proposed Guardrail built from what Stash learned in that session (it's marked "demo seed"). Stash proposes these by itself when the same failure shows up in two sessions.
+
+4. **Start new Claude Code chats.** Old chats stay in Claude Code's history, which is fine: `! stash push` inside a chat always pushes that chat, and old ones only show up if you run `stash push` from a plain terminal and it asks which session.
 
 That's it. `stash status` should still show all ✓, and the app shows the Project empty.
 

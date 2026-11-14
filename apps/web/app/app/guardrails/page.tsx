@@ -43,7 +43,7 @@ export default async function GuardrailsPage({ searchParams }: { searchParams: S
                   <p className="rule">{g.rule}</p>
                   <p>{g.rationale}</p>
                   <div className="evidence">
-                    <span className="meta">Evidence from {new Set(g.evidence.map((e) => e.sessionId)).size} Sessions · pattern: {g.pattern}</span>
+                    <span className="meta">Evidence from {new Set(g.evidence.map((e) => e.sessionId)).size === 1 ? "1 Session" : `${new Set(g.evidence.map((e) => e.sessionId)).size} Sessions`} · pattern: {g.pattern}</span>
                     {g.evidence.map((e) => (
                       <div key={e.memoryId}>
                         <Link href={`/app/sessions/${e.sessionId}${q}#memory-${e.memoryId}`}>{ses.get(e.sessionId)?.title ?? e.sessionId}</Link>
