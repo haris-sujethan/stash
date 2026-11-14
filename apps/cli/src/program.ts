@@ -3,6 +3,7 @@ import { login } from "./commands/login.js";
 import { init } from "./commands/init.js";
 import { push } from "./commands/push.js";
 import { pull } from "./commands/pull.js";
+import { merge } from "./commands/merge.js";
 import { sessions } from "./commands/sessions.js";
 import { status } from "./commands/status.js";
 
@@ -35,7 +36,7 @@ export function buildProgram(): Command {
     .command("merge <a> <b>")
     .description("Reconcile two Sessions into a Merge")
     .option("--llm <tool>", "AI tool for this run: claude, codex or cmd")
-    .action(notYet("M7"));
+    .action(merge);
   program.command("sessions").description("List this Project's Sessions").action(sessions);
   program.command("status").description("Check the API, your token and the Project").action(status);
   program.command("guardrails").description("List Guardrails (read-only; approve on the website)").action(notYet("M8"));

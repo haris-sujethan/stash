@@ -2,3 +2,4 @@
 export * from "./base.js";
 export * from "./extract.js";
 export * from "./briefing.js";
+export * from "./merge.js";
