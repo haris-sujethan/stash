@@ -1,4 +1,4 @@
-// Running the developer's own AI tool for every reasoning step (ADR 0005, BUILD.md 12.1 and 12.2).
+// Running the developer's own AI tool for every reasoning step (ADR 0005).
 // Each adapter spawns a command-line tool directly (never through a shell), sends the prompt on stdin,
 // and returns the tool's answer. runStructured() checks the answer against a zod schema, with one retry.
 import { spawn } from "node:child_process";

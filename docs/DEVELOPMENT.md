@@ -277,7 +277,7 @@ Switch Projects with the names in the top bar.
 
 1. **Find the session.** `CLAUDE_CODE_SESSION_ID` when inside Claude Code; `--session`; or ask. Sessions Stash started itself (`stash:extract`) are never offered.
 2. **Parse** `~/.claude/projects/<folder>/<id>.jsonl`. Follow the branch the session ended on, through attachment records and across context compaction. Parallel tool calls are kept; a rewind becomes one "branch abandoned" Event. Thinking blocks and internal records are dropped. Outputs over 4 KB keep the first 2 KB and last 1 KB plus a hash.
-3. **Redact** on the laptop: Anthropic, OpenAI, AWS, GitHub, JWT and private keys, MongoDB credentials, and every value in the repo's `.env` files become `[REDACTED:kind]`. If scanning fails, nothing is uploaded.
+3. **Redact** on the laptop: API keys and tokens (Anthropic, OpenAI, AWS, GitHub, Slack, Google, Stripe, Stash, JWTs, `Bearer` tokens), private keys, database credentials, and every value in the repo's `.env` files become `[REDACTED:kind]`. If scanning fails, nothing is uploaded.
 4. **Upload** only Events the server does not have, in batches of 500, with retries. Event ids are content hashes, so retries never duplicate.
 5. **Record a Version** unless nothing changed. Lineage is recorded here from `stash:briefing` markers.
 6. **Reason locally.** The Transcript is rendered with short ids (`e12`), fitted to the model, and sent to your AI tool with a JSON schema. The answer is checked: unknown citations dropped, "evidenced" downgraded unless a tool result, error or file change shows it, instructions reworded as descriptions. The server checks again, stores the Memories, and makes them the Session's current set.
@@ -297,7 +297,7 @@ Switch Projects with the names in the top bar.
 | Merge / Finding | Two Sessions reconciled / one comparison inside it |
 | Guardrail | A human-approved rule learned from repeated failures |
 
-Full definitions: [`GLOSSARY.md`](../GLOSSARY.md).
+Full definitions: [`GLOSSARY.md`](GLOSSARY.md).
 
 ### Decisions that look wrong without context
 

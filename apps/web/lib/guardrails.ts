@@ -1,11 +1,11 @@
-// Repeated-failure search for Guardrail proposals (BUILD.md 12.5). The AI tool judges the evidence in the CLI.
+// Repeated-failure search for Guardrail proposals. The AI tool judges the evidence in the CLI.
 import type { Event } from "@stash/context-format";
 import type { ExistingGuardrail, FailureForCheck, GuardrailCandidates } from "@stash/core";
 import { collections } from "./db";
 import { HttpError, type Caller } from "./http";
 import { searchMemories } from "./vector";
 
-/** Matches at or above this go to the evidence check. Calibrated on Cluster0 (BUILD.md section 8). */
+/** Matches at or above this go to the evidence check. Calibrated on Cluster0. */
 export const GUARDRAIL_MATCH_MIN = Number(process.env.GUARDRAIL_MATCH_MIN ?? 0.7);
 
 const excerpt = (e: Event) => ({

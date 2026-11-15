@@ -1,5 +1,5 @@
 // Claude Code adapter: reads ~/.claude/projects/<slug>/<sessionId>.jsonl into Universal Context Format Events.
-// BUILD.md 11.1 and 11.2. Pure functions first (parse, branch selection, mapping), file access last.
+// Pure functions first (parse, branch selection, mapping), file access last.
 import { readdir, readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -247,7 +247,9 @@ export function sessionTitle(records: RawRecord[]): string {
   for (const r of records) {
     if (r.type !== "user" || r.isMeta || r.isCompactSummary) continue;
     const text = blocksOf(r).map((b) => (b.type === "text" ? stripReminders(b.text) : "")).join(" ").trim();
-    if (text) return text.replace(/\s+/g, " ").slice(0, 80);
+    // Slash commands and their output (/login, /model…) are Claude Code's own records, not the user's task.
+    if (!text || /^<(command-|local-command-)/.test(text) || text.startsWith("Caveat:")) continue;
+    return text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
   }
   return "Untitled session";
 }
@@ -308,4 +310,3 @@ export const claudeCode: AgentAdapter = {
   },
 };
 
-export type { Event };

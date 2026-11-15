@@ -1,5 +1,4 @@
 // Reading an agent's native session into Universal Context Format Events.
-// The Claude Code adapter (BUILD.md 11.1 and 11.2) lands in M3.
 import type { Event } from "@stash/context-format";
 
 export interface SessionCandidate {

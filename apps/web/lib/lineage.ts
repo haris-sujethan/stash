@@ -1,4 +1,4 @@
-// Session Lineage (BUILD.md 12.5 server side): every Briefing starts with
+// Session Lineage: every Briefing starts with
 // `stash:briefing <source>@v<n> pull=<p_id>`. When that line shows up in a pushed Transcript (the agent ran
 // stash pull, or a human pasted the Briefing), the Session records the source as a parent. Several markers mean
 // several parents. Only pulls that really happened in this Project count, so a made-up marker records nothing.

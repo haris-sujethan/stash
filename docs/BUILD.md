@@ -121,7 +121,7 @@ Versions current on npm as of 2026-11-14. Pin majors.
 ### Backend: `apps/web/.env.local`
 
 ```bash
-MONGODB_URI="mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority"
+MONGODB_URI="<your Atlas connection string>"
 MONGODB_DB="stash"
 EMBED_MODEL="voyage-4"
 VECTOR_INDEX="memories_vector"

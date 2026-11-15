@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { briefingMarker, contentHash, estimateTokens, eventId, findBriefingMarkers, newId } from "./index.js";
+import { briefingMarker, contentHash, estimateTokens, eventId, findBriefingMarkers, newId, normalizeRemote } from "./index.js";
 
 describe("ids", () => {
   it("prefixes ids by kind", () => {
@@ -37,7 +37,6 @@ describe("briefing markers", () => {
   });
 });
 
-import { normalizeRemote } from "./index.js";
 
 describe("normalizeRemote", () => {
   it("maps every form of the same GitHub repo to one Project", () => {

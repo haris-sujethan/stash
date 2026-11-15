@@ -1,5 +1,5 @@
 // Secret scanning, run on the developer's machine before anything is uploaded or sent to an AI tool.
-// BUILD.md 11.3. Every match becomes [REDACTED:<kind>]; the report counts distinct secret values.
+// Every match becomes [REDACTED:<kind>]; the report counts distinct secret values.
 // If scanning throws, the caller must upload nothing.
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -21,6 +21,11 @@ export const PATTERNS: SecretPattern[] = [
   { kind: "github", re: /gh[pousr]_[A-Za-z0-9]{36,}/g },
   { kind: "mongodb", re: /mongodb(?:\+srv)?:\/\/([^\s"'@/]+:[^\s"'@/]+)@/g, group: 1 },
   { kind: "jwt", re: /eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g },
+  { kind: "stash", re: /(?<![A-Za-z0-9])stash_[0-9A-Za-z]{32}(?![0-9A-Za-z])/g },
+  { kind: "slack", re: /xox[abposr]-[A-Za-z0-9-]{10,}/g },
+  { kind: "google", re: /AIza[0-9A-Za-z_-]{35}/g },
+  { kind: "stripe", re: /(?:sk|rk)_live_[0-9A-Za-z]{16,}/g },
+  { kind: "bearer", re: /\b[Bb]earer\s+([A-Za-z0-9._~+/=-]{20,})/g, group: 1 },
 ];
 
 export interface RedactionReport {

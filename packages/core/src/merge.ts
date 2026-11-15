@@ -1,4 +1,4 @@
-// Merge: reconcile two Sessions into one Digest and Findings (BUILD.md 12.7, ADR 0003).
+// Merge: reconcile two Sessions into one Digest and Findings.
 // The AI tool sees both Sessions' Memories under short aliases (A1, B3) and the Vector Search candidate pairs;
 // it returns Findings that cite those aliases. Sources are never modified.
 import { z } from "zod";

@@ -1,4 +1,4 @@
-// Gathers what a Briefing needs from Atlas and records the pull (BUILD.md section 13). No LLM call.
+// Gathers what a Briefing needs from Atlas and records the pull. No LLM call.
 import { buildBriefing, newId, type BriefingInput, type KeyEvent } from "@stash/core";
 import type { Event } from "@stash/context-format";
 import { collections } from "./db";

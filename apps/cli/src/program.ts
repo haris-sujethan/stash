@@ -13,7 +13,7 @@ import { status } from "./commands/status.js";
 export const VERSION = "0.1.0";
 
 
-/** The whole command surface from MVP.md. Commands are filled in milestone by milestone. */
+/** Every `stash` command and its options. */
 export function buildProgram(): Command {
   const program = new Command().name("stash").description("Shared memory for AI coding agents.").version(VERSION);
 

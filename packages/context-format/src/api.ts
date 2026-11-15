@@ -1,4 +1,4 @@
-// Request and response shapes shared by the CLI and the web API (BUILD.md section 9).
+// Request and response shapes shared by the CLI and the web API.
 import { z } from "zod";
 import { Event } from "./model.js";
 

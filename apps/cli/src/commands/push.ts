@@ -1,4 +1,4 @@
-// stash push (BUILD.md section 11): find the session, capture it, redact locally, upload, record a Version.
+// stash push: find the session, capture it, redact locally, upload, record a Version.
 import { hostname } from "node:os";
 import { basename } from "node:path";
 import { MAX_BATCH_BYTES, MAX_BATCH_EVENTS, type UploadEvent } from "@stash/context-format";

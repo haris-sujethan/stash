@@ -1,4 +1,4 @@
-// One MongoClient per process, typed collections, and every index Stash needs (BUILD.md section 7).
+// One MongoClient per process, typed collections, and every index Stash needs.
 import { MongoClient, type Db, type IndexDescription } from "mongodb";
 import type { Event, Memory, Merge, Guardrail, Pull, Session, SessionVersion } from "@stash/context-format";
 

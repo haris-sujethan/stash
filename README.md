@@ -1,129 +1,113 @@
 # Stash
 
-**Your agents forget. Stash remembers.**
+**Your agents forget. Stash remembers.** Agent memory across sessions, laptops, models and teammates.
 
-When an AI coding agent's session ends, everything it learned is lost. The next session, on another laptop or another model, starts from zero. Stash saves what the agent learned and hands it to the next agent: what it tried, what worked, what failed, and the evidence for each.
+![The Stash landing page](docs/images/home.png)
 
-Built for Agents in Context Toronto, a MongoDB hackathon. It runs on MongoDB Atlas with Vector Search.
+When an AI coding agent's session ends, everything it learned is lost: what it tried, what worked, what failed. The next agent starts from zero. Stash saves that knowledge with its evidence, so any agent, on any laptop or model, continues where the last one stopped. Repeated mistakes become rules a person approves, so a team's agents get smarter with every session.
 
-## Key words
+Built in a day for **Agents in Context Toronto**, a MongoDB hackathon, on MongoDB Atlas and Atlas Vector Search.
 
-These are the words you'll see in the app and the CLI.
+## How it works
 
-| Word | What it means |
+```text
+ Your agent ── stash push ──►  MongoDB Atlas  ── stash pull ──►  Any agent
+ a coding session              memories + vectors                any laptop, any model
+```
+
+| Step | What happens |
 | --- | --- |
-| **Project** | One code repository. Everyone working in the same GitHub repo shares one Project. |
-| **Session** | One conversation with an AI agent, such as one Claude Code chat. |
-| **Version** | A snapshot of a Session each time you push it. Push again after more work and you get Version 2. |
-| **Push** | Save a Session to Stash (`stash push`). |
-| **Event** | One thing that happened in a Session: a message, a command, its output, a file change or an error. |
-| **Transcript** | All of a Session's Events in order, with secrets removed. |
-| **Memory** | One thing the agent learned, in one sentence, pointing to the Events that prove it. |
-| **Memory type** | What kind of thing it is: **Decision** (a choice and why), **Discovery** (something learned), **Failed approach** (something that didn't work, and why), **Constraint** (a limit or requirement) or **Open question** (something still unknown). |
-| **Memory status** | How sure we are: **Hypothesis** (inferred, not shown), **Evidenced** (an Event shows it) or **Verified** (a person confirmed it). |
-| **Digest** | A short summary of a Session: the goal, where it stands, what's done and what's next. |
-| **Briefing** | What `stash pull` prints for the next agent: the Digest, the Memories, rules to follow, and related findings from other Sessions. |
-| **Pull** | Get a Briefing (`stash pull <id>`), so an agent starts where the last one stopped. |
-| **Merge** | Combine two Sessions that worked on the same problem (`stash merge <a> <b>`). |
-| **Finding** | One result of a Merge: **Duplicate** (both found it), **Complementary** (different pieces that fit together), **Conflicting** (they disagree) or **Only in one**. |
-| **Guardrail** | A rule Stash suggests after the same mistake happens in two Sessions. It reaches agents only after a person approves it. |
-| **Lineage** | Which Session continued which: "continued from ses_…". |
-| **Stash token** | Your login for the CLI (`stash login`). |
-| **Approver secret** | A password only people know, needed to approve Guardrails or verify Memories. Agents never have it. |
-| **AI tool** | The AI you already use (Claude Code, Codex, …). Stash uses it to write Memories. Stash itself holds no AI key. |
+| **Push** | The CLI reads the agent's session log on your laptop, removes secrets before anything leaves it, and uploads only what's new. Your own AI tool (Claude Code, Codex, or any command) turns the session into **Memories**, each linked to the evidence that proves it. Stash holds no AI key. |
+| **Pull** | `stash pull <id>` prints a **Briefing**: the rules to follow, what was decided, discovered and ruled out, and related findings from other sessions. It's built straight from the database with no AI call, in about a second. |
+| **Merge** | `stash merge <a> <b>` reconciles two investigations into duplicate, complementary and conflicting **Findings**. Conflicts are kept, never voted away, and the sources are never changed. |
+| **Learn** | When the same failure shows up in two sessions, Stash proposes a **Guardrail**. Only a person with the approver secret can approve it; then every Briefing starts with it. |
 
-## Install
+### MongoDB
 
-You need Node 26, git, and Claude Code. Stash isn't on npm yet, so you install it from this repository.
+- **Atlas** stores every session, event, memory, merge and guardrail as documents, so each memory traces back to the exact command output or file change behind it.
+- **Automated Embedding** (`voyage-4`) turns every memory into a vector as it's saved, with no embedding service or key.
+- **One Vector Search index** powers recall: related memories in every Briefing, merge candidates, spotting repeated failures, and search by meaning in the app.
+
+## Quick start
+
+You need Node 26, git, Claude Code and a MongoDB Atlas cluster with Vector Search. Stash isn't on npm yet, so it's installed from this repository.
 
 ```bash
 git clone https://github.com/haris-sujethan/stash.git && cd stash
 npm install && npm run build
-(cd apps/cli && npm link)
+(cd apps/cli && npm link)          # puts `stash` on your PATH
+cp .env.example apps/web/.env.local
 ```
 
-Put the database connection string in `apps/web/.env.local` as `MONGODB_URI="…"` (ask whoever runs your Stash), then start Stash and log in:
+Set `MONGODB_URI` in `apps/web/.env.local` to your Atlas connection string, then:
 
 ```bash
-npm run dev
+npm run dev                         # the API, website and docs on http://localhost:3000
 ```
 
 In a second terminal:
 
 ```bash
-npm run seed
-stash login
+npm run seed                        # creates the indexes, asks for an approver secret, prints a token
+stash login                         # paste the token
+cd ~/your-repo && stash init        # joins this repo's Project; commit the .stash.json it writes
 ```
 
-`npm run seed` prints your Stash token; `stash login` asks for it. `npm run dev` must stay running while you use Stash.
+In Claude Code, run `! stash push` at the end of a session, or `stash hooks install` once to push automatically. On any machine, `stash pull <session id>` continues from it.
 
-## Use it
+## Commands
 
-**1. Set up a repository.** In the repo you work in:
+| Command | What it does |
+| --- | --- |
+| `stash login` | Save your Stash token |
+| `stash init` | Join (or create) the Project for this repository |
+| `stash push` | Save this agent session: capture, redact, upload, extract Memories |
+| `stash pull <id>` | Print a Briefing for a Session or Merge |
+| `stash merge <a> <b>` | Reconcile two Sessions |
+| `stash sessions` · `stash status` | List Sessions · check the setup |
+| `stash guardrails` | List Guardrails (read-only; approve on the website) |
+| `stash hooks install` | Push automatically from Claude Code |
 
-```bash
-stash init
-```
+## Key words
 
-Commit the `.stash.json` it creates, so your teammates join the same Project.
+| Word | Meaning |
+| --- | --- |
+| **Project** | One repository. Every clone shares one Project. |
+| **Session** · **Version** | One agent conversation · a snapshot of it each time it's pushed |
+| **Event** · **Transcript** | One thing that happened (a message, command, output, edit or error) · all of them in order, secrets removed |
+| **Memory** | One thing the agent learned, citing its Events. A **Decision**, **Discovery**, **Failed approach**, **Constraint** or **Open question**; **Hypothesis**, **Evidenced**, or **Verified** by a person |
+| **Digest** · **Briefing** | A session's summary · what `stash pull` gives the next agent |
+| **Merge** · **Finding** | Two sessions reconciled · one comparison inside it |
+| **Guardrail** | A rule learned from repeated mistakes, reaching agents only once a person approves it |
+| **Lineage** | Which session continued which |
 
-**2. Push a session.** In Claude Code, type:
+## Security
+
+- **Secrets are removed on your laptop** before anything is uploaded or sent to an AI tool: API keys and tokens (Anthropic, OpenAI, AWS, GitHub, Slack, Google, Stripe, Stash, JWTs, `Bearer`), private keys, database credentials, and every value in the repository's `.env` files. If scanning fails, nothing is uploaded.
+- **The web app only listens on `127.0.0.1`.** It has no login of its own; run it on the machine you use it from.
+- **Only people approve.** Approving a Guardrail or verifying a Memory needs the approver secret, checked by the server on every request and stored only as a scrypt hash. The CLI has no approve command.
+- **No AI key.** Reasoning runs through the user's own AI tool, which is called with its tools and hooks disabled.
+- Stash tokens are stored as SHA-256 hashes; the CLI's config file is readable only by its owner.
+
+## Project layout
 
 ```text
-! stash push
+apps/cli                 the `stash` command
+apps/web                 Next.js: the API, the website, the docs, and the seed and reset scripts
+packages/context-format  the data model and API types (zod)
+packages/core            Briefings, extraction, merge and guardrail logic, ids, validation
+packages/agent-adapters  reads Claude Code sessions
+packages/llm-adapters    runs Claude Code, Codex or any command for reasoning
+docs                     developer guide, glossary, decisions (adr/), build plan, demo guide
+design/landing           the landing page design and its explorations
 ```
 
-Stash removes secrets on your laptop, saves the Session, and uses your AI tool to write the Digest and Memories.
-
-To push automatically instead, run `stash hooks install` once. Claude Code then saves each turn as you work and does a full push when the session ends.
-
-**3. Pull it anywhere.** On any laptop, in any agent:
+## Development
 
 ```bash
-stash pull ses_xxxxxxxx
+npm run build    # all workspaces
+npm test         # 70+ tests, no network or AI calls
+npm run dev      # web app with hot reload
 ```
 
-Or tell the agent: *"Run `stash pull ses_xxxxxxxx` and continue from there."*
-
-**4. Merge two sessions** that worked on the same problem:
-
-```bash
-stash merge ses_aaaa ses_bbbb
-```
-
-**5. Approve rules.** When Stash proposes a Guardrail, open the app's **Guardrails** page, click **Approve**, and type the approver secret. Every future Briefing starts with that rule.
-
-## The app
-
-Open `http://localhost:3000/app`.
-
-| Page | What you see |
-| --- | --- |
-| **Home** | How many Sessions, Memories, Merges and Guardrails this Project has, and what happened recently |
-| **Sessions** | Every pushed Session. Open one for its Digest, Memories, Transcript and Lineage. |
-| **Memories** | Everything learned in the Project. Search by meaning, filter by type or status, and verify. |
-| **Merges** | Two Sessions side by side, with their Findings |
-| **Guardrails** | Rules waiting for approval, and the approved ones |
-
-Switch Projects with the names in the top bar.
-
-## Questions
-
-**Do I need an AI API key?** No. Stash uses the AI tool you already have, with your own login.
-
-**Is Stash always running?** No. It only runs when you type `stash`, or when Claude Code calls it because you ran `stash hooks install`. The web app (`npm run dev`) must be running for the CLI to work.
-
-**Are my secrets safe?** API keys, tokens, database passwords and the values in your `.env` files are replaced with `[REDACTED]` on your laptop before anything is uploaded.
-
-**Can an agent approve its own rules?** No. Approving needs the approver secret, which only people have, and the CLI has no approve command.
-
-**Which agents work?** Pushing works with Claude Code today. Pulling works with any agent that can run a command.
-
-**Is it on npm?** Not yet. Use `npm link` as shown above.
-
-## More
-
-- `docs/DEVELOPMENT.md` (`/docs/dev`): how it works inside, every command and option, the API, and troubleshooting
-- `DEMO.md`: the two-laptop demo, step by step
-- `BUILD.md` (`/docs/build`): the original build plan
-- `GLOSSARY.md`, `MVP.md`, `docs/adr/`: the exact definitions and the decisions behind them
+CI runs the build and tests on every push. More: [developer guide](docs/DEVELOPMENT.md) · [glossary](docs/GLOSSARY.md) · [decision records](docs/adr/) · [demo guide](docs/DEMO.md).

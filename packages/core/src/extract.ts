@@ -1,5 +1,5 @@
 // Digest and Memory extraction: the schema the AI tool must return, its instructions, the Transcript as the
-// model sees it, and the validator both the CLI and the server run (BUILD.md 12.3 and 12.4).
+// model sees it, and the validator both the CLI and the server run.
 import { z } from "zod";
 import { MEMORY_TYPES, type Digest, type EventType } from "@stash/context-format";
 import { EXTRACT_MARKER, estimateTokens } from "./base.js";

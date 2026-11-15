@@ -1,4 +1,4 @@
-// Request helpers for route handlers: bearer auth, body validation and consistent errors (BUILD.md section 9).
+// Request helpers for route handlers: bearer auth, body validation and consistent errors.
 import { randomBytes } from "node:crypto";
 import type { z } from "zod";
 import { collections } from "./db";

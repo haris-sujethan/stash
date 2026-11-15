@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { claudeAdapter, commandAdapter, firstJsonObject, runStructured, splitCommand } from "./index.js";
+import { claudeAdapter, commandAdapter, findExecutable, firstJsonObject, runStructured, splitCommand } from "./index.js";
 
 const Schema = z.object({ objective: z.string() });
 let dir: string;
@@ -62,7 +62,6 @@ describe("helpers", () => {
   });
 });
 
-import { findExecutable } from "./index.js";
 
 describe("findExecutable", () => {
   it("finds a tool in an install folder that isn't on PATH", async () => {

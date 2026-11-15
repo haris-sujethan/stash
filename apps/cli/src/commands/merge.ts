@@ -1,4 +1,4 @@
-// stash merge <a> <b> (BUILD.md 12.7): the server prepares both Sessions and the Vector Search candidates,
+// stash merge <a> <b>: the server prepares both Sessions and the Vector Search candidates,
 // the developer's AI tool reconciles them locally, and the CLI uploads the Merge. Sources never change.
 import { DEFAULT_TIMEOUT_MS, runStructured } from "@stash/llm-adapters";
 import { MERGE_SYSTEM, MergeSchema, mergePrompt, validateMerge, type PreparedMerge } from "@stash/core";

@@ -1,5 +1,5 @@
 // Universal Context Format: the shapes every Transcript, Digest and Memory take,
-// whichever agent produced them. Terms follow GLOSSARY.md; the data model is BUILD.md section 7.
+// whichever agent produced them. Terms follow docs/GLOSSARY.md.
 import { z } from "zod";
 
 export const EVENT_TYPES = [

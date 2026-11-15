@@ -1,4 +1,4 @@
-// Guardrail proposals (BUILD.md 12.5): a failure that recurs in two or more Sessions becomes a Proposed
+// Guardrail proposals: a failure that recurs in two or more Sessions becomes a Proposed
 // Guardrail, which reaches agents only after a human approves it (ADR 0004).
 import { z } from "zod";
 import { EXTRACT_MARKER } from "./base.js";

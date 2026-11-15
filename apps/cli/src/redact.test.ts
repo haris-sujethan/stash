@@ -1,18 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { parseEnvValues, Redactor } from "./redact.js";
 
-const KEY = "sk-ant-demo-AbCdEfGhIjKlMnOpQrStUvWx";
+// Every "secret" below is fake and assembled at runtime, so the source never contains a string that looks like a
+// real credential to a secret scanner.
+const fake = (...parts: string[]) => parts.join("");
+const ANTHROPIC = fake("sk-", "ant-", "test-", "AbCdEfGhIjKlMnOpQrStUvWx");
 
 describe("Redactor", () => {
   it("replaces a planted key everywhere and counts it once", () => {
     const r = new Redactor();
     const events = [
-      { text: `cat .env\nANTHROPIC_API_KEY=${KEY}` },
-      { tool: { input: { command: `export K=${KEY}` } } },
-      { output: { excerpt: `using ${KEY}` } },
+      { text: `cat .env\nANTHROPIC_API_KEY=${ANTHROPIC}` },
+      { tool: { input: { command: `export K=${ANTHROPIC}` } } },
+      { output: { excerpt: `using ${ANTHROPIC}` } },
     ];
     const out = JSON.stringify(r.redact(events));
-    expect(out).not.toContain(KEY);
+    expect(out).not.toContain(ANTHROPIC);
     expect(out.match(/\[REDACTED:anthropic\]/g)).toHaveLength(3);
     expect(r.report()).toEqual({ distinct: 1, byKind: { anthropic: 1 } });
   });
@@ -20,12 +23,16 @@ describe("Redactor", () => {
   it("recognizes each known format", () => {
     const r = new Redactor();
     const cases: [string, string][] = [
-      ["openai", "sk-proj-abcdefghijklmnopqrstuvwx1234"],
-      ["aws", "AKIAABCDEFGHIJKLMNOP"],
-      ["github", "ghp_" + "a".repeat(36)],
-      ["github", "github_pat_" + "b".repeat(60)],
-      ["jwt", "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NSJ9.c2lnbmF0dXJlLXZhbHVl"],
-      ["private_key", "-----BEGIN RSA PRIVATE KEY-----\nMIIabc\n-----END RSA PRIVATE KEY-----"],
+      ["openai", fake("sk-", "proj-", "x".repeat(28))],
+      ["aws", fake("AKIA", "TESTONLY", "00000000")],
+      ["github", fake("gh", "p_", "a".repeat(36))],
+      ["github", fake("github", "_pat_", "b".repeat(60))],
+      ["jwt", fake("eyJ", "aGVhZGVy", ".", "eyJ", "cGF5bG9hZA", ".", "c2lnbmF0dXJl")],
+      ["private_key", fake("-----BEGIN ", "RSA PRIVATE KEY-----\nTEST\n-----END ", "RSA PRIVATE KEY-----")],
+      ["stash", fake("stash", "_", "T".repeat(32))],
+      ["slack", fake("xox", "b-", "0".repeat(12))],
+      ["google", fake("AI", "za", "t".repeat(35))],
+      ["stripe", fake("sk", "_live_", "z".repeat(24))],
     ];
     for (const [kind, secret] of cases) {
       expect(r.redactString(`x ${secret} y`)).toBe(`x [REDACTED:${kind}] y`);
@@ -33,17 +40,21 @@ describe("Redactor", () => {
     expect(r.report().distinct).toBe(cases.length);
   });
 
-  it("keeps the shape of a MongoDB URI but removes the credentials", () => {
-    const r = new Redactor();
-    expect(r.redactString("mongodb+srv://app:s3cretPass@cluster0.abc.mongodb.net/")).toBe(
-      "mongodb+srv://[REDACTED:mongodb]@cluster0.abc.mongodb.net/",
-    );
+  it("removes the credential after Bearer but keeps the word", () => {
+    const token = fake("test", "-token-", "q".repeat(24));
+    expect(new Redactor().redactString(`Authorization: Bearer ${token}`)).toBe("Authorization: Bearer [REDACTED:bearer]");
+  });
+
+  it("keeps the shape of a database URI but removes the credentials", () => {
+    const uri = fake("mongodb+srv://", "demo-user", ":", "not-a-real-password", "@db.example.test/");
+    expect(new Redactor().redactString(uri)).toBe("mongodb+srv://[REDACTED:mongodb]@db.example.test/");
   });
 
   it("removes .env values and leaves ordinary text alone", () => {
     const r = new Redactor(["correct-horse-battery", "short"]);
     expect(r.redactString("pw is correct-horse-battery, port short")).toBe("pw is [REDACTED:env], port short");
     expect(r.redactString("task-management-dashboard-version-two")).toBe("task-management-dashboard-version-two");
+    expect(r.redactString("the stash_command and bearer of news")).toBe("the stash_command and bearer of news");
     expect(r.report()).toEqual({ distinct: 1, byKind: { env: 1 } });
   });
 

@@ -1,4 +1,4 @@
-// Every $vectorSearch lives here (BUILD.md section 8). Queries are plain text: Atlas embeds them with the same
+// Every $vectorSearch lives here. Queries are plain text: Atlas embeds them with the same
 // model it uses for Memory text. Every query is filtered to one Project and to current Memories.
 import type { Document } from "mongodb";
 import type { Memory } from "@stash/context-format";

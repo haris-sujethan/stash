@@ -1,6 +1,6 @@
 # Stash: Hackathon MVP
 
-[BLUEPRINT.md](BLUEPRINT.md) is the long-term vision. This file is what we're actually building in 24 hours. It records every decision from the design sessions. Terms are defined in [GLOSSARY.md](GLOSSARY.md), and the decisions most likely to be reversed by mistake are explained in [docs/adr/](docs/adr/).
+[BLUEPRINT.md](BLUEPRINT.md) is the long-term vision. This file is what we're actually building in 24 hours. It records every decision from the design sessions. Terms are defined in [GLOSSARY.md](GLOSSARY.md), and the decisions most likely to be reversed by mistake are explained in [docs/adr/](adr/).
 
 The MVP should show the core idea rather than build the whole platform. The demo is one complete workflow with two agents and a shared project.
 
@@ -15,7 +15,7 @@ The MVP should show the core idea rather than build the whole platform. The demo
 
 ## Architecture
 
-TypeScript everywhere ([ADR 0001](docs/adr/0001-typescript-everywhere-nextjs-backend.md)): two apps in one monorepo. All LLM work runs locally, through the developer's own AI tool ([ADR 0005](docs/adr/0005-local-llm-through-the-users-own-ai-tool.md)); Stash holds no LLM key.
+TypeScript everywhere ([ADR 0001](adr/0001-typescript-everywhere-nextjs-backend.md)): two apps in one monorepo. All LLM work runs locally, through the developer's own AI tool ([ADR 0005](adr/0005-local-llm-through-the-users-own-ai-tool.md)); Stash holds no LLM key.
 
 ```
 stash/
@@ -101,7 +101,7 @@ Deferred: `stash pull --project`, `stash search`, `stash logout`, `stash config`
 
 ## Pull and Briefing
 
-No LLM call at pull time ([ADR 0002](docs/adr/0002-deterministic-briefings.md)). The Briefing is a fixed template filled from stored data, plus one Vector Search query:
+No LLM call at pull time ([ADR 0002](adr/0002-deterministic-briefings.md)). The Briefing is a fixed template filled from stored data, plus one Vector Search query:
 
 1. Marker line: `stash:briefing <id>@v<version> pull=<pull-id>`
 2. Approved Guardrails
@@ -123,7 +123,7 @@ Every Memory shows its status. A Merge's Briefing shows its conflicts as Conflic
 - Takes exactly two Sessions, using each one's latest processed Version, and records which Versions it used. A Merge can't be used as a source for another Merge.
 - Runs from the CLI while you wait, with progress: the server supplies both Sessions and the Vector Search candidates, the developer's AI tool reconciles them, and the CLI uploads the Merge. The website only displays Merges.
 - Produces a Digest and Findings: Duplicate, Complementary, Conflicting, Only in one source. Each Finding cites Memories and Events.
-- Never changes after it's created and never changes its sources ([ADR 0003](docs/adr/0003-immutable-merge-sources.md)). Newer Versions need a new Merge.
+- Never changes after it's created and never changes its sources ([ADR 0003](adr/0003-immutable-merge-sources.md)). Newer Versions need a new Merge.
 - Can be pulled: `stash pull m_789`.
 
 ## Guardrails
@@ -134,7 +134,7 @@ After every successful push:
 2. Use vector search to find similar Failed Approaches in the Project's *other* Sessions.
 3. The server returns those matches to the CLI, and the developer's AI tool compares the underlying evidence to decide whether it's really the same failure. Similar wording alone isn't enough.
 4. If the failure appears in **2 or more different Sessions** and no Guardrail already covers it, the AI tool drafts a Proposed Guardrail citing the Memories and Events. Guardrails count as covering it whether they are proposed, approved or rejected.
-5. Approve or reject happens on the website only and requires the approver secret ([ADR 0004](docs/adr/0004-human-only-approvals.md)).
+5. Approve or reject happens on the website only and requires the approver secret ([ADR 0004](adr/0004-human-only-approvals.md)).
 6. Approved Guardrails go into every Briefing for the Project. A rejected pattern is never proposed again.
 
 No expiry or Guardrail versioning in the MVP.

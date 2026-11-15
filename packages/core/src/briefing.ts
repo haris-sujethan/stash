@@ -1,5 +1,5 @@
 // The Briefing: a fixed template filled from stored data, sized to a token budget. No LLM (ADR 0002).
-// Section order never changes (MVP.md "Pull and Briefing"); when it doesn't fit, whole items are dropped
+// Section order never changes; when it doesn't fit, whole items are dropped
 // from the least important sections first. Guardrails, the marker and the objective are never dropped.
 import type { Digest, MemoryStatus, MemoryType } from "@stash/context-format";
 import { briefingMarker, estimateTokens } from "./base.js";

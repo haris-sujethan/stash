@@ -1,4 +1,4 @@
-// stash pull <id>: print a Briefing for a Session or Merge to stdout (BUILD.md section 13).
+// stash pull <id>: print a Briefing for a Session or Merge to stdout.
 import { writeFile } from "node:fs/promises";
 import { requireUserConfig, UserError } from "../config.js";
 import { StashApi } from "../api.js";

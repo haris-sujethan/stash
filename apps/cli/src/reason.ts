@@ -1,4 +1,4 @@
-// Runs the developer's own AI tool for reasoning steps (ADR 0005, BUILD.md section 12).
+// Runs the developer's own AI tool for reasoning steps (ADR 0005).
 import { adapterFor, claudeAdapter, codexAdapter, DEFAULT_TIMEOUT_MS, runningInside, runStructured, type LlmAdapter, type LlmTool } from "@stash/llm-adapters";
 import { EXTRACT_SYSTEM, ExtractSchema, extractPrompt, renderTranscript, validateExtraction, type TranscriptEvent } from "@stash/core";
 import type { EventType, ExtractedBy } from "@stash/context-format";

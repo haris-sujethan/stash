@@ -1,4 +1,4 @@
-// Server-side reads for the app pages. The website has no login in the MVP (one seeded Workspace, MVP.md);
+// Server-side reads for the app pages. The website has no login (one seeded Workspace, bound to localhost);
 // approvals are protected by the approver secret, not by the page.
 import { collections } from "./db";
 

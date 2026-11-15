@@ -1,7 +1,7 @@
-// Finds which Claude Code session to push (BUILD.md 11.1). Never guesses silently.
+// Finds which Claude Code session to push. Never guesses silently.
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { claudeCode, claudeProjectsDir, listSessionsIn, projectSlug, type SessionCandidate } from "@stash/agent-adapters";
+import { claudeProjectsDir, listSessionsIn, projectSlug, type SessionCandidate } from "@stash/agent-adapters";
 import { UserError } from "./config.js";
 
 export type Discovery =
@@ -44,4 +44,3 @@ export async function discoverSession(opts: { flag?: string; env?: string; dirs:
   return { kind: "choose", candidates };
 }
 
-export { claudeCode };

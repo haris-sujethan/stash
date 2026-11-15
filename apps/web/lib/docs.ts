@@ -1,16 +1,17 @@
-// Renders the private docs from Markdown at build time: design/landing/15-bubbles/docs/project.md and BUILD.md.
+// Renders the private docs from Markdown at build time: README.md and the files in docs/.
 // Same output as the static docs page: heading ids, a contents rail of h2s, wrapped tables, typographic quotes in
 // running text, and appendix sections folded behind one <details>.
 import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { dirname, posix, relative, resolve } from "node:path";
 import { Marked } from "marked";
 
 const ROOT = resolve(process.cwd(), "../..");
+const REPO_URL = "https://github.com/haris-sujethan/stash";
 export const DOC_SOURCES = {
   docs: resolve(ROOT, "README.md"),
   dev: resolve(ROOT, "docs/DEVELOPMENT.md"),
   project: resolve(ROOT, "design/landing/15-bubbles/docs/project.md"),
-  build: resolve(ROOT, "BUILD.md"),
+  build: resolve(ROOT, "docs/BUILD.md"),
 } as const;
 
 const slug = (t: string) =>
@@ -52,6 +53,16 @@ export async function renderDoc(which: keyof typeof DOC_SOURCES): Promise<Render
       return part.replace(/(\w)&#39;(\w)/g, "$1’$2").replace(/(\w)'(\w)/g, "$1’$2").replace(/&quot;([^&]+?)&quot;/g, "“$1”");
     })
     .join("");
+
+  // Links written for GitHub (relative to the repository) point at the matching site page, or at GitHub.
+  const base = relative(ROOT, dirname(DOC_SOURCES[which])).split("\\").join("/");
+  const SITE: Record<string, string> = { "docs/DEVELOPMENT.md": "/docs/dev", "docs/BUILD.md": "/docs/build", "README.md": "/docs" };
+  html = html
+    .replace(/src="docs\/images\//g, 'src="/images/')
+    .replace(/href="(?!https?:|#|\/|mailto:)([^"]+)"/g, (_m, link: string) => {
+      const path = posix.normalize(posix.join(base, link));
+      return `href="${SITE[path] ?? `${REPO_URL}/blob/main/${path}`}"`;
+    });
 
   const cut = html.search(/<h2 id="appendix-/);
   if (cut >= 0) {

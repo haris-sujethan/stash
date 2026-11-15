@@ -1,11 +1,11 @@
-// Prepares and stores Merges (BUILD.md 12.7). The reasoning runs in the CLI with the developer's AI tool.
+// Prepares and stores Merges. The reasoning runs in the CLI with the developer's AI tool.
 import type { Memory, Session } from "@stash/context-format";
 import type { CandidatePair, EvidenceExcerpt, MergeSource, PreparedMerge } from "@stash/core";
 import { collections } from "./db";
 import { HttpError, type Caller } from "./http";
 import { searchMemories } from "./vector";
 
-/** Similarity at or above this makes a pair a merge candidate. Calibrated on Cluster0 (BUILD.md section 8). */
+/** Similarity at or above this makes a pair a merge candidate. Calibrated on Cluster0. */
 export const MERGE_CANDIDATE_MIN = Number(process.env.MERGE_CANDIDATE_MIN ?? 0.82);
 
 export async function loadSource(caller: Caller, sessionId: string): Promise<{ session: Session; source: MergeSource; memories: Memory[] }> {

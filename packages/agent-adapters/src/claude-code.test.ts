@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { captureFromText, excerpt, isStashOwnSession, parseJsonl, projectSlug, selectActiveBranch } from "./claude-code.js";
+import { findBriefingMarkers } from "@stash/core";
 
 // A small session shaped like real Claude Code files: one record per content block, parent links through
 // attachment records, parallel tool calls, a rewind, a hidden thinking block and an error.
@@ -23,7 +24,7 @@ const records = [
   // Two tool calls in parallel: both results hang off different records.
   assistant("a4", "r1", { type: "tool_use", id: "t2", name: "Bash", input: { command: "cat .env" } }),
   assistant("a5", "a4", { type: "tool_use", id: "t3", name: "Edit", input: { file_path: "/work/stash-demo/src/client/generated.ts", old_string: "a", new_string: "b" } }),
-  user("r2", "a4", [{ type: "tool_result", tool_use_id: "t2", content: "ANTHROPIC_API_KEY=sk-ant-demo-AbCdEfGhIjKlMnOpQrStUvWx\nPORT=4000" }]),
+  user("r2", "a4", [{ type: "tool_result", tool_use_id: "t2", content: `ANTHROPIC_API_KEY=${["sk", "ant", "test", "AbCdEfGhIjKlMnOpQrStUvWx"].join("-")}\nPORT=4000` }]),
   user("r3", "a5", [{ type: "tool_result", tool_use_id: "t3", content: "File has been modified", is_error: false }]),
   assistant("a6", "r3", { type: "tool_use", id: "t4", name: "Bash", input: { command: "npm test" } }),
   user("r4", "a6", [{ type: "tool_result", tool_use_id: "t4", content: "3 failed: refresh() called twice", is_error: true }]),
@@ -149,7 +150,6 @@ describe("helpers", () => {
   });
 });
 
-import { findBriefingMarkers } from "@stash/core";
 
 describe("lineage markers survive capture", () => {
   it("keeps the marker of a long Briefing printed by stash pull", () => {
@@ -164,5 +164,20 @@ describe("lineage markers survive capture", () => {
     expect(findBriefingMarkers(result?.output?.excerpt ?? "")).toEqual([
       { sourceId: "ses_8kq2v", sourceType: "session", sourceVersion: 2, pullId: "p_91x7k2ma" },
     ]);
+  });
+});
+
+describe("session titles", () => {
+  it("skips slash commands like /login and uses the first real request", () => {
+    const lines = [
+      user("c1", null, "<command-name>/login</command-name>\n<command-message>login</command-message>"),
+      user("c2", "c1", "<local-command-stdout>Login successful</local-command-stdout>"),
+      user("c3", "c2", "Fix the logout bug"),
+    ].map((r) => JSON.stringify(r)).join("\n");
+    expect(captureFromText(SID, lines).title).toBe("Fix the logout bug");
+  });
+
+  it("calls a session with only slash commands untitled", () => {
+    expect(captureFromText(SID, JSON.stringify(user("c1", null, "<command-name>/login</command-name>"))).title).toBe("Untitled session");
   });
 });

@@ -11,7 +11,7 @@ export default async function BuildPlan() {
       title="Stash, the build plan."
       intro="Everything an agent needs to build the MVP from zero. Read it with the docs; where they disagree, MVP.md wins."
       current="build"
-      source="BUILD.md"
+      source="docs/BUILD.md"
     />
   );
 }
