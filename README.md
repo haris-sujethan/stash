@@ -109,5 +109,3 @@ npm run build    # all workspaces
 npm test         # 70+ tests, no network or AI calls
 npm run dev      # web app with hot reload
 ```
-
-CI runs the build and tests on every push. More: [developer guide](docs/DEVELOPMENT.md) · [glossary](docs/GLOSSARY.md) · [decision records](docs/adr/) · [demo guide](docs/DEMO.md).
